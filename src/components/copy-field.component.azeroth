@@ -1,0 +1,62 @@
+import { Check, Copy } from 'lucide';
+
+import { icon } from './icon';
+
+/**
+ * A value with a copy button that confirms itself.
+ *
+ * Owns its own `copied` flag rather than taking one from the parent: a shared flag across
+ * a list means copying one row lights up whichever row the parent last recorded. Each
+ * field answering only for itself is what makes it safe to repeat.
+ */
+export default component CopyField(props:
+{
+    value: string;
+    /** Accessible name for the button, e.g. "Copy RPC endpoint". */
+    copyLabel: string;
+    copiedLabel: string;
+    copyable?: boolean;
+})
+{
+    state copied = false;
+
+    let timer = 0;
+
+    const run = async (): Promise<void> =>
+    {
+        try
+        {
+            await navigator.clipboard.writeText(props.value);
+
+            copied = true;
+            window.clearTimeout(timer);
+            timer = window.setTimeout(() => { copied = false; }, 1600);
+        }
+        catch
+        {
+            // Clipboard is permission-gated and blocked in some embedded browsers. The
+            // value is on screen and selectable, so a failure costs convenience only.
+        }
+    };
+
+    cleanup { window.clearTimeout(timer); }
+
+    <div class="flex min-w-0 flex-1 items-center gap-2">
+        { /* `dir="ltr"` pins the value even in Persian, where bidi would otherwise reorder
+             a URL or an ID. Not cosmetic: someone pastes what they read. */ }
+        <span dir="ltr" class="min-w-0 flex-1 truncate text-start font-mono text-sm text-ink">
+            { props.value }
+        </span>
+
+        <Show when={ () => props.copyable !== false }>
+            <button
+                type="button"
+                class="grid size-9 shrink-0 place-items-center rounded-lg text-faint transition-colors hover:bg-elevated hover:text-ink"
+                aria-label={ () => copied ? props.copiedLabel : props.copyLabel }
+                onClick={ () => void run() }
+            >
+                { () => copied ? icon(Check, 'size-[18px] text-accent') : icon(Copy, 'size-[18px]') }
+            </button>
+        </Show>
+    </div>
+}

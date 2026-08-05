@@ -1,0 +1,28 @@
+import type { Child } from 'azerothjs';
+
+import { Info, TriangleAlert } from 'lucide';
+
+import { icon } from './icon';
+
+export type BannerTone = 'warn' | 'info';
+
+/**
+ * An inline notice. The warn tone carries a real icon rather than colour alone, because a
+ * "these numbers are not final" message that only reads as a colour is invisible to a
+ * colourblind reader and to anyone printing the page.
+ */
+export default component Banner(props: { tone?: BannerTone; children?: Child })
+{
+    derived warn = (props.tone ?? 'warn') === 'warn';
+
+    <p
+        class={ () => 'flex items-start gap-2.5 rounded-xl border p-3.5 text-sm leading-relaxed text-ink '
+            + (warn ? 'border-warm/40 bg-warm/10' : 'border-line bg-elevated') }
+        role={ () => warn ? 'status' : undefined }
+    >
+        <span class={ () => 'mt-0.5 shrink-0 ' + (warn ? 'text-warm' : 'text-muted') }>
+            { () => icon(warn ? TriangleAlert : Info, 'size-[18px]') }
+        </span>
+        { props.children }
+    </p>
+}

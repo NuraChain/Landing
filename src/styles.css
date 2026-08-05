@@ -1,0 +1,259 @@
+@import 'tailwindcss';
+
+/* Themes are explicit, not inferred. `light-dark()` can only express two, and this site
+   ships three, so every token is declared per `[data-theme]` and the attribute is set
+   before first paint by the script in index.html. `color-scheme` still rides along so
+   native controls, scrollbars and form widgets follow the theme too. */
+
+:root,
+:root[data-theme='dark']
+{
+    color-scheme: dark;
+
+    --bg: #070b12;
+    --surface: #0d141f;
+    --elevated: #141d2b;
+    --ink: #e6edf7;
+    --muted: #97a6bd;
+    --faint: #64748b;
+    --line: #1d2839;
+    --line-strong: #2a3850;
+
+    --accent: #2ad4b8;
+    --accent-hover: #45e5cb;
+    --accent-ink: #04241f;
+    --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+
+    --warm: #f5a524;
+    --danger: #f4557b;
+
+    --glow: radial-gradient(60% 60% at 50% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%);
+    --shadow: 0 18px 50px -20px rgb(0 0 0 / 0.7);
+
+    --scroll-thumb: #2a3850;
+    --scroll-thumb-hover: #3c4d6b;
+}
+
+:root[data-theme='light']
+{
+    color-scheme: light;
+
+    --bg: #f7f9fb;
+    --surface: #ffffff;
+    --elevated: #f0f4f8;
+    --ink: #0d1826;
+    --muted: #4d5f78;
+    --faint: #6b7c94;
+    --line: #dde5ee;
+    --line-strong: #c3d0e0;
+
+    --accent: #0e9384;
+    --accent-hover: #0b7a6e;
+    --accent-ink: #ffffff;
+    --accent-soft: color-mix(in srgb, var(--accent) 10%, transparent);
+
+    --warm: #b45309;
+    --danger: #be123c;
+
+    --glow: radial-gradient(60% 60% at 50% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
+    --shadow: 0 18px 40px -24px rgb(13 24 38 / 0.35);
+
+    --scroll-thumb: #c3d0e0;
+    --scroll-thumb-hover: #a3b3c7;
+}
+
+/* Not "dark but more". Contrast mode drops the decorative layers entirely: solid
+   backgrounds, full-strength borders, no glow, because the visual noise is exactly what
+   makes a low-vision reader lose the edge of a control. */
+:root[data-theme='contrast']
+{
+    color-scheme: dark;
+
+    --bg: #000000;
+    --surface: #000000;
+    --elevated: #12151a;
+    --ink: #ffffff;
+    --muted: #e2e8f0;
+    --faint: #cbd5e1;
+    --line: #ffffff;
+    --line-strong: #ffffff;
+
+    --accent: #4ff0d2;
+    --accent-hover: #7bf7e0;
+    --accent-ink: #000000;
+    --accent-soft: color-mix(in srgb, var(--accent) 22%, transparent);
+
+    --warm: #ffc94d;
+    --danger: #ff8fa8;
+
+    --glow: none;
+    --shadow: none;
+
+    /* Full strength, not a tint. A low-contrast thumb is exactly the affordance this
+       theme's readers cannot find. */
+    --scroll-thumb: #ffffff;
+    --scroll-thumb-hover: var(--accent);
+}
+
+@theme inline
+{
+    --color-bg: var(--bg);
+    --color-surface: var(--surface);
+    --color-elevated: var(--elevated);
+    --color-ink: var(--ink);
+    --color-muted: var(--muted);
+    --color-faint: var(--faint);
+    --color-line: var(--line);
+    --color-line-strong: var(--line-strong);
+    --color-accent: var(--accent);
+    --color-accent-hover: var(--accent-hover);
+    --color-accent-ink: var(--accent-ink);
+    --color-accent-soft: var(--accent-soft);
+    --color-warm: var(--warm);
+    --color-danger: var(--danger);
+
+    --font-sans: 'Inter var', Inter, system-ui, sans-serif;
+    --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
+}
+
+@layer base
+{
+    html
+    {
+        background: var(--bg);
+        color: var(--ink);
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body
+    {
+        font-family: var(--font-sans);
+    }
+
+    /* Persian needs a face that actually has the glyphs, and a line-height with room for
+       its ascenders. Latin inside a Persian paragraph must not shift the baseline. */
+    :root:lang(fa) body
+    {
+        font-family: Vazirmatn, 'Segoe UI', Tahoma, sans-serif;
+        line-height: 1.85;
+    }
+
+    :focus-visible
+    {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 2px;
+    }
+
+    /* Anchor navigation lands under a sticky header without this. */
+    [id]
+    {
+        scroll-margin-top: 5.5rem;
+    }
+
+    /* The standard property first, since Firefox and current Chromium both honour it and
+       it is the one that will outlive the vendor prefix. `--scroll-thumb` is a theme token
+       rather than a fixed grey so the contrast theme can raise it to a full-strength edge
+       instead of the subtle one that suits dark. */
+    html
+    {
+        scrollbar-width: thin;
+        scrollbar-color: var(--scroll-thumb) transparent;
+    }
+
+    /* Older WebKit ignores the above entirely, so the same look is restated here. Track
+       stays transparent: a filled track next to a themed page reads as a seam. */
+    ::-webkit-scrollbar
+    {
+        width: 10px;
+        height: 10px;
+    }
+
+    ::-webkit-scrollbar-track
+    {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb
+    {
+        background: var(--scroll-thumb);
+        border: 2px solid transparent;
+        background-clip: padding-box;
+        border-radius: 999px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover
+    {
+        background: var(--scroll-thumb-hover);
+        background-clip: padding-box;
+    }
+
+    ::-webkit-scrollbar-corner
+    {
+        background: transparent;
+    }
+}
+
+@layer utilities
+{
+    .glow
+    {
+        background-image: var(--glow);
+    }
+}
+
+/* One keyframe, direction supplied by a custom property, so the drawer enters from the
+   right in English and the left in Persian without a second animation to keep in step. */
+@keyframes drawer
+{
+    from
+    {
+        transform: translateX(var(--drawer-from, 100%));
+    }
+}
+
+[dir='rtl'] .drawer
+{
+    --drawer-from: -100%;
+}
+
+/* Touch targets, enforced globally for the same reason as reduced-motion below: a section
+   written later cannot forget a rule it never had to remember. 36px is comfortable under a
+   mouse and a miss under a thumb, so a coarse pointer gets 44px regardless of what the
+   component asked for. Scoped to navigation and controls rather than every `a`, because
+   inflating an inline link inside a paragraph would wreck the text block it sits in. */
+@media (pointer: coarse)
+{
+    button,
+    [role='button'],
+    summary,
+    header a,
+    nav a,
+    footer a,
+    a[href^='#']
+    {
+        min-height: 44px;
+    }
+
+    button,
+    [role='button']
+    {
+        min-width: 44px;
+    }
+}
+
+/* Honoured globally rather than per animation, so a component added later cannot forget
+   it. Motion is suppressed, not merely shortened: a 0.01ms transition still fires its
+   events, which keeps scroll-linked reveals from stranding content invisible. */
+@media (prefers-reduced-motion: reduce)
+{
+    *,
+    *::before,
+    *::after
+    {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

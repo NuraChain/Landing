@@ -1,0 +1,69 @@
+import type { Child } from 'azerothjs';
+
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+export type ButtonSize = 'md' | 'lg';
+
+interface ButtonProps
+{
+    variant?: ButtonVariant;
+    size?: ButtonSize;
+    /** Present means this renders an anchor. A control that navigates must BE a link, not a button that calls the router, or middle-click and open-in-new-tab both stop working. */
+    href?: string;
+    /** Only meaningful alongside `href`. Adds the safe rel automatically. */
+    external?: boolean;
+    type?: 'button' | 'submit';
+    disabled?: boolean;
+    ariaLabel?: string;
+    class?: string;
+    onClick?: () => void;
+    children?: Child;
+}
+
+const VARIANT: Record<ButtonVariant, string> =
+{
+    primary: 'bg-accent text-accent-ink hover:bg-accent-hover',
+    secondary: 'border border-line text-ink hover:border-line-strong hover:bg-elevated',
+    ghost: 'text-muted hover:bg-elevated hover:text-ink'
+};
+
+const SIZE: Record<ButtonSize, string> = { md: 'h-10 px-4 text-sm', lg: 'h-12 px-6' };
+
+/**
+ * The one button. Every call site was repeating the same class string, so a change to the
+ * hover treatment meant finding all of them; now it lands here.
+ */
+export default component Button(props: ButtonProps)
+{
+    derived classes = 'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-colors '
+        + SIZE[props.size ?? 'md']
+        + ' ' + VARIANT[props.variant ?? 'primary']
+        + (props.disabled === true ? ' cursor-not-allowed opacity-55' : '')
+        + (props.class !== undefined ? ` ${ props.class }` : '');
+
+    <Show
+        when={ () => props.href }
+        fallback={ () =>
+        <button
+            type={ props.type ?? 'button' }
+            class={ () => classes }
+            disabled={ () => props.disabled === true }
+            aria-label={ props.ariaLabel }
+            onClick={ () => props.onClick?.() }
+        >
+            { props.children }
+        </button>
+    }
+    >
+        { (href: () => string) =>
+        <a
+            href={ href() }
+            class={ () => classes }
+            aria-label={ props.ariaLabel }
+            target={ props.external === true ? '_blank' : undefined }
+            rel={ props.external === true ? 'noreferrer noopener' : undefined }
+        >
+            { props.children }
+        </a>
+        }
+    </Show>
+}

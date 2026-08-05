@@ -1,0 +1,194 @@
+import { For, Show } from 'azerothjs';
+
+import { Contrast, Languages, Menu, Moon, Sun, X } from 'lucide';
+
+import { useLocale } from '../stores/locale';
+import { useTheme } from '../stores/theme';
+import type { Theme } from '../stores/theme';
+
+import { icon } from './icon';
+
+type SectionId = 'wallet' | 'tokenomics' | 'chain' | 'explorer' | 'social';
+
+// Mutable, not `as const`: `<For each>` takes `unknown[]`, and a readonly tuple both
+// fails to assign and collapses the row parameter to `unknown`.
+const SECTIONS: SectionId[] = ['wallet', 'tokenomics', 'chain', 'explorer', 'social'];
+
+const GLYPH: Record<Theme, typeof Moon> = { dark: Moon, light: Sun, contrast: Contrast };
+
+/**
+ * Sticky header that condenses once the page scrolls.
+ *
+ * Anchor navigation rather than routes: the whole landing page is one document, so a
+ * router hop here would tear down and rebuild content the visitor is already looking at.
+ */
+export default component Header()
+{
+    const { t, locale, toggle } = useLocale();
+    const { theme, cycle } = useTheme();
+
+    state scrolled = false;
+    state menuOpen = false;
+
+    effect
+    {
+        const onScroll = (): void => { scrolled = window.scrollY > 8; };
+
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+
+        cleanup { window.removeEventListener('scroll', onScroll); }
+    }
+
+    // A hash link leaves the menu open behind the section it jumped to, which reads as a
+    // broken overlay on a phone.
+    const jump = (): void => { menuOpen = false; };
+
+    // Escape closes, and the page behind stops scrolling. Without the lock, a drag on the
+    // drawer scrolls the document underneath it and the whole thing feels like a web page
+    // rather than an app.
+    effect
+    {
+        if (!menuOpen)
+        {
+            return;
+        }
+
+        const onKey = (event: KeyboardEvent): void =>
+        {
+            if (event.key === 'Escape')
+            {
+                menuOpen = false;
+            }
+        };
+
+        const previous = document.body.style.overflow;
+
+        document.body.style.overflow = 'hidden';
+        document.addEventListener('keydown', onKey);
+
+        cleanup
+        {
+            document.body.style.overflow = previous;
+            document.removeEventListener('keydown', onKey);
+        }
+    }
+
+    const label = (id: SectionId): string => t().nav[id];
+
+    <header
+        class={ () => 'sticky top-0 z-50 border-b transition-colors duration-300 '
+            + (scrolled ? 'border-line bg-bg/85 backdrop-blur-lg' : 'border-transparent bg-transparent') }
+    >
+        <div class="mx-auto flex h-16 max-w-6xl items-center gap-3 px-5">
+            <a href="#top" class="me-auto flex items-center gap-2 text-base font-semibold tracking-tight text-ink">
+                <span class="grid size-7 place-items-center rounded-lg bg-accent text-accent-ink">N</span>
+                Nura
+            </a>
+
+            <nav class="hidden items-center gap-1 md:flex" aria-label={ t().nav.wallet }>
+                <For each={ SECTIONS } key={ (id) => id }>
+                { (id) =>
+                    <a
+                        href={ `#${ id }` }
+                        class="rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-elevated hover:text-ink"
+                    >
+                        { label(id) }
+                    </a>
+                }
+                </For>
+            </nav>
+
+            <button
+                type="button"
+                class="grid size-9 place-items-center rounded-lg text-muted transition-colors hover:bg-elevated hover:text-ink"
+                aria-label={ `${ t().theme.label }: ${ t().theme[theme()] }` }
+                onClick={ () => cycle() }
+            >
+                { () => icon(GLYPH[theme()], 'size-[18px]') }
+            </button>
+
+            <button
+                type="button"
+                class="flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm text-muted transition-colors hover:bg-elevated hover:text-ink"
+                aria-label={ t().languageName }
+                onClick={ () => toggle() }
+            >
+                { icon(Languages, 'size-[18px]') }
+                <span class="font-medium">{ () => locale() === 'en' ? 'FA' : 'EN' }</span>
+            </button>
+
+            <a
+                href="#wallet"
+                class="hidden h-9 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-hover sm:flex"
+            >
+                { t().nav.download }
+            </a>
+
+            <button
+                type="button"
+                class="grid size-9 place-items-center rounded-lg text-muted hover:bg-elevated hover:text-ink md:hidden"
+                aria-label={ () => menuOpen ? t().nav.closeMenu : t().nav.openMenu }
+                aria-expanded={ () => menuOpen ? 'true' : 'false' }
+                onClick={ () => menuOpen = !menuOpen }
+            >
+                { () => icon(menuOpen ? X : Menu, 'size-5') }
+            </button>
+        </div>
+
+        <Show when={ menuOpen }>
+            <Portal>
+                { /* ONE child. `Portal` appends a single node, so handing it the scrim and
+                     the panel as siblings throws at append time - the same one-element rule
+                     a `<For>` row and a route component follow. The wrapper is unstyled and
+                     both children are `fixed`, so it intercepts nothing. */ }
+                <div class="md:hidden">
+                { /* Scrim first so the panel stacks above it. Tapping it closes, which is
+                     the gesture people try before hunting for an X. */ }
+                    <div
+                        class="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
+                        onClick={ () => menuOpen = false }
+                ></div>
+
+                { /* Anchored to the inline-END edge, so it slides from the right in English
+                     and from the LEFT in Persian. A drawer pinned to `right` would come from
+                     the wrong side of an RTL page and read as a mistake. */ }
+                    <nav
+                        class="drawer fixed inset-y-0 end-0 z-[61] flex w-[min(19rem,85vw)] flex-col gap-1 border-s border-line bg-surface p-4 shadow-2xl motion-safe:animate-[drawer_220ms_ease-out] md:hidden"
+                        style="padding-top: max(1rem, env(safe-area-inset-top)); padding-bottom: max(1rem, env(safe-area-inset-bottom));"
+                        aria-label={ t().nav.wallet }
+                    >
+                        <button
+                            type="button"
+                            class="mb-2 grid size-11 place-items-center self-end rounded-lg text-muted hover:bg-elevated hover:text-ink"
+                            aria-label={ t().nav.closeMenu }
+                            onClick={ () => menuOpen = false }
+                        >
+                        { icon(X, 'size-5') }
+                        </button>
+
+                        <For each={ SECTIONS } key={ (id) => id }>
+                    { (id) =>
+                        <a
+                            href={ `#${ id }` }
+                            class="rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink"
+                            onClick={ () => jump() }
+                        >
+                            { label(id) }
+                        </a>
+                    }
+                        </For>
+
+                        <a
+                            href="#wallet"
+                            class="mt-3 flex h-12 items-center justify-center rounded-xl bg-accent font-semibold text-accent-ink"
+                            onClick={ () => jump() }
+                        >
+                        { t().nav.download }
+                        </a>
+                    </nav>
+                </div>
+            </Portal>
+        </Show>
+    </header>
+}

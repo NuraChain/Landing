@@ -1,0 +1,17 @@
+/**
+ * The title and lede every section opens with.
+ *
+ * Always an `h2`: the page has one `h1` in the hero, and a section that picked its own
+ * level would break the outline a screen-reader user navigates by. The size is a class,
+ * the level is not negotiable.
+ */
+export default component SectionHeading(props: { title: string; subtitle?: string })
+{
+    <div>
+        <h2 class="text-3xl font-bold tracking-tight text-ink sm:text-4xl">{ props.title }</h2>
+
+        <Show when={ () => props.subtitle }>
+            { (subtitle: () => string) => <p class="mt-3 text-muted">{ subtitle() }</p> }
+        </Show>
+    </div>
+}

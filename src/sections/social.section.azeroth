@@ -1,0 +1,41 @@
+import { For } from 'azerothjs';
+
+import { ArrowUpRight } from 'lucide';
+
+import { SOCIALS } from '../lib/content/site';
+
+import { brandIcon } from '../components/brand-icon';
+import Card from '../components/card.component.azeroth';
+import { icon } from '../components/icon';
+import SectionHeading from '../components/section-heading.component.azeroth';
+
+import { useLocale } from '../stores/locale';
+
+export default component SocialSection()
+{
+    const { t } = useLocale();
+
+    <section id="social" class="border-t border-line px-5 py-16 sm:py-20">
+        <div class="mx-auto max-w-4xl">
+            <SectionHeading title={ t().social.title } subtitle={ t().social.subtitle } />
+
+            <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <For each={ () => [...SOCIALS] } key={ (social) => social.id }>
+                { (social) =>
+                    <Card href={ social.url } external padding="sm" class="group flex items-center gap-3">
+                        <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
+                            { brandIcon(social.id) }
+                        </span>
+
+                        <span class="min-w-0 flex-1 truncate font-medium text-ink">{ social.label }</span>
+
+                        <span class="shrink-0 text-faint transition-colors group-hover:text-ink">
+                            { icon(ArrowUpRight, 'size-4') }
+                        </span>
+                    </Card>
+                }
+                </For>
+            </div>
+        </div>
+    </section>
+}

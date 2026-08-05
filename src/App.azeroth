@@ -1,0 +1,43 @@
+import { RouterProvider, Routes, createMemoryHistory, createRouter } from 'azerothjs';
+
+import Footer from './components/footer.component.azeroth';
+import Header from './components/header.component.azeroth';
+
+import { useLocale } from './stores/locale';
+
+import { routes } from './routes.ts';
+
+/**
+ * The shell. Header and skip link sit outside `<Routes>` because they persist across the
+ * legal pages the footer links to; only the page body swaps.
+ */
+export default component App(props: { url?: string })
+{
+    const { t } = useLocale();
+
+    const router = createRouter({
+        routes,
+        history: props.url !== undefined ? createMemoryHistory(props.url) : undefined
+    });
+
+    <RouterProvider router={ router }>
+        { /* First tab stop on the page. Keyboard users should not have to walk the whole
+             header on every navigation to reach the content. */ }
+        <a
+            href="#main"
+            class="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:font-semibold focus:text-accent-ink"
+        >
+            { t().nav.skipToContent }
+        </a>
+
+        <div id="top">
+            <Header />
+
+            <main id="main">
+                <Routes fallback={ () => <h1 class="p-16 text-center text-2xl">404</h1> } />
+            </main>
+
+            <Footer />
+        </div>
+    </RouterProvider>
+}

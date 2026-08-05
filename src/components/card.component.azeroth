@@ -1,0 +1,39 @@
+import type { Child } from 'azerothjs';
+
+/**
+ * The surface panel every section builds on.
+ *
+ * `href` makes the whole card a link rather than wrapping a link inside it, so the target
+ * is the full rectangle instead of a few words. A card that only responds on its title is
+ * the most common near-miss on touch.
+ */
+export default component Card(props:
+{
+    href?: string;
+    external?: boolean;
+    padding?: 'sm' | 'md';
+    class?: string;
+    children?: Child;
+})
+{
+    derived classes = 'rounded-2xl border border-line bg-surface '
+        + (props.padding === 'sm' ? 'p-4' : 'p-5')
+        + (props.href !== undefined ? ' transition-colors hover:border-line-strong hover:bg-elevated' : '')
+        + (props.class !== undefined ? ` ${ props.class }` : '');
+
+    <Show
+        when={ () => props.href }
+        fallback={ () => <div class={ () => classes }>{ props.children }</div> }
+    >
+        { (href: () => string) =>
+        <a
+            href={ href() }
+            class={ () => classes }
+            target={ props.external === true ? '_blank' : undefined }
+            rel={ props.external === true ? 'noreferrer noopener' : undefined }
+        >
+            { props.children }
+        </a>
+        }
+    </Show>
+}

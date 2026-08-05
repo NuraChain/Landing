@@ -1,0 +1,51 @@
+import { For, Show } from 'azerothjs';
+
+import { CHAIN, PROVISIONAL } from '../lib/content/site';
+
+import Banner from '../components/banner.component.azeroth';
+import CopyField from '../components/copy-field.component.azeroth';
+import SectionHeading from '../components/section-heading.component.azeroth';
+
+import { useLocale } from '../stores/locale';
+
+/**
+ * The reference card people come back for: everything needed to add Nura to a wallet by
+ * hand. Values stay in Latin script and LTR in both locales - an RPC URL or a chain ID
+ * reversed by bidi is not a cosmetic problem, it is a value someone pastes and loses
+ * funds to, which is also why the provisional banner is loud rather than a footnote.
+ */
+export default component ChainSection()
+{
+    const { t } = useLocale();
+
+    <section id="chain" class="border-t border-line px-5 py-16 sm:py-20">
+        <div class="mx-auto max-w-4xl">
+            <SectionHeading title={ t().chain.title } subtitle={ t().chain.subtitle } />
+
+            <Show when={ PROVISIONAL }>
+                <div class="mt-6">
+                    <Banner>{ t().chain.provisional }</Banner>
+                </div>
+            </Show>
+
+            <dl class="mt-8 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+                <For each={ () => [...CHAIN] } key={ (fact) => fact.key }>
+                { (fact) =>
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3.5 sm:px-5">
+                        <dt class="min-w-32 text-sm text-muted">{ t().chain[fact.key] }</dt>
+
+                        <dd class="flex min-w-0 flex-1 items-center gap-2">
+                            <CopyField
+                                value={ fact.value }
+                                copyable={ fact.copyable }
+                                copyLabel={ `${ t().chain.copy } ${ t().chain[fact.key] }` }
+                                copiedLabel={ t().chain.copied }
+                            />
+                        </dd>
+                    </div>
+                }
+                </For>
+            </dl>
+        </div>
+    </section>
+}
