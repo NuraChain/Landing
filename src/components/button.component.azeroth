@@ -53,10 +53,10 @@ export default component Button(props: ButtonProps)
             { props.children }
         </button>
     }
+        let={ href }
     >
-        { (href: () => string) =>
         <a
-            href={ href() }
+            href={ href }
             class={ () => classes }
             aria-label={ props.ariaLabel }
             target={ props.external === true ? '_blank' : undefined }
@@ -64,6 +64,5 @@ export default component Button(props: ButtonProps)
         >
             { props.children }
         </a>
-        }
     </Show>
 }

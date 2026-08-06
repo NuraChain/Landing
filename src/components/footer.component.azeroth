@@ -23,8 +23,7 @@ export default component Footer()
                     <p class="mt-3 text-sm leading-relaxed text-muted">{ t().footer.tagline }</p>
 
                     <div class="mt-5 flex flex-wrap items-center gap-1">
-                        <For each={ () => [...SOCIALS] } key={ (social) => social.id }>
-                        { (social) =>
+                        <For each={ () => [...SOCIALS] } key={ (social) => social.id } let={ social }>
                             <a
                                 href={ social.url }
                                 target="_blank"
@@ -34,7 +33,6 @@ export default component Footer()
                             >
                                 { brandIcon(social.id) }
                             </a>
-                        }
                         </For>
                     </div>
                 </div>

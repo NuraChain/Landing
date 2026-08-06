@@ -136,23 +136,21 @@ export default component Home()
                             { t().wallet.comingSoon }
                         </p>
                     }
+                        let={ url }
                     >
-                        { (url: () => string) =>
                         <a
-                            href={ url() }
+                            href={ url }
                             class="mt-3 inline-flex h-12 items-center gap-2 rounded-xl bg-accent px-6 font-semibold text-accent-ink transition-colors hover:bg-accent-hover"
                         >
                             { () => icon(GLYPH[primary.id], 'size-[18px]') }
                             { () => `${ t().nav.download } ${ primary.label }` }
                         </a>
-                        }
                     </Show>
 
                     <p class="mt-8 text-sm font-medium text-faint">{ t().wallet.otherPlatforms }</p>
 
                     <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                        <For each={ () => others } key={ (entry) => entry.id }>
-                        { (entry) =>
+                        <For each={ () => others } key={ (entry) => entry.id } let={ entry }>
                             <a
                                 href={ entry.url ?? undefined }
                                 aria-disabled={ entry.url === null ? 'true' : 'false' }
@@ -166,7 +164,6 @@ export default component Home()
                                     </span>
                                 </span>
                             </a>
-                        }
                         </For>
                     </div>
                 </div>

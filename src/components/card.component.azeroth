@@ -24,16 +24,15 @@ export default component Card(props:
     <Show
         when={ () => props.href }
         fallback={ () => <div class={ () => classes }>{ props.children }</div> }
+        let={ href }
     >
-        { (href: () => string) =>
         <a
-            href={ href() }
+            href={ href }
             class={ () => classes }
             target={ props.external === true ? '_blank' : undefined }
             rel={ props.external === true ? 'noreferrer noopener' : undefined }
         >
             { props.children }
         </a>
-        }
     </Show>
 }
