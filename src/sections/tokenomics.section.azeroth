@@ -69,22 +69,19 @@ export default component TokenomicsSection()
                     .map((a) => `${ t().tokenomics.allocations[a.key] } ${ percent(a.percent) }`)
                     .join(', ') }
             >
-                <For each={ () => [...ALLOCATIONS] } key={ (slice) => slice.key }>
-                { (slice, index) =>
+                <For each={ () => [...ALLOCATIONS] } key={ (slice) => slice.key } let={ slice } index={ index }>
                     <div
                         class="h-full transition-opacity duration-200"
                         style={ () => `flex: ${ slice.percent }; background: ${ HUES[index % HUES.length] };`
                             + (active === null || active === slice.key ? '' : 'opacity: 0.35;') }
                     ></div>
-                }
                 </For>
             </div>
 
             { /* Every segment is direct-labelled here, which is what lets the palette sit
                  at its measured separation safely: identity never rests on colour alone. */ }
             <ul class="mt-5 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
-                <For each={ () => [...ALLOCATIONS] } key={ (slice) => slice.key }>
-                { (slice, index) =>
+                <For each={ () => [...ALLOCATIONS] } key={ (slice) => slice.key } let={ slice } index={ index }>
                     <li
                         class="flex items-center gap-2.5 rounded-lg px-1 py-1 transition-colors"
                         onMouseEnter={ () => active = slice.key }
@@ -99,7 +96,6 @@ export default component TokenomicsSection()
                         </span>
                         <span class="shrink-0 font-mono text-sm text-muted">{ () => percent(slice.percent) }</span>
                     </li>
-                }
                 </For>
             </ul>
         </div>

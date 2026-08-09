@@ -56,10 +56,10 @@ export default component CopyField(props:
                 { props.value }
             </span>
             }
+            let={ href }
         >
-            { (href: () => string) =>
             <a
-                href={ href() }
+                href={ href }
                 target="_blank"
                 rel="noreferrer noopener"
                 dir="ltr"
@@ -67,7 +67,6 @@ export default component CopyField(props:
             >
                 { props.value }
             </a>
-            }
         </Show>
 
         <Show when={ () => props.copyable !== false }>
