@@ -76,14 +76,29 @@ export default component Header()
 
     const label = (id: SectionId): string => t().nav[id];
 
-    <header
-        class={ () => 'sticky top-0 z-50 border-b transition-colors duration-300 '
-            + (scrolled ? 'border-line bg-bg/85 backdrop-blur-lg' : 'border-transparent bg-transparent') }
-    >
-        <div class="mx-auto flex h-16 max-w-6xl items-center gap-3 px-5">
+    { /* The bar is a floating card, so the surface - border, background, blur - moves to
+         the INNER element and the sticky <header> stays a transparent full-width rail. It
+         has to: the rail is what holds the sticky position and the side gutters, and an
+         inset rounded box cannot do both jobs at once. `mt-4` matches `top-4` so the gap
+         above the card is the same 16px at rest as it is once stuck - offsetting only the
+         stuck state would make the header jump on the first scroll. */ }
+    <header class="sticky top-4 z-50 mt-4 px-4">
+        { /* The card carries a surface at BOTH scroll positions. It used to go fully
+             transparent at rest, which was fine when the bar was full-bleed and its edges
+             were the viewport's - but a floating card with no border and no background has
+             nothing to read as inset, so at scroll 0 it just looked full width again. Rest
+             is the quiet version of the same card, not the absence of one; scrolling only
+             firms it up. */ }
+        <div
+            class={ () => 'mx-auto flex h-16 max-w-6xl items-center gap-3 rounded-2xl border px-5 transition-colors duration-300 '
+                + (scrolled ? 'border-line bg-bg/85 backdrop-blur-lg' : 'border-line/60 bg-surface/60 backdrop-blur-md') }
+        >
             <a href="#top" class="me-auto flex items-center gap-2 text-base font-semibold tracking-tight text-ink">
-                <span class="grid size-7 place-items-center rounded-lg bg-accent text-accent-ink">N</span>
-                Nura
+                { /* Decorative: `alt=""` on purpose, because the brand name sits right
+                     beside it inside the same link. A real alt here would make a screen
+                     reader announce the name twice. */ }
+                <img src="/icon.png" alt="" width="28" height="28" class="size-7 rounded-lg" />
+                { t().brand }
             </a>
 
             <nav class="hidden items-center gap-1 md:flex" aria-label={ t().nav.wallet }>

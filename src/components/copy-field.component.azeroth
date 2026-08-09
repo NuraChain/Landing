@@ -16,6 +16,11 @@ export default component CopyField(props:
     copyLabel: string;
     copiedLabel: string;
     copyable?: boolean;
+    /**
+     * Renders the value as an external link on top of keeping it copyable. Omitted for
+     * values a browser cannot open, which is most of them.
+     */
+    href?: string;
 })
 {
     state copied = false;
@@ -44,9 +49,26 @@ export default component CopyField(props:
     <div class="flex min-w-0 flex-1 items-center gap-2">
         { /* `dir="ltr"` pins the value even in Persian, where bidi would otherwise reorder
              a URL or an ID. Not cosmetic: someone pastes what they read. */ }
-        <span dir="ltr" class="min-w-0 flex-1 truncate text-start font-mono text-sm text-ink">
-            { props.value }
-        </span>
+        <Show
+            when={ () => props.href }
+            fallback={ () =>
+            <span dir="ltr" class="min-w-0 flex-1 truncate text-start font-mono text-sm text-ink">
+                { props.value }
+            </span>
+            }
+        >
+            { (href: () => string) =>
+            <a
+                href={ href() }
+                target="_blank"
+                rel="noreferrer noopener"
+                dir="ltr"
+                class="min-w-0 flex-1 truncate text-start font-mono text-sm text-ink underline-offset-4 transition-colors hover:text-accent hover:underline"
+            >
+                { props.value }
+            </a>
+            }
+        </Show>
 
         <Show when={ () => props.copyable !== false }>
             <button

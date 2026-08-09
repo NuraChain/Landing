@@ -4,6 +4,8 @@ export const en: Strings =
 {
     languageName: 'English',
 
+    brand: 'Nura Chain',
+
     nav:
     {
         tokenomics: 'Tokenomics',
@@ -41,13 +43,23 @@ export const en: Strings =
         circulating: 'Circulating',
         allocation: 'Allocation',
         vesting: 'Vesting schedule',
-        provisional: 'Provisional figures, pending final publication.'
+        provisional: 'Provisional figures, pending final publication.',
+
+        allocations:
+        {
+            locked: 'Locked',
+            liquidity: 'Liquidity',
+            community: 'Community',
+            publicSale: 'Public sale',
+            treasury: 'Treasury',
+            validators: 'Validators'
+        }
     },
 
     chain:
     {
         title: 'Chain information',
-        subtitle: 'Everything you need to add Nura to your wallet by hand.',
+        subtitle: 'Everything you need to add Nura Chain to your wallet by hand.',
         networkName: 'Network name',
         chainId: 'Chain ID',
         rpcUrl: 'RPC endpoint',
@@ -92,12 +104,9 @@ export const en: Strings =
 
     footer:
     {
-        tagline: 'A self custody wallet for the Nura network.',
+        tagline: 'A self custody wallet for Nura Chain.',
         product: 'Product',
         resources: 'Resources',
-        legal: 'Legal',
-        privacy: 'Privacy policy',
-        terms: 'Terms of use',
         builtWith: 'Built with',
         rights: 'All rights reserved.'
     }

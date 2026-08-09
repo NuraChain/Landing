@@ -1,5 +1,12 @@
 @import 'tailwindcss';
 
+/* Self-hosted rather than a CDN link: the Persian face is not optional decoration, it is
+   the only reason the site is legible in Persian, and a third-party font host is both a
+   render-blocking dependency and a request that tells someone else who reads this site.
+   The package ships `font-display: swap` and per-script unicode-range subsets, so a Latin
+   visitor never downloads the Arabic-range file at all. */
+@import '@fontsource-variable/vazirmatn';
+
 /* Themes are explicit, not inferred. `light-dark()` can only express two, and this site
    ships three, so every token is declared per `[data-theme]` and the attribute is set
    before first paint by the script in index.html. `color-scheme` still rides along so
@@ -134,8 +141,19 @@
        its ascenders. Latin inside a Persian paragraph must not shift the baseline. */
     :root:lang(fa) body
     {
-        font-family: Vazirmatn, 'Segoe UI', Tahoma, sans-serif;
+        font-family: 'Vazirmatn Variable', Vazirmatn, 'Segoe UI', Tahoma, sans-serif;
         line-height: 1.85;
+    }
+
+    /* Tailwind v4's Preflight changed buttons to `cursor: default` (v3 left them on the
+       pointer). Restored here once rather than as a `cursor-pointer` class on each control,
+       because the failure mode is silent - a new button simply feels dead and nobody
+       notices until someone says the theme toggle "isn't clickable". Disabled controls are
+       excluded so they keep signalling that they do nothing. */
+    button:not(:disabled),
+    [role='button']:not(:disabled)
+    {
+        cursor: pointer;
     }
 
     :focus-visible

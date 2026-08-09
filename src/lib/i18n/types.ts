@@ -10,6 +10,14 @@ export interface Strings
     /** Language name in its OWN language, for the switcher. A Persian speaker looking for their language should not have to read English to find it. */
     languageName: string;
 
+    /**
+     * The project's own name, per locale. Translated because Persian renders it in Persian
+     * script, so it cannot be a literal in the markup the way a wordmark usually is. Note
+     * this covers the chain ALONE: the product names built on it ("Nura Wallet", "Nura
+     * Explorer") are separate keys under their own sections and translate independently.
+     */
+    brand: string;
+
     nav:
     {
         tokenomics: string;
@@ -48,6 +56,21 @@ export interface Strings
         allocation: string;
         vesting: string;
         provisional: string;
+
+        /**
+         * One label per row of `ALLOCATIONS`, reached by that row's `key`. Nested rather
+         * than flattened into this object so a new allocation can never collide with
+         * `title` or `allocation` and silently render the wrong string.
+         */
+        allocations:
+        {
+            locked: string;
+            liquidity: string;
+            community: string;
+            publicSale: string;
+            treasury: string;
+            validators: string;
+        };
     };
 
     chain:
@@ -101,9 +124,6 @@ export interface Strings
         tagline: string;
         product: string;
         resources: string;
-        legal: string;
-        privacy: string;
-        terms: string;
         builtWith: string;
         rights: string;
     };

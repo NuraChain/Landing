@@ -8,7 +8,7 @@ import type { SocialId } from '../lib/content/site';
  *
  * lucide removed its brand icons over trademark, and hand-drawing a logo produces a shape
  * that is recognisably wrong. `simple-icons` ships the real path data (CC0), which leaves
- * only the trademark question, and that is answered by USE: these link to Nura's own
+ * only the trademark question, and that is answered by USE: these link to Nura Chain's own
  * profiles on each platform, which is the nominative use every one of these brands permits
  * in its guidelines. Do not recolour or distort them.
  */

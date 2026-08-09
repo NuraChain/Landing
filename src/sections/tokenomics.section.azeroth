@@ -1,8 +1,7 @@
-import { For, Show } from 'azerothjs';
+import { For } from 'azerothjs';
 
-import { ALLOCATIONS, PROVISIONAL, SUPPLY } from '../lib/content/site';
+import { ALLOCATIONS, SUPPLY } from '../lib/content/site';
 
-import Banner from '../components/banner.component.azeroth';
 import Card from '../components/card.component.azeroth';
 import SectionHeading from '../components/section-heading.component.azeroth';
 
@@ -13,11 +12,17 @@ import { useLocale } from '../stores/locale';
  *
  * The first attempt paired a blue and a violet that measured ΔE 0.3 under protanopia and
  * 8.7 with full colour vision: two segments nobody could tell apart. These are re-stepped
- * so the worst ADJACENT pair is ΔE 13.9 protan / 16.8 normal, with similar hues kept
- * non-adjacent. Fixed order, never cycled: a slot belongs to an entity, so adding or
- * removing a row must not repaint the survivors.
+ * so the worst ADJACENT pair is ΔE 13.9 protan / 16.8 normal / 12.2 tritan, with similar
+ * hues kept non-adjacent. Fixed order, never cycled: a slot belongs to an entity, so
+ * adding or removing a row must not repaint the survivors - which is why the green was
+ * APPENDED for the sixth allocation rather than slotted in where it looked best.
+ *
+ * Validated on adjacent pairs against all three theme surfaces, not chosen by eye. The
+ * pairing only holds for THIS order; see the note on ALLOCATIONS before reordering. Teal
+ * measures 2.94:1 on the white surface, under the 3:1 floor - the direct labels below are
+ * what make that legal, so they are not optional decoration.
  */
-const HUES: string[] = ['#22a89b', '#c07f26', '#6b8afd', '#e15a7c', '#a274d6'];
+const HUES: string[] = ['#22a89b', '#c07f26', '#6b8afd', '#e15a7c', '#a274d6', '#4f9e52'];
 
 export default component TokenomicsSection()
 {
@@ -33,12 +38,6 @@ export default component TokenomicsSection()
     <section id="tokenomics" class="border-t border-line px-5 py-16 sm:py-20">
         <div class="mx-auto max-w-4xl">
             <SectionHeading title={ t().tokenomics.title } subtitle={ t().tokenomics.subtitle } />
-
-            <Show when={ PROVISIONAL }>
-                <div class="mt-6">
-                    <Banner>{ t().tokenomics.provisional }</Banner>
-                </div>
-            </Show>
 
             { /* Two headline figures. A number this important is read, not decoded off an
                  axis, so it is a stat tile rather than another mark on the chart. */ }
@@ -59,21 +58,23 @@ export default component TokenomicsSection()
 
             <h3 class="mt-10 text-sm font-semibold text-faint">{ t().tokenomics.allocation }</h3>
 
-            { /* A segmented bar, not a donut: this is parts-of-a-whole across 5 categories,
+            { /* A segmented bar, not a donut: this is parts-of-a-whole across 6 categories,
                  where comparing segment LENGTHS along one axis is the thing a reader
                  actually does. Angles are harder to compare than lengths. The 2px surface
                  gap between fills is what keeps two adjacent segments from reading as one. */ }
             <div
                 class="mt-3 flex h-11 w-full gap-[2px] overflow-hidden rounded-xl"
                 role="img"
-                aria-label={ () => ALLOCATIONS.map((a) => `${ a.label } ${ percent(a.percent) }`).join(', ') }
+                aria-label={ () => ALLOCATIONS
+                    .map((a) => `${ t().tokenomics.allocations[a.key] } ${ percent(a.percent) }`)
+                    .join(', ') }
             >
-                <For each={ () => [...ALLOCATIONS] } key={ (slice) => slice.label }>
+                <For each={ () => [...ALLOCATIONS] } key={ (slice) => slice.key }>
                 { (slice, index) =>
                     <div
                         class="h-full transition-opacity duration-200"
                         style={ () => `flex: ${ slice.percent }; background: ${ HUES[index % HUES.length] };`
-                            + (active === null || active === slice.label ? '' : 'opacity: 0.35;') }
+                            + (active === null || active === slice.key ? '' : 'opacity: 0.35;') }
                     ></div>
                 }
                 </For>
@@ -82,18 +83,20 @@ export default component TokenomicsSection()
             { /* Every segment is direct-labelled here, which is what lets the palette sit
                  at its measured separation safely: identity never rests on colour alone. */ }
             <ul class="mt-5 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
-                <For each={ () => [...ALLOCATIONS] } key={ (slice) => slice.label }>
+                <For each={ () => [...ALLOCATIONS] } key={ (slice) => slice.key }>
                 { (slice, index) =>
                     <li
                         class="flex items-center gap-2.5 rounded-lg px-1 py-1 transition-colors"
-                        onMouseEnter={ () => active = slice.label }
+                        onMouseEnter={ () => active = slice.key }
                         onMouseLeave={ () => active = null }
                     >
                         <span
                             class="size-3 shrink-0 rounded-[3px]"
                             style={ `background: ${ HUES[index % HUES.length] }` }
                         ></span>
-                        <span class="min-w-0 flex-1 truncate text-sm text-ink">{ slice.label }</span>
+                        <span class="min-w-0 flex-1 truncate text-sm text-ink">
+                            { () => t().tokenomics.allocations[slice.key] }
+                        </span>
                         <span class="shrink-0 font-mono text-sm text-muted">{ () => percent(slice.percent) }</span>
                     </li>
                 }

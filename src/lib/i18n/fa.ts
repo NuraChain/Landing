@@ -4,6 +4,8 @@ export const fa: Strings =
 {
     languageName: 'فارسی',
 
+    brand: 'زنجیره نورا',
+
     nav:
     {
         tokenomics: 'توکنومیکس',
@@ -41,13 +43,23 @@ export const fa: Strings =
         circulating: 'در گردش',
         allocation: 'تخصیص',
         vesting: 'برنامه آزادسازی',
-        provisional: 'ارقام موقت، تا زمان انتشار نهایی.'
+        provisional: 'ارقام موقت، تا زمان انتشار نهایی.',
+
+        allocations:
+        {
+            locked: 'قفل‌شده',
+            liquidity: 'نقدینگی',
+            community: 'جامعه',
+            publicSale: 'عرضه عمومی',
+            treasury: 'خزانه',
+            validators: 'اعتبارسنج‌ها'
+        }
     },
 
     chain:
     {
         title: 'اطلاعات شبکه',
-        subtitle: 'هر چیزی که برای افزودن دستی نورا به کیف‌پولت لازم داری.',
+        subtitle: 'هر چیزی که برای افزودن دستی زنجیره نورا به کیف‌پولت لازم داری.',
         networkName: 'نام شبکه',
         chainId: 'شناسه شبکه',
         rpcUrl: 'نقطه اتصال RPC',
@@ -92,12 +104,9 @@ export const fa: Strings =
 
     footer:
     {
-        tagline: 'کیف‌پول نگهداری شخصی برای شبکه نورا.',
+        tagline: 'کیف‌پول نگهداری شخصی برای زنجیره نورا.',
         product: 'محصول',
         resources: 'منابع',
-        legal: 'حقوقی',
-        privacy: 'سیاست حریم خصوصی',
-        terms: 'شرایط استفاده',
         builtWith: 'ساخته‌شده با',
         rights: 'همه حقوق محفوظ است.'
     }

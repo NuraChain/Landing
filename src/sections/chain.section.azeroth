@@ -1,15 +1,14 @@
-import { For, Show } from 'azerothjs';
+import { For } from 'azerothjs';
 
-import { CHAIN, PROVISIONAL } from '../lib/content/site';
+import { CHAIN } from '../lib/content/site';
 
-import Banner from '../components/banner.component.azeroth';
 import CopyField from '../components/copy-field.component.azeroth';
 import SectionHeading from '../components/section-heading.component.azeroth';
 
 import { useLocale } from '../stores/locale';
 
 /**
- * The reference card people come back for: everything needed to add Nura to a wallet by
+ * The reference card people come back for: everything needed to add Nura Chain to a wallet by
  * hand. Values stay in Latin script and LTR in both locales - an RPC URL or a chain ID
  * reversed by bidi is not a cosmetic problem, it is a value someone pastes and loses
  * funds to, which is also why the provisional banner is loud rather than a footnote.
@@ -22,12 +21,6 @@ export default component ChainSection()
         <div class="mx-auto max-w-4xl">
             <SectionHeading title={ t().chain.title } subtitle={ t().chain.subtitle } />
 
-            <Show when={ PROVISIONAL }>
-                <div class="mt-6">
-                    <Banner>{ t().chain.provisional }</Banner>
-                </div>
-            </Show>
-
             <dl class="mt-8 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
                 <For each={ () => [...CHAIN] } key={ (fact) => fact.key }>
                 { (fact) =>
@@ -38,6 +31,7 @@ export default component ChainSection()
                             <CopyField
                                 value={ fact.value }
                                 copyable={ fact.copyable }
+                                href={ fact.link === true ? fact.value : undefined }
                                 copyLabel={ `${ t().chain.copy } ${ t().chain[fact.key] }` }
                                 copiedLabel={ t().chain.copied }
                             />
