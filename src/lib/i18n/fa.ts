@@ -75,9 +75,9 @@ export const fa: Strings =
     {
         title: 'کیف‌پول نورا',
         subtitle: 'یک کیف‌پول، روی همه دستگاه‌هایت.',
-        downloadFor: 'دانلود برای',
-        otherPlatforms: 'سایر پلتفرم‌ها',
+        platforms: 'پلتفرم‌ها',
         comingSoon: 'به‌زودی',
+        allDownloads: 'همه نسخه‌ها و معماری‌ها در گیت‌هاب',
         features:
         {
             selfCustody: 'نگهداری شخصی',

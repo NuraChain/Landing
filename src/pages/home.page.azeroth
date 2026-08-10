@@ -1,12 +1,14 @@
-import { For, Show } from 'azerothjs';
+import { For } from 'azerothjs';
 
-import { Apple, ArrowRight, Code2, Monitor, Puzzle, Smartphone, Terminal, Zap } from 'lucide';
+import { ArrowRight, Code2, Terminal, Zap } from 'lucide';
 
-import { DOWNLOADS } from '../lib/content/site';
-import type { Download, PlatformId } from '../lib/content/site';
+import { DOWNLOADS, RELEASES_URL } from '../lib/content/site';
+import type { Download } from '../lib/content/site';
 
+import { brandIcon } from '../components/brand-icon';
 import Button from '../components/button.component.azeroth';
 import { icon } from '../components/icon';
+import { platformIcon } from '../components/platform-icon';
 
 import { useLocale } from '../stores/locale';
 
@@ -15,56 +17,9 @@ import ExplorerSection from '../sections/explorer.section.azeroth';
 import SocialSection from '../sections/social.section.azeroth';
 import TokenomicsSection from '../sections/tokenomics.section.azeroth';
 
-const GLYPH: Record<PlatformId, typeof Apple> =
-{
-    ios: Apple,
-    android: Smartphone,
-    windows: Monitor,
-    macos: Apple,
-    linux: Terminal,
-    extension: Puzzle
-};
-
-/**
- * Best guess at what the visitor is holding, so the download they want is the one under
- * the primary button. A guess, never a gate: every other platform stays one glance away,
- * because getting this wrong and hiding the alternatives is worse than not guessing.
- */
-const detect = (): PlatformId =>
-{
-    const ua = navigator.userAgent;
-
-    if (/iPhone|iPad|iPod/i.test(ua))
-    {
-        return 'ios';
-    }
-
-    if (/Android/i.test(ua))
-    {
-        return 'android';
-    }
-
-    if (/Mac/i.test(ua))
-    {
-        return 'macos';
-    }
-
-    if (/Linux/i.test(ua))
-    {
-        return 'linux';
-    }
-
-    return 'windows';
-};
-
 export default component Home()
 {
     const { t } = useLocale();
-
-    state platform = detect();
-
-    derived primary = DOWNLOADS.find((entry) => entry.id === platform) ?? DOWNLOADS[0];
-    derived others = DOWNLOADS.filter((entry) => entry.id !== platform);
 
     const tile = (entry: Download): string =>
         'flex items-center gap-3 rounded-xl border px-4 py-3 text-start transition-colors '
@@ -125,47 +80,64 @@ export default component Home()
                 </div>
 
                 <div class="mt-10 rounded-2xl border border-line bg-surface p-6">
-                    <p class="text-sm font-medium text-faint">
-                        { () => `${ t().wallet.downloadFor } ${ primary.label }` }
-                    </p>
+                    <p class="text-sm font-medium text-faint">{ t().wallet.platforms }</p>
 
-                    <Show
-                        when={ () => primary.url }
-                        fallback={ () =>
-                        <p class="mt-3 inline-flex h-12 items-center rounded-xl border border-dashed border-line-strong px-6 font-medium text-faint">
-                            { t().wallet.comingSoon }
-                        </p>
-                    }
-                        let={ url }
-                    >
-                        <a
-                            href={ url }
-                            class="mt-3 inline-flex h-12 items-center gap-2 rounded-xl bg-accent px-6 font-semibold text-accent-ink transition-colors hover:bg-accent-hover"
-                        >
-                            { () => icon(GLYPH[primary.id], 'size-[18px]') }
-                            { () => `${ t().nav.download } ${ primary.label }` }
-                        </a>
-                    </Show>
-
-                    <p class="mt-8 text-sm font-medium text-faint">{ t().wallet.otherPlatforms }</p>
-
+                    { /* Every platform on one footing. This used to promote whichever OS a
+                         user-agent sniff guessed into a big accent button with the other five
+                         demoted to tiles below - which made Windows look like the supported
+                         platform and the rest like afterthoughts, and put the wrong one on top
+                         whenever the guess missed. A uniform grid states what is true: six
+                         targets, three of them shipping. */ }
                     <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                        <For each={ () => others } key={ (entry) => entry.id } let={ entry }>
+                        <For each={ () => [...DOWNLOADS] } key={ (entry) => entry.id } let={ entry }>
                             <a
                                 href={ entry.url ?? undefined }
                                 aria-disabled={ entry.url === null ? 'true' : 'false' }
                                 class={ tile(entry) }
                             >
-                                <span class="text-muted">{ icon(GLYPH[entry.id], 'size-5') }</span>
+                                { /* Its own brand colour, but only while the row is live: a
+                                     coming-soon tile is dimmed to 55% and a full-strength mark
+                                     inside it would read as the one thing you CAN click. */ }
+                                <span
+                                    class="shrink-0 text-muted"
+                                    style={ entry.url === null ? undefined : `color: var(--brand-${ entry.id })` }
+                                >
+                                    { platformIcon(entry.id) }
+                                </span>
                                 <span class="min-w-0">
                                     <span class="block text-sm font-medium text-ink">{ entry.label }</span>
+                                    { /* The note is a Latin format string, so Persian needs it
+                                         pinned LTR: bidi treats a leading "." as neutral and
+                                         flips it to the far end, rendering ".deb · x64" as
+                                         "deb · x64.". The dir goes on an INLINE wrapper, not on
+                                         the block above - `text-start` resolves against each
+                                         element's own direction, so an ltr block would align the
+                                         note to the opposite edge from the label sitting over
+                                         it. The coming-soon copy is translated and keeps the
+                                         page direction. */ }
                                     <span class="block text-xs text-faint">
-                                        { entry.url === null ? t().wallet.comingSoon : entry.note }
+                                        <span dir={ entry.url === null ? undefined : 'ltr' }>
+                                            { entry.url === null ? t().wallet.comingSoon : entry.note }
+                                        </span>
                                     </span>
                                 </span>
                             </a>
                         </For>
                     </div>
+
+                    { /* The escape hatch for everything the six tiles above cannot say: arm64,
+                         .rpm, .AppImage, the per-ABI APKs, and older versions. Each tile links
+                         ONE mainstream build, so without this the other formats would simply
+                         not exist as far as a visitor could tell. */ }
+                    <a
+                        href={ RELEASES_URL }
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        class="mt-5 inline-flex items-center gap-2 text-sm font-medium text-muted underline-offset-4 transition-colors hover:text-ink hover:underline"
+                    >
+                        { brandIcon('github') }
+                        { t().wallet.allDownloads }
+                    </a>
                 </div>
             </div>
         </section>

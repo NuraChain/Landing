@@ -92,9 +92,9 @@ export interface Strings
     {
         title: string;
         subtitle: string;
-        downloadFor: string;
-        otherPlatforms: string;
+        platforms: string;
         comingSoon: string;
+        allDownloads: string;
         features:
         {
             selfCustody: string;

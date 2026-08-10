@@ -75,9 +75,9 @@ export const en: Strings =
     {
         title: 'Nura Wallet',
         subtitle: 'One wallet, every device you own.',
-        downloadFor: 'Download for',
-        otherPlatforms: 'Other platforms',
+        platforms: 'Platforms',
         comingSoon: 'Coming soon',
+        allDownloads: 'All builds and architectures on GitHub',
         features:
         {
             selfCustody: 'Self custody',

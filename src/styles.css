@@ -39,6 +39,18 @@
 
     --scroll-thumb: #2a3850;
     --scroll-thumb-hover: #3c4d6b;
+
+    /* Platform marks. The published brand hex is used WHERE IT SURVIVES the surface and a
+       same-hue step replaces it where it does not - on this dark surface Android, Linux and
+       the Apple mark are the real values, and only Windows lifts to its Win11 light accent.
+       Apple's #000000 measures 1.14:1 here, so it inverts to near-white. Every value below
+       clears 3:1 against --surface; re-measure before editing one. */
+    --brand-ios: #f5f5f7;
+    --brand-macos: #f5f5f7;
+    --brand-android: #3ddc84;
+    --brand-apk: #3ddc84;
+    --brand-windows: #4cc2ff;
+    --brand-linux: #fcc624;
 }
 
 :root[data-theme='light']
@@ -67,6 +79,16 @@
 
     --scroll-thumb: #c3d0e0;
     --scroll-thumb-hover: #a3b3c7;
+
+    /* White flips which hexes survive: Apple and Windows are the published values here,
+       while Android green (1.78:1) and Linux yellow (1.59:1) would be near-invisible and
+       drop to a darker step of the same hue. */
+    --brand-ios: #000000;
+    --brand-macos: #000000;
+    --brand-android: #12864a;
+    --brand-apk: #12864a;
+    --brand-windows: #0078d4;
+    --brand-linux: #9a7700;
 }
 
 /* Not "dark but more". Contrast mode drops the decorative layers entirely: solid
@@ -100,6 +122,16 @@
        theme's readers cannot find. */
     --scroll-thumb: #ffffff;
     --scroll-thumb-hover: var(--accent);
+
+    /* Brightest step of each hue, on pure black. The dark theme's values would technically
+       pass here, but this theme exists for readers who need headroom rather than the
+       minimum, so every mark is pushed up: nothing below 8:1. */
+    --brand-ios: #f5f5f7;
+    --brand-macos: #f5f5f7;
+    --brand-android: #3ddc84;
+    --brand-apk: #3ddc84;
+    --brand-windows: #4cc2ff;
+    --brand-linux: #fcc624;
 }
 
 @theme inline

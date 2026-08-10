@@ -12,7 +12,7 @@
  */
 export const PROVISIONAL = true;
 
-export type PlatformId = 'ios' | 'android' | 'windows' | 'macos' | 'linux' | 'extension';
+export type PlatformId = 'ios' | 'android' | 'apk' | 'windows' | 'macos' | 'linux';
 
 export interface Download
 {
@@ -25,7 +25,27 @@ export interface Download
     note: string;
 }
 
-/** TODO(real-data): every url below except Android is still unconfirmed. */
+/** Every build, and the page people land on when they want one this list does not cover. */
+export const RELEASES_URL = 'https://github.com/NuraChain/Wallet/releases';
+
+/**
+ * Desktop and mobile builds link through `/releases/latest/download/<asset>`, GitHub's
+ * redirect to whatever the newest release calls that file. Pinning `/download/v1.0.10/`
+ * instead would freeze this page at one version and quietly serve a stale wallet after the
+ * next tag - the worst kind of stale, because nothing here would look broken.
+ *
+ * This only works while asset names stay version-free, which is what v1.0.10 changed (its
+ * predecessors embedded `1.0.8` in every filename). A release that reverts to versioned
+ * names breaks all six links at once, so keep the naming and these strings in step.
+ *
+ * One build per platform, the mainstream architecture. Every other arch and format - arm64,
+ * .rpm, .AppImage, the split APKs - lives behind the releases link rather than in a matrix
+ * nobody reads.
+ *
+ * TODO(real-data): iOS and macOS have no published build yet.
+ */
+const LATEST = `${ RELEASES_URL }/latest/download`;
+
 export const DOWNLOADS: readonly Download[] =
 [
     { id: 'ios', label: 'iOS', url: null, note: 'App Store' },
@@ -35,10 +55,15 @@ export const DOWNLOADS: readonly Download[] =
         url: 'https://play.google.com/store/apps/details?id=io.nurawallet.android',
         note: 'Google Play'
     },
-    { id: 'windows', label: 'Windows', url: null, note: '.exe' },
+    { id: 'windows', label: 'Windows', url: `${ LATEST }/Nura-Wallet-Windows-x64-setup.exe`, note: '.exe · x64' },
     { id: 'macos', label: 'macOS', url: null, note: 'Apple silicon' },
-    { id: 'linux', label: 'Linux', url: null, note: '.deb / .AppImage' },
-    { id: 'extension', label: 'Browser', url: null, note: 'Chrome / Firefox' }
+    { id: 'linux', label: 'Linux', url: `${ LATEST }/Nura-Wallet-Linux-amd64.deb`, note: '.deb · x64' },
+    {
+        id: 'apk',
+        label: 'Android APK',
+        url: `${ LATEST }/Nura-Wallet-Android-universal.apk`,
+        note: '.apk · universal'
+    }
 ];
 
 export interface ChainFact
