@@ -53,8 +53,19 @@ export const es: Strings =
             community: 'Comunidad',
             publicSale: 'Venta pública',
             treasury: 'Tesorería',
-            validators: 'Validadores'
-        }
+            airdrop: 'Airdrop'
+        },
+
+        notes:
+        {
+            locked: 'El 40% restante del suministro total quedará bloqueado durante un año. Al terminar ese periodo se decidirá cómo se usa, y cualquier decisión sobre ese 40% deberá aprobarse con el voto de al menos el 65% de la red.',
+            liquidity: 'El 25% del suministro total se destinará a lo largo de un año a aportar y gestionar liquidez. El objetivo es una liquidez suficiente para operar y un ecosistema NURA más estable.',
+            community: 'El 10% del suministro total se repartirá entre los miembros de la comunidad a lo largo de un año. Está pensado para quienes, sin pagar nada directamente, contribuyen al crecimiento de NURA con su actividad, participación, desarrollo, difusión u otras aportaciones efectivas. La asignación se hará tras la revisión y aprobación del consejo de gestión.',
+            treasury: 'El 10% del suministro total irá a la tesorería de NURA. Durante un año, y bajo la supervisión del consejo de gestión, financiará el desarrollo del ecosistema, la infraestructura, los productos, las alianzas y otras necesidades del proyecto.',
+            airdrop: 'El 5% del suministro total de NURA se distribuirá como airdrop a lo largo de un año. Los destinatarios se identificarán a través de canales y comunidades seleccionados, y la asignación final la confirma el consejo de gestión.'
+        },
+
+        moreAbout: 'Más sobre'
     },
 
     chain:

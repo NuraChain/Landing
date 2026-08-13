@@ -1,9 +1,12 @@
-import { For } from 'azerothjs';
+import { For, Show } from 'azerothjs';
+
+import { Info } from 'lucide';
 
 import { ALLOCATIONS, SUPPLY } from '../lib/content/site';
 
 import Card from '../components/card.component.azeroth';
 import SectionHeading from '../components/section-heading.component.azeroth';
+import { icon } from '../components/icon';
 
 import { useLocale } from '../stores/locale';
 
@@ -29,11 +32,44 @@ export default component TokenomicsSection()
     const { locale, t } = useLocale();
 
     state active = null as string | null;
+    state openNote = null as string | null;
 
     // Locale-aware grouping, so Persian gets Persian digits and separators for free.
     const number = (value: number): string => new Intl.NumberFormat(locale()).format(value);
     const percent = (value: number): string =>
         new Intl.NumberFormat(locale(), { style: 'percent', maximumFractionDigits: 1 }).format(value / 100);
+
+    /**
+     * `notes` is keyed by a SUBSET of the allocation keys, so this returns undefined for a
+     * row whose terms are not settled - `publicSale` today - and that row renders no button
+     * at all. The cast is the honest way to index a deliberately partial record.
+     */
+    const noteFor = (key: string): string | undefined =>
+        (t().tokenomics.notes as Record<string, string | undefined>)[key];
+
+    // Escape closes the open note, matching the drawer and the language modal in the header.
+    effect
+    {
+        if (openNote === null)
+        {
+            return;
+        }
+
+        const onKey = (event: KeyboardEvent): void =>
+        {
+            if (event.key === 'Escape')
+            {
+                openNote = null;
+            }
+        };
+
+        document.addEventListener('keydown', onKey);
+
+        cleanup
+        {
+            document.removeEventListener('keydown', onKey);
+        }
+    }
 
     <section id="tokenomics" class="border-t border-line px-5 py-16 sm:py-20">
         <div class="mx-auto max-w-4xl">
@@ -79,22 +115,51 @@ export default component TokenomicsSection()
             </div>
 
             { /* Every segment is direct-labelled here, which is what lets the palette sit
-                 at its measured separation safely: identity never rests on colour alone. */ }
-            <ul class="mt-5 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
+                 at its measured separation safely: identity never rests on colour alone.
+
+                 The terms behind a slice open in place rather than floating in a tooltip:
+                 they run to a full paragraph, and a hover tooltip that long has nowhere to
+                 go on a phone and never opens at all without a mouse. A disclosure reads
+                 the same on every input, so the expanded cell simply grows its grid row. */ }
+            <ul class="mt-5 grid gap-x-6 gap-y-1 sm:grid-cols-2">
                 <For each={ () => [...ALLOCATIONS] } key={ (slice) => slice.key } let={ slice } index={ index }>
                     <li
-                        class="flex items-center gap-2.5 rounded-lg px-1 py-1 transition-colors"
+                        class="rounded-lg transition-colors"
                         onMouseEnter={ () => active = slice.key }
                         onMouseLeave={ () => active = null }
                     >
-                        <span
-                            class="size-3 shrink-0 rounded-[3px]"
-                            style={ `background: ${ HUES[index % HUES.length] }` }
-                        ></span>
-                        <span class="min-w-0 flex-1 truncate text-sm text-ink">
-                            { () => t().tokenomics.allocations[slice.key] }
-                        </span>
-                        <span class="shrink-0 font-mono text-sm text-muted">{ () => percent(slice.percent) }</span>
+                        <div class="flex items-center gap-2.5 px-1 py-1">
+                            <span
+                                class="size-3 shrink-0 rounded-[3px]"
+                                style={ `background: ${ HUES[index % HUES.length] }` }
+                            ></span>
+                            <span class="min-w-0 flex-1 truncate text-sm text-ink">
+                                { () => t().tokenomics.allocations[slice.key] }
+                            </span>
+                            <span class="shrink-0 font-mono text-sm text-muted">{ () => percent(slice.percent) }</span>
+
+                            <Show when={ () => noteFor(slice.key) !== undefined }>
+                                <button
+                                    type="button"
+                                    class="grid size-6 shrink-0 place-items-center rounded-md text-faint transition-colors hover:bg-elevated hover:text-ink"
+                                    aria-label={ () => `${ t().tokenomics.moreAbout } ${ t().tokenomics.allocations[slice.key] }` }
+                                    aria-expanded={ () => openNote === slice.key ? 'true' : 'false' }
+                                    aria-controls={ `allocation-note-${ slice.key }` }
+                                    onClick={ () => openNote = openNote === slice.key ? null : slice.key }
+                                >
+                                    { icon(Info, 'size-4') }
+                                </button>
+                            </Show>
+                        </div>
+
+                        <Show when={ () => openNote === slice.key }>
+                            <p
+                                id={ `allocation-note-${ slice.key }` }
+                                class="mx-1 mb-1.5 rounded-lg bg-elevated px-3 py-2.5 text-sm leading-relaxed text-muted"
+                            >
+                                { () => noteFor(slice.key) }
+                            </p>
+                        </Show>
                     </li>
                 </For>
             </ul>

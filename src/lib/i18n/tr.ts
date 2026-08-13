@@ -53,8 +53,19 @@ export const tr: Strings =
             community: 'Topluluk',
             publicSale: 'Halka arz',
             treasury: 'Hazine',
-            validators: 'Doğrulayıcılar'
-        }
+            airdrop: 'Airdrop'
+        },
+
+        notes:
+        {
+            locked: 'Toplam arzın kalan %40\'ı bir yıl boyunca kilitli kalacak. Bu sürenin sonunda nasıl kullanılacağına karar verilecek; bu %40 hakkındaki her karar, ağın en az %65\'inin oyuyla onaylanmalı.',
+            liquidity: 'Toplam arzın %25\'i bir yıl boyunca likidite sağlamak ve yönetmek için ayrılacak. Amaç, işlemler için yeterli likidite ve daha istikrarlı bir NURA ekosistemi.',
+            community: 'Toplam arzın %10\'u bir yıl içinde topluluk üyelerine ayrılacak. Bu pay, doğrudan ödeme yapmadan; etkinlik, katılım, geliştirme, tanıtım veya başka etkili yollarla NURA ekosisteminin büyümesine katkı verenler için. Dağıtım, yönetim kurulunun incelemesi ve onayının ardından yapılacak.',
+            treasury: 'Toplam arzın %10\'u NURA hazinesine gidecek. Bir yıl boyunca ve yönetim kurulunun gözetiminde ekosistem geliştirme, altyapı, ürünler, iş birlikleri ve projenin diğer ihtiyaçları için kullanılacak.',
+            airdrop: 'NURA toplam arzının %5\'i bir yıllık süre boyunca airdrop olarak dağıtılacak. Alıcılar seçilmiş kanallar ve topluluklar üzerinden belirlenecek, nihai dağıtım yönetim kurulunun onayıyla yapılacak.'
+        },
+
+        moreAbout: 'Ayrıntılar:'
     },
 
     chain:

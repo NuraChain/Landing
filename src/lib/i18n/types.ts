@@ -71,8 +71,29 @@ export interface Strings
             community: string;
             publicSale: string;
             treasury: string;
-            validators: string;
+            airdrop: string;
         };
+
+        /**
+         * The long-form terms behind each slice, shown in the disclosure the legend's info
+         * button opens. Keyed by a SUBSET of the allocation keys on purpose: a row with no
+         * entry here renders no button at all, so an allocation whose terms are not settled
+         * yet stays silent rather than shipping invented copy. `publicSale` is that case.
+         *
+         * These are paragraphs, not labels - the reason the legend opens a panel instead of
+         * floating a tooltip, which no viewport survives at this length.
+         */
+        notes:
+        {
+            locked: string;
+            liquidity: string;
+            community: string;
+            treasury: string;
+            airdrop: string;
+        };
+
+        /** Accessible name for the per-row info button; the row's own label follows it. */
+        moreAbout: string;
     };
 
     chain:

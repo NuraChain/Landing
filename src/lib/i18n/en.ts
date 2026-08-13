@@ -53,8 +53,19 @@ export const en: Strings =
             community: 'Community',
             publicSale: 'Public sale',
             treasury: 'Treasury',
-            validators: 'Validators'
-        }
+            airdrop: 'Airdrop'
+        },
+
+        notes:
+        {
+            locked: 'The remaining 40% of total supply will be locked for one year. What happens to it will be decided once that period ends, and any decision about this 40% must be approved by a vote of at least 65% of the network.',
+            liquidity: '25% of total supply will be allocated over a one-year period to providing and managing liquidity. The aim is workable liquidity for trading and a steadier NURA ecosystem.',
+            community: '10% of total supply will go to community members over one year. It is meant for people who pay nothing directly and help NURA grow through activity, participation, development, referrals, or other effective contributions. Allocation follows review and approval by the management board.',
+            treasury: '10% of total supply will go to the NURA treasury. Over a one-year period, under the oversight of the management board, it funds ecosystem development, infrastructure, products, partnerships, and other project needs.',
+            airdrop: '5% of total NURA supply will be distributed as an airdrop over a one-year period. Recipients will be identified through selected channels and communities, and the final allocation is confirmed by the management board.'
+        },
+
+        moreAbout: 'More about'
     },
 
     chain:

@@ -86,10 +86,10 @@ export const NETWORK_NAME = 'Nura Mainnet';
 export const CHAIN_ID = 1020;
 export const RPC_URL = 'https://rpc.nurachain.net';
 export const EXPLORER_URL = 'https://explorer.nurachain.net';
-export const NATIVE_TOKEN = 'Nora Coin';
+export const NATIVE_TOKEN = 'Nura Coin';
 
 /** TODO(real-data): ticker, as unconfirmed as the rest. Wallets show it next to balances. */
-export const NATIVE_TOKEN_SYMBOL = 'NORA';
+export const NATIVE_TOKEN_SYMBOL = 'NURA';
 
 export const CHAIN: readonly ChainFact[] =
 [
@@ -123,7 +123,7 @@ export interface Allocation
      * translate at all - unlike the chain facts above, which stay Latin in every locale
      * because they are values someone pastes into a wallet.
      */
-    key: 'locked' | 'liquidity' | 'community' | 'publicSale' | 'treasury' | 'validators';
+    key: 'locked' | 'liquidity' | 'community' | 'publicSale' | 'treasury' | 'airdrop';
     percent: number;
 }
 
@@ -142,7 +142,7 @@ export const ALLOCATIONS: readonly Allocation[] =
     { key: 'community', percent: 10 },
     { key: 'publicSale', percent: 10 },
     { key: 'treasury', percent: 10 },
-    { key: 'validators', percent: 5 }
+    { key: 'airdrop', percent: 5 }
 ];
 
 /**
