@@ -82,15 +82,38 @@ export interface ChainFact
 }
 
 /** TODO(real-data): placeholder values. A wrong chainId or rpcUrl is actively harmful. */
+export const NETWORK_NAME = 'Nura Mainnet';
+export const CHAIN_ID = 22;
+export const RPC_URL = 'https://rpc.nurachain.net';
+export const EXPLORER_URL = 'https://explorer.nurachain.net';
+export const NATIVE_TOKEN = 'Nora Coin';
+
+/** TODO(real-data): ticker, as unconfirmed as the rest. Wallets show it next to balances. */
+export const NATIVE_TOKEN_SYMBOL = 'NORA';
+
 export const CHAIN: readonly ChainFact[] =
 [
-    { key: 'networkName', value: 'Nura Mainnet', copyable: false },
-    { key: 'chainId', value: '1010', copyable: true },
-    { key: 'rpcUrl', value: 'https://rpc.nurachain.net', copyable: true },
-    { key: 'explorerUrl', value: 'https://explorer.nurachain.net', copyable: true, link: true },
-    { key: 'nativeToken', value: 'Nora Coin', copyable: false },
+    { key: 'networkName', value: NETWORK_NAME, copyable: false },
+    { key: 'chainId', value: String(CHAIN_ID), copyable: true },
+    { key: 'rpcUrl', value: RPC_URL, copyable: true },
+    { key: 'explorerUrl', value: EXPLORER_URL, copyable: true, link: true },
+    { key: 'nativeToken', value: NATIVE_TOKEN, copyable: false },
     { key: 'blockTime', value: '3s', copyable: false }
 ];
+
+/**
+ * The EIP-3085 `wallet_addEthereumChain` request, built from the same constants the manual
+ * card renders so the one-click path and the copy-paste path can never disagree. Wallets
+ * insist on the hex form of the id; 18 decimals is the EVM convention.
+ */
+export const ADD_CHAIN_PARAMS =
+{
+    chainId: `0x${ CHAIN_ID.toString(16) }`,
+    chainName: NETWORK_NAME,
+    nativeCurrency: { name: NATIVE_TOKEN, symbol: NATIVE_TOKEN_SYMBOL, decimals: 18 },
+    rpcUrls: [RPC_URL],
+    blockExplorerUrls: [EXPLORER_URL]
+} as const;
 
 export interface Allocation
 {
@@ -151,5 +174,3 @@ export const SOCIALS: readonly Social[] =
     { id: 'x', label: 'X', url: 'https://x.com/nurachainnet' },
     { id: 'discord', label: 'Discord', url: 'https://discord.gg/8BMAXTdXQg' }
 ];
-
-export const EXPLORER_URL = 'https://explorer.nurachain.net';

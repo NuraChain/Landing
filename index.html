@@ -17,7 +17,8 @@
              app would paint the default first and repaint on hydration, and that flash is
              the most visible bug a themed site can ship. The key and the attribute name
              must match `THEME_KEY` and the effect in src/stores/theme.ts. Same reasoning
-             for `dir`: setting it after hydration reflows the whole page in Persian. -->
+             for `dir`: setting it after hydration reflows the whole page in Persian or
+             Arabic. Both lists must match `LOCALES` and `RTL` in src/stores/locale.ts. -->
         <script>
             (function ()
             {
@@ -31,18 +32,30 @@
 
                     document.documentElement.dataset.theme = theme;
 
+                    var locales = ['en', 'fa', 'ar', 'es', 'pt', 'hi', 'zh', 'ru', 'fr', 'tr'];
+                    var rtl = ['fa', 'ar'];
                     var locale = localStorage.getItem('nura.locale');
 
-                    if (locale !== 'en' && locale !== 'fa')
+                    if (locales.indexOf(locale) === -1)
                     {
-                        locale = (navigator.languages || []).some(function (tag)
+                        locale = 'en';
+
+                        var tags = navigator.languages || [];
+
+                        for (var i = 0; i < tags.length; i++)
                         {
-                            return tag.toLowerCase().indexOf('fa') === 0;
-                        }) ? 'fa' : 'en';
+                            var primary = tags[i].toLowerCase().split('-')[0];
+
+                            if (locales.indexOf(primary) !== -1)
+                            {
+                                locale = primary;
+                                break;
+                            }
+                        }
                     }
 
                     document.documentElement.lang = locale;
-                    document.documentElement.dir = locale === 'fa' ? 'rtl' : 'ltr';
+                    document.documentElement.dir = rtl.indexOf(locale) === -1 ? 'ltr' : 'rtl';
                 }
                 catch (error)
                 {

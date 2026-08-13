@@ -1,0 +1,67 @@
+import { createSignal } from 'azerothjs';
+
+import { Check, TriangleAlert, Wallet } from 'lucide';
+
+import { addChainToWallet } from '../lib/wallet';
+
+import { useLocale } from '../stores/locale';
+
+import Button from './button.component.azeroth';
+import type { ButtonSize, ButtonVariant } from './button.component.azeroth';
+import { icon } from './icon';
+
+type Status = 'idle' | 'pending' | 'added' | 'failed';
+
+/**
+ * The one-click version of the chain reference card: asks the injected wallet to add Nura
+ * Chain (EIP-3085) and answers on its own label, the same way CopyField confirms a copy.
+ *
+ * With no wallet extension present - most desktop browsers - it jumps to #chain instead,
+ * because the manual values ARE the fallback and a button that silently does nothing reads
+ * as broken.
+ */
+export default component AddChainButton(props: { size?: ButtonSize; variant?: ButtonVariant })
+{
+    const { t } = useLocale();
+
+    const [status, setStatus] = createSignal<Status>('idle');
+
+    let timer = 0;
+
+    const run = async (): Promise<void> =>
+    {
+        if (status() === 'pending')
+        {
+            return;
+        }
+
+        setStatus('pending');
+
+        const result = await addChainToWallet();
+
+        if (result === 'no-provider')
+        {
+            setStatus('idle');
+            location.hash = '#chain';
+
+            return;
+        }
+
+        setStatus(result);
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => setStatus('idle'), 2600);
+    };
+
+    cleanup { window.clearTimeout(timer); }
+
+    <Button
+        variant={ props.variant ?? 'secondary' }
+        size={ props.size ?? 'md' }
+        onClick={ () => void run() }
+    >
+        { () => icon(status() === 'added' ? Check : status() === 'failed' ? TriangleAlert : Wallet, 'size-[18px]') }
+        { () => status() === 'added' ? t().addChain.done
+            : status() === 'failed' ? t().addChain.failed
+            : t().addChain.cta }
+    </Button>
+}

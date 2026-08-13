@@ -1,21 +1,40 @@
 import { createEffect, createSignal, createStore } from 'azerothjs';
 
+import { ar } from '../lib/i18n/ar';
 import { en } from '../lib/i18n/en';
+import { es } from '../lib/i18n/es';
 import { fa } from '../lib/i18n/fa';
+import { fr } from '../lib/i18n/fr';
+import { hi } from '../lib/i18n/hi';
+import { pt } from '../lib/i18n/pt';
+import { ru } from '../lib/i18n/ru';
+import { tr } from '../lib/i18n/tr';
+import { zh } from '../lib/i18n/zh';
 import type { Strings } from '../lib/i18n/types';
 
-export type Locale = 'en' | 'fa';
+export type Locale = 'en' | 'fa' | 'ar' | 'es' | 'pt' | 'hi' | 'zh' | 'ru' | 'fr' | 'tr';
 
-const TABLE: Record<Locale, Strings> = { en, fa };
-const RTL: ReadonlySet<Locale> = new Set<Locale>(['fa']);
+/**
+ * Also the order the switcher lists them in. Adding a language is one row here, one file
+ * under lib/i18n/, and the same two lists in index.html's pre-paint script - which must
+ * stay in step with these, or the first paint disagrees with the hydrated page.
+ */
+export const LOCALES: readonly Locale[] = ['en', 'fa', 'ar', 'es', 'pt', 'hi', 'zh', 'ru', 'fr', 'tr'];
+
+const TABLE: Record<Locale, Strings> = { en, fa, ar, es, pt, hi, zh, ru, fr, tr };
+const RTL: ReadonlySet<Locale> = new Set<Locale>(['fa', 'ar']);
 const KEY = 'nura.locale';
 
-const isLocale = (value: unknown): value is Locale => value === 'en' || value === 'fa';
+const isLocale = (value: unknown): value is Locale =>
+    typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
+
+/** The switcher's row labels: every language names itself, whichever one is active. */
+export const nativeName = (locale: Locale): string => TABLE[locale].languageName;
 
 /**
  * The visitor's language, remembered across visits and falling back to the browser's own
- * preference. Reading `navigator.languages` rather than a hardcoded default means a
- * Persian speaker lands on Persian without hunting for the switcher.
+ * preference. Walking `navigator.languages` in the browser's order rather than ours means
+ * a visitor lands on THEIR best language, not the first one we happen to support.
  */
 const initial = (): Locale =>
 {
@@ -33,7 +52,17 @@ const initial = (): Locale =>
         // A blocked store costs the remembered choice, never the page.
     }
 
-    return navigator.languages?.some((tag) => tag.toLowerCase().startsWith('fa')) === true ? 'fa' : 'en';
+    for (const tag of navigator.languages ?? [])
+    {
+        const primary = tag.toLowerCase().split('-')[0];
+
+        if (isLocale(primary))
+        {
+            return primary;
+        }
+    }
+
+    return 'en';
 };
 
 export const useLocale = createStore(() =>
@@ -73,7 +102,6 @@ export const useLocale = createStore(() =>
         /** The active string table. Every component reads copy through `t()`. */
         t: (): Strings => TABLE[locale()],
         isRtl: (): boolean => RTL.has(locale()),
-        choose,
-        toggle: (): void => choose(locale() === 'en' ? 'fa' : 'en')
+        choose
     };
 });

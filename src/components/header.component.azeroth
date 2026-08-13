@@ -1,8 +1,8 @@
 import { For, Show } from 'azerothjs';
 
-import { Contrast, Languages, Menu, Moon, Sun, X } from 'lucide';
+import { Check, Contrast, Languages, Menu, Moon, Sun, X } from 'lucide';
 
-import { useLocale } from '../stores/locale';
+import { LOCALES, nativeName, useLocale } from '../stores/locale';
 import { useTheme } from '../stores/theme';
 import type { Theme } from '../stores/theme';
 
@@ -24,11 +24,12 @@ const GLYPH: Record<Theme, typeof Moon> = { dark: Moon, light: Sun, contrast: Co
  */
 export default component Header()
 {
-    const { t, locale, toggle } = useLocale();
+    const { t, locale, choose } = useLocale();
     const { theme, cycle } = useTheme();
 
     state scrolled = false;
     state menuOpen = false;
+    state langOpen = false;
 
     effect
     {
@@ -70,6 +71,40 @@ export default component Header()
         cleanup
         {
             document.body.style.overflow = previous;
+            document.removeEventListener('keydown', onKey);
+        }
+    }
+
+    // The language menu closes on Escape and on any click. The document listener is
+    // registered one tick late so the click that OPENED the menu, still bubbling up to the
+    // document, does not close it in the same breath. Item clicks bubble too, so choosing
+    // a language needs no extra close call - but it gets one anyway (below) for the case
+    // where a future change stops the propagation.
+    effect
+    {
+        if (!langOpen)
+        {
+            return;
+        }
+
+        const close = (): void => { langOpen = false; };
+
+        const onKey = (event: KeyboardEvent): void =>
+        {
+            if (event.key === 'Escape')
+            {
+                close();
+            }
+        };
+
+        const timer = window.setTimeout(() => document.addEventListener('click', close), 0);
+
+        document.addEventListener('keydown', onKey);
+
+        cleanup
+        {
+            window.clearTimeout(timer);
+            document.removeEventListener('click', close);
             document.removeEventListener('keydown', onKey);
         }
     }
@@ -121,15 +156,41 @@ export default component Header()
                 { () => icon(GLYPH[theme()], 'size-[18px]') }
             </button>
 
-            <button
-                type="button"
-                class="flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm text-muted transition-colors hover:bg-elevated hover:text-ink"
-                aria-label={ t().languageName }
-                onClick={ () => toggle() }
-            >
-                { icon(Languages, 'size-[18px]') }
-                <span class="font-medium">{ () => locale() === 'en' ? 'FA' : 'EN' }</span>
-            </button>
+            { /* Ten languages outgrew a toggle. The trigger shows the ACTIVE code, and each
+                 row names its language in itself - a Persian speaker hunting through an
+                 English page should meet "فارسی", not "Persian". `lang` per row keeps
+                 screen readers pronouncing each name in its own language. */ }
+            <div class="relative">
+                <button
+                    type="button"
+                    class="flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm text-muted transition-colors hover:bg-elevated hover:text-ink"
+                    aria-label={ t().languageName }
+                    aria-expanded={ () => langOpen ? 'true' : 'false' }
+                    onClick={ () => langOpen = !langOpen }
+                >
+                    { icon(Languages, 'size-[18px]') }
+                    <span class="font-medium uppercase">{ () => locale() }</span>
+                </button>
+
+                <Show when={ langOpen }>
+                    <div class="absolute end-0 top-full z-[70] mt-2 max-h-[min(24rem,70vh)] w-44 overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-2xl">
+                        <For each={ () => [...LOCALES] } key={ (id) => id } let={ id }>
+                            <button
+                                type="button"
+                                lang={ id }
+                                class={ () => 'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors '
+                                    + (locale() === id ? 'bg-elevated text-ink' : 'text-muted hover:bg-elevated hover:text-ink') }
+                                onClick={ () => { choose(id); langOpen = false; } }
+                            >
+                                <span class="flex-1 text-start">{ nativeName(id) }</span>
+                                <Show when={ () => locale() === id }>
+                                    { icon(Check, 'size-4 shrink-0 text-accent') }
+                                </Show>
+                            </button>
+                        </For>
+                    </div>
+                </Show>
+            </div>
 
             <a
                 href="#wallet"

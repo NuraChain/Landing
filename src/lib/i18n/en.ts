@@ -71,6 +71,13 @@ export const en: Strings =
         provisional: 'Provisional values. Verify against the official announcement before sending funds.'
     },
 
+    addChain:
+    {
+        cta: 'Add Nura Chain to wallet',
+        done: 'Added to your wallet',
+        failed: 'Could not add'
+    },
+
     wallet:
     {
         title: 'Nura Wallet',

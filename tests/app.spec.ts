@@ -5,35 +5,85 @@ import { renderTest, cleanup, fire } from '@azerothjs/testing';
 
 import App from '../src/App.azeroth';
 
-afterEach(cleanup);
+/**
+ * `App` mounts SIBLING roots (the skip link, then the page shell), so it hands back an
+ * array of nodes. `render()` accepts that in the browser, but `renderTest` appends its
+ * component's return value directly - so the array is folded into one wrapper here.
+ */
+const mountApp = (url: string): ReturnType<typeof renderTest> => renderTest((() =>
+{
+    const wrap = document.createElement('div');
+    const nodes = App({ url }) as unknown;
+
+    for (const node of (Array.isArray(nodes) ? nodes : [nodes]) as Node[])
+    {
+        wrap.appendChild(node);
+    }
+
+    return wrap;
+}) as unknown as Parameters<typeof renderTest>[0]);
+
+afterEach(() =>
+{
+    cleanup();
+
+    // A language choice persists to localStorage; a test that switched must not leak its
+    // choice into the next one.
+    localStorage.clear();
+});
 
 describe('App', () =>
 {
-    it('renders the home route and counts fine-grained - only the value text nodes update', () =>
+    it('renders the chain reference card with the real values', () =>
     {
-        const { container } = renderTest(() => App({ url: '/' }));
-        const button = container.querySelector('button.cell');
-        expect(button?.textContent).toContain('count = 0');
-        if (button)
-        {
-            fire(button, 'click');
-        }
-        expect(button?.textContent).toContain('count = 1');
-        expect(container.textContent).toContain('parity = odd');
-        expect(container.textContent).toContain('doubled = 2');
+        const { container } = mountApp('/');
+
+        const values = [...container.querySelectorAll('dl [dir="ltr"]')].map((el) => el.textContent?.trim());
+
+        expect(values).toContain('22');
+        expect(values).toContain('https://rpc.nurachain.net');
     });
 
-    it('the about route renders through the same table', () =>
+    it('offers the one-click add-chain button at the top and the bottom of the page', () =>
     {
-        const { container } = renderTest(() => App({ url: '/about' }));
-        expect(container.querySelector('h1')?.textContent).toBe('About');
-        expect(container.textContent).toContain('src/routes.ts');
+        const { container } = mountApp('/');
+
+        const buttons = [...container.querySelectorAll('button')]
+            .filter((button) => button.textContent?.includes('Add Nura Chain to wallet'));
+
+        expect(buttons).toHaveLength(2);
     });
 
-    it('the nav links both pages', () =>
+    it('switches language from the picker and flips direction for RTL locales', () =>
     {
-        const { container } = renderTest(() => App({ url: '/' }));
-        const links = [...container.querySelectorAll('nav a')].map((a) => a.getAttribute('href'));
-        expect(links).toEqual(['/', '/about']);
+        const { container } = mountApp('/');
+
+        const trigger = [...container.querySelectorAll('button')]
+            .find((button) => button.textContent?.trim() === 'en');
+
+        expect(trigger).toBeDefined();
+        fire(trigger!, 'click');
+
+        const spanish = [...container.querySelectorAll('button')]
+            .find((button) => button.textContent?.includes('Español'));
+
+        expect(spanish).toBeDefined();
+        fire(spanish!, 'click');
+
+        expect(document.documentElement.lang).toBe('es');
+        expect(container.textContent).toContain('Tus llaves');
+
+        const reopened = [...container.querySelectorAll('button')]
+            .find((button) => button.textContent?.trim() === 'es');
+
+        fire(reopened!, 'click');
+
+        const persian = [...container.querySelectorAll('button')]
+            .find((button) => button.textContent?.includes('فارسی'));
+
+        fire(persian!, 'click');
+
+        expect(document.documentElement.lang).toBe('fa');
+        expect(document.documentElement.dir).toBe('rtl');
     });
 });

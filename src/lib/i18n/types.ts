@@ -88,6 +88,18 @@ export interface Strings
         provisional: string;
     };
 
+    /**
+     * The one-click alternative to the manual chain card: a button that asks the visitor's
+     * wallet extension to add Nura Chain (EIP-3085). `done` and `failed` swap in as the
+     * label briefly, so all three must stay short enough to live inside a button.
+     */
+    addChain:
+    {
+        cta: string;
+        done: string;
+        failed: string;
+    };
+
     wallet:
     {
         title: string;

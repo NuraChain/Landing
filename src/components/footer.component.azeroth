@@ -4,6 +4,7 @@ import { EXPLORER_URL, SOCIALS } from '../lib/content/site';
 
 import { useLocale } from '../stores/locale';
 
+import AddChainButton from './add-chain-button.component.azeroth';
 import { brandIcon } from './brand-icon';
 
 export default component Footer()
@@ -21,6 +22,12 @@ export default component Footer()
                         { t().brand }
                     </a>
                     <p class="mt-3 text-sm leading-relaxed text-muted">{ t().footer.tagline }</p>
+
+                    { /* The same one-click control as the hero, for the visitor who read the
+                         whole page first and decided at the bottom. */ }
+                    <div class="mt-5">
+                        <AddChainButton />
+                    </div>
 
                     <div class="mt-5 flex flex-wrap items-center gap-1">
                         <For each={ () => [...SOCIALS] } key={ (social) => social.id } let={ social }>

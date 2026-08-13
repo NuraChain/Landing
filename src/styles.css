@@ -169,9 +169,12 @@
         font-family: var(--font-sans);
     }
 
-    /* Persian needs a face that actually has the glyphs, and a line-height with room for
-       its ascenders. Latin inside a Persian paragraph must not shift the baseline. */
-    :root:lang(fa) body
+    /* Persian and Arabic need a face that actually has the glyphs, and a line-height with
+       room for their ascenders. Latin inside such a paragraph must not shift the baseline.
+       Vazirmatn covers the full Arabic script, so one face serves both locales; the other
+       non-Latin scripts (Devanagari, Han, Cyrillic) read fine from the system stack. */
+    :root:lang(fa) body,
+    :root:lang(ar) body
     {
         font-family: 'Vazirmatn Variable', Vazirmatn, 'Segoe UI', Tahoma, sans-serif;
         line-height: 1.85;

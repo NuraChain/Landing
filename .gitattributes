@@ -1,0 +1,4 @@
+# The lint config enforces LF (`linebreak-style`), so the checkout must produce LF too -
+# without this, a Windows clone with core.autocrlf=true materialises CRLF and every file
+# fails lint before a single line is written.
+* text=auto eol=lf
