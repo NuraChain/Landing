@@ -14,6 +14,7 @@ export const pt: Strings =
         explorer: 'Explorador',
         social: 'Comunidade',
         download: 'Baixar',
+        language: 'Idioma',
         skipToContent: 'Pular para o conteúdo',
         openMenu: 'Abrir menu',
         closeMenu: 'Fechar menu'

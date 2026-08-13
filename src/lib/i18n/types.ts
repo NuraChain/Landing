@@ -26,6 +26,8 @@ export interface Strings
         explorer: string;
         social: string;
         download: string;
+        /** The language picker: the trigger's accessible name and the modal's title. */
+        language: string;
         skipToContent: string;
         openMenu: string;
         closeMenu: string;

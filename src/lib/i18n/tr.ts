@@ -14,6 +14,7 @@ export const tr: Strings =
         explorer: 'Gezgin',
         social: 'Topluluk',
         download: 'İndir',
+        language: 'Dil',
         skipToContent: 'İçeriğe atla',
         openMenu: 'Menüyü aç',
         closeMenu: 'Menüyü kapat'

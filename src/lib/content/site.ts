@@ -83,7 +83,7 @@ export interface ChainFact
 
 /** TODO(real-data): placeholder values. A wrong chainId or rpcUrl is actively harmful. */
 export const NETWORK_NAME = 'Nura Mainnet';
-export const CHAIN_ID = 22;
+export const CHAIN_ID = 1020;
 export const RPC_URL = 'https://rpc.nurachain.net';
 export const EXPLORER_URL = 'https://explorer.nurachain.net';
 export const NATIVE_TOKEN = 'Nora Coin';

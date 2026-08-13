@@ -40,7 +40,7 @@ describe('App', () =>
 
         const values = [...container.querySelectorAll('dl [dir="ltr"]')].map((el) => el.textContent?.trim());
 
-        expect(values).toContain('22');
+        expect(values).toContain('1020');
         expect(values).toContain('https://rpc.nurachain.net');
     });
 
@@ -54,34 +54,38 @@ describe('App', () =>
         expect(buttons).toHaveLength(2);
     });
 
-    it('switches language from the picker and flips direction for RTL locales', () =>
+    it('switches language from the modal picker and flips direction for RTL locales', () =>
     {
         const { container } = mountApp('/');
 
-        const trigger = [...container.querySelectorAll('button')]
-            .find((button) => button.textContent?.trim() === 'en');
+        // The trigger is icon-only, so it is found by its accessible name - which is
+        // itself translated, hence the per-language label below.
+        const openPicker = (triggerLabel: string): void =>
+        {
+            const trigger = container.querySelector(`button[aria-label="${ triggerLabel }"]`);
 
-        expect(trigger).toBeDefined();
-        fire(trigger!, 'click');
+            expect(trigger).not.toBeNull();
+            fire(trigger!, 'click');
+        };
 
-        const spanish = [...container.querySelectorAll('button')]
-            .find((button) => button.textContent?.includes('Español'));
+        // The modal mounts through a Portal onto document.body, outside `container`.
+        const pick = (name: string): void =>
+        {
+            const item = [...document.querySelectorAll('[role="dialog"] button')]
+                .find((button) => button.textContent?.includes(name));
 
-        expect(spanish).toBeDefined();
-        fire(spanish!, 'click');
+            expect(item).toBeDefined();
+            fire(item!, 'click');
+        };
+
+        openPicker('Language');
+        pick('Español');
 
         expect(document.documentElement.lang).toBe('es');
         expect(container.textContent).toContain('Tus llaves');
 
-        const reopened = [...container.querySelectorAll('button')]
-            .find((button) => button.textContent?.trim() === 'es');
-
-        fire(reopened!, 'click');
-
-        const persian = [...container.querySelectorAll('button')]
-            .find((button) => button.textContent?.includes('فارسی'));
-
-        fire(persian!, 'click');
+        openPicker('Idioma');
+        pick('فارسی');
 
         expect(document.documentElement.lang).toBe('fa');
         expect(document.documentElement.dir).toBe('rtl');

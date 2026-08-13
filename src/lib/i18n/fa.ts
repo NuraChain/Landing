@@ -14,6 +14,7 @@ export const fa: Strings =
         explorer: 'کاوشگر',
         social: 'انجمن',
         download: 'دانلود',
+        language: 'زبان',
         skipToContent: 'رفتن به محتوای اصلی',
         openMenu: 'باز کردن منو',
         closeMenu: 'بستن منو'

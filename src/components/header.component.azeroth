@@ -6,6 +6,7 @@ import { LOCALES, nativeName, useLocale } from '../stores/locale';
 import { useTheme } from '../stores/theme';
 import type { Theme } from '../stores/theme';
 
+import { flagSrc } from './flag-icon';
 import { icon } from './icon';
 
 type SectionId = 'wallet' | 'tokenomics' | 'chain' | 'explorer' | 'social';
@@ -75,11 +76,8 @@ export default component Header()
         }
     }
 
-    // The language menu closes on Escape and on any click. The document listener is
-    // registered one tick late so the click that OPENED the menu, still bubbling up to the
-    // document, does not close it in the same breath. Item clicks bubble too, so choosing
-    // a language needs no extra close call - but it gets one anyway (below) for the case
-    // where a future change stops the propagation.
+    // Same contract as the drawer above: Escape closes the language modal and the page
+    // behind it stops scrolling while it is up.
     effect
     {
         if (!langOpen)
@@ -87,24 +85,22 @@ export default component Header()
             return;
         }
 
-        const close = (): void => { langOpen = false; };
-
         const onKey = (event: KeyboardEvent): void =>
         {
             if (event.key === 'Escape')
             {
-                close();
+                langOpen = false;
             }
         };
 
-        const timer = window.setTimeout(() => document.addEventListener('click', close), 0);
+        const previous = document.body.style.overflow;
 
+        document.body.style.overflow = 'hidden';
         document.addEventListener('keydown', onKey);
 
         cleanup
         {
-            window.clearTimeout(timer);
-            document.removeEventListener('click', close);
+            document.body.style.overflow = previous;
             document.removeEventListener('keydown', onKey);
         }
     }
@@ -156,41 +152,16 @@ export default component Header()
                 { () => icon(GLYPH[theme()], 'size-[18px]') }
             </button>
 
-            { /* Ten languages outgrew a toggle. The trigger shows the ACTIVE code, and each
-                 row names its language in itself - a Persian speaker hunting through an
-                 English page should meet "فارسی", not "Persian". `lang` per row keeps
-                 screen readers pronouncing each name in its own language. */ }
-            <div class="relative">
-                <button
-                    type="button"
-                    class="flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm text-muted transition-colors hover:bg-elevated hover:text-ink"
-                    aria-label={ t().languageName }
-                    aria-expanded={ () => langOpen ? 'true' : 'false' }
-                    onClick={ () => langOpen = !langOpen }
-                >
-                    { icon(Languages, 'size-[18px]') }
-                    <span class="font-medium uppercase">{ () => locale() }</span>
-                </button>
-
-                <Show when={ langOpen }>
-                    <div class="absolute end-0 top-full z-[70] mt-2 max-h-[min(24rem,70vh)] w-44 overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-2xl">
-                        <For each={ () => [...LOCALES] } key={ (id) => id } let={ id }>
-                            <button
-                                type="button"
-                                lang={ id }
-                                class={ () => 'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors '
-                                    + (locale() === id ? 'bg-elevated text-ink' : 'text-muted hover:bg-elevated hover:text-ink') }
-                                onClick={ () => { choose(id); langOpen = false; } }
-                            >
-                                <span class="flex-1 text-start">{ nativeName(id) }</span>
-                                <Show when={ () => locale() === id }>
-                                    { icon(Check, 'size-4 shrink-0 text-accent') }
-                                </Show>
-                            </button>
-                        </For>
-                    </div>
-                </Show>
-            </div>
+            <button
+                type="button"
+                class="grid size-9 place-items-center rounded-lg text-muted transition-colors hover:bg-elevated hover:text-ink"
+                aria-label={ t().nav.language }
+                aria-haspopup="dialog"
+                aria-expanded={ () => langOpen ? 'true' : 'false' }
+                onClick={ () => langOpen = true }
+            >
+                { icon(Languages, 'size-[18px]') }
+            </button>
 
             <a
                 href="#wallet"
@@ -259,6 +230,74 @@ export default component Header()
                         { t().nav.download }
                         </a>
                     </nav>
+                </div>
+            </Portal>
+        </Show>
+
+        { /* Ten languages outgrew a toggle, and a modal outgrew a dropdown: a centred
+             dialog holds a two-column grid without fighting the header card for space, and
+             it works identically at every breakpoint. Each row names its language in
+             itself - a Persian speaker hunting through an English page should meet
+             "فارسی", not "Persian" - and `lang` per row keeps screen readers pronouncing
+             each name in its own language. Flags are `alt=""` on purpose: the name sits
+             right beside them, and a flag is a scanning aid, not the information. */ }
+        <Show when={ langOpen }>
+            <Portal>
+                { /* ONE child, same as the drawer: `Portal` appends a single node. */ }
+                <div>
+                    <div
+                        class="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm"
+                        onClick={ () => langOpen = false }
+                    ></div>
+
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={ t().nav.language }
+                        class="fixed left-1/2 top-1/2 z-[81] max-h-[85vh] w-[min(26rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-line bg-surface p-4 shadow-2xl"
+                    >
+                        <div class="mb-3 flex items-center justify-between gap-3">
+                            <h2 class="flex items-center gap-2 font-semibold text-ink">
+                                { icon(Languages, 'size-[18px]') }
+                                { t().nav.language }
+                            </h2>
+
+                            <button
+                                type="button"
+                                class="grid size-9 place-items-center rounded-lg text-muted hover:bg-elevated hover:text-ink"
+                                aria-label={ t().nav.closeMenu }
+                                onClick={ () => langOpen = false }
+                            >
+                                { icon(X, 'size-5') }
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <For each={ () => [...LOCALES] } key={ (id) => id } let={ id }>
+                                <button
+                                    type="button"
+                                    lang={ id }
+                                    class={ () => 'flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition-colors '
+                                        + (locale() === id
+                                            ? 'border-accent/50 bg-accent-soft text-ink'
+                                            : 'border-transparent text-muted hover:bg-elevated hover:text-ink') }
+                                    onClick={ () => { choose(id); langOpen = false; } }
+                                >
+                                    <img
+                                        src={ flagSrc(id) }
+                                        alt=""
+                                        width="24"
+                                        height="18"
+                                        class="h-[18px] w-6 shrink-0 rounded-[4px] object-cover"
+                                    />
+                                    <span class="min-w-0 flex-1 truncate text-start">{ nativeName(id) }</span>
+                                    <Show when={ () => locale() === id }>
+                                        { icon(Check, 'size-4 shrink-0 text-accent') }
+                                    </Show>
+                                </button>
+                            </For>
+                        </div>
+                    </div>
                 </div>
             </Portal>
         </Show>

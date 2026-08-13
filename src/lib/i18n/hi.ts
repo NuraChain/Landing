@@ -14,6 +14,7 @@ export const hi: Strings =
         explorer: 'एक्सप्लोरर',
         social: 'समुदाय',
         download: 'डाउनलोड',
+        language: 'भाषा',
         skipToContent: 'मुख्य सामग्री पर जाएँ',
         openMenu: 'मेनू खोलें',
         closeMenu: 'मेनू बंद करें'

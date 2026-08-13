@@ -14,6 +14,7 @@ export const en: Strings =
         explorer: 'Explorer',
         social: 'Community',
         download: 'Download',
+        language: 'Language',
         skipToContent: 'Skip to content',
         openMenu: 'Open menu',
         closeMenu: 'Close menu'

@@ -14,6 +14,7 @@ export const ar: Strings =
         explorer: 'المستكشف',
         social: 'المجتمع',
         download: 'تنزيل',
+        language: 'اللغة',
         skipToContent: 'الانتقال إلى المحتوى',
         openMenu: 'فتح القائمة',
         closeMenu: 'إغلاق القائمة'

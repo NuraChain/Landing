@@ -14,6 +14,7 @@ export const zh: Strings =
         explorer: '浏览器',
         social: '社区',
         download: '下载',
+        language: '语言',
         skipToContent: '跳到正文',
         openMenu: '打开菜单',
         closeMenu: '关闭菜单'

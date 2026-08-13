@@ -14,6 +14,7 @@ export const ru: Strings =
         explorer: 'Обозреватель',
         social: 'Сообщество',
         download: 'Скачать',
+        language: 'Язык',
         skipToContent: 'Перейти к содержимому',
         openMenu: 'Открыть меню',
         closeMenu: 'Закрыть меню'
