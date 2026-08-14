@@ -206,7 +206,11 @@ export const BRIDGE_HOLDER_BSC_URL = `https://bscscan.com/address/${ BRIDGE_HOLD
  * Raw numbers, never pre-formatted strings, so each locale groups them its own way -
  * Persian renders its own digits and separators off the same value.
  *
- * TODO(real-data): `total` is still unconfirmed.
+ * `total` is confirmed, and load-bearing beyond this file: the public sale note quotes
+ * $0.00024 per NURA, which is $24,000 over the 10% of THIS number. Move it and that price
+ * silently becomes wrong, so move the note with it.
+ *
+ * TODO(real-data): `circulating` has never been confirmed.
  */
 export const SUPPLY =
 {
