@@ -76,6 +76,8 @@ export const zh: Strings =
         blockHeight: '区块高度',
         transactions: '交易总数',
         tvl: '总锁仓价值',
+        holder: '持有地址',
+        breakdown: '该数字的构成',
         unavailable: '有数据未能加载。数据源恢复响应后会立即显示。'
     },
 

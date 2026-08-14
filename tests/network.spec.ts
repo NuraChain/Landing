@@ -213,6 +213,35 @@ describe('bridgeTvl', () =>
         await expect(bridgeTvl()).resolves.toMatchObject({ usd: 1700 });
     });
 
+    it('returns the per-token split the hover breakdown renders', async () =>
+    {
+        const fetchMock = vi.fn().mockImplementation((url: string) =>
+            Promise.resolve(String(url).includes('coingecko')
+                ? prices({ binancecoin: { usd: 600 }, tether: { usd: 1 } })
+                : batch(supplies(2n * 10n ** 18n, 500n * 10n ** 18n))));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        const { parts } = await bridgeTvl();
+
+        expect(parts).toEqual([
+            { symbol: 'BNB', units: 2, usd: 1200 },
+            { symbol: 'USDT', units: 500, usd: 500 }
+        ]);
+    });
+
+    it('still names both tokens when nothing is bridged', async () =>
+    {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(batch(supplies(0n, 0n))));
+
+        const { parts } = await bridgeTvl();
+
+        // The breakdown must say which assets are empty, not fall silent - "$0.00" with no
+        // rows would leave a reader unable to tell zero from unsupported.
+        expect(parts.map((part) => part.symbol)).toEqual(['BNB', 'USDT']);
+        expect(parts.every((part) => part.units === 0)).toBe(true);
+    });
+
     it('skips the price call entirely when every supply is zero', async () =>
     {
         const fetchMock = vi.fn().mockResolvedValue(batch(supplies(0n, 0n)));

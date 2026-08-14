@@ -76,6 +76,8 @@ export const tr: Strings =
         blockHeight: 'Blok yüksekliği',
         transactions: 'Toplam işlem',
         tvl: 'Kilitli toplam değer',
+        holder: 'Tutan adres',
+        breakdown: 'Bu rakamı ne oluşturuyor',
         unavailable: 'Bir veri yüklenemedi. Kaynağı yanıt verir vermez geri gelir.'
     },
 

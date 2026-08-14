@@ -76,6 +76,8 @@ export const en: Strings =
         blockHeight: 'Block height',
         transactions: 'Total transactions',
         tvl: 'Total value locked',
+        holder: 'Held by',
+        breakdown: 'What makes up this figure',
         unavailable: 'A figure could not be loaded. It returns as soon as its source answers.'
     },
 

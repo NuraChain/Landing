@@ -76,6 +76,8 @@ export const fr: Strings =
         blockHeight: 'Hauteur de bloc',
         transactions: 'Transactions totales',
         tvl: 'Valeur totale verrouillée',
+        holder: 'Détenu par',
+        breakdown: 'Ce qui compose ce chiffre',
         unavailable: 'Un chiffre n\'a pas pu être chargé. Il revient dès que sa source répond.'
     },
 

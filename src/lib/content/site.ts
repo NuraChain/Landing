@@ -178,6 +178,31 @@ export const BRIDGE_TOKENS: readonly BridgeToken[] =
 ];
 
 /**
+ * The account holding every bridged token counted in TVL, linked from the breakdown so the
+ * figure is checkable rather than asserted.
+ *
+ * It is a NURA address, and the link points at the Nura explorer. Checked on 2026-08-14,
+ * the same address on BNB Chain and on Ethereum has a zero balance, a zero nonce and no
+ * code - it has never been used on either - so a BscScan link would send a visitor to an
+ * empty page and read as an unbacked bridge. The custodian holding the origin-side
+ * collateral is a different address, and this file does not know it yet.
+ *
+ * TODO(real-data): add the BNB Chain custodian once known; the origin side is what proves
+ * the minted claim is backed, and only that address can show it.
+ */
+export const BRIDGE_HOLDER = '0x4ac0d9300422b408bA2AbF47995C87cF32763712';
+
+/**
+ * The same address on BNB Chain, for the BNB side of the bridge.
+ *
+ * Checked twice, 2026-08-14 and 2026-08-15: zero native balance, zero BEP-20 USDT, zero
+ * nonce and no code, so as of writing this link opens an account BNB Chain has never seen
+ * used. It ships because it was asked for; if the origin-side custodian turns out to be a
+ * different address, this is the one line to change and the breakdown picks it up.
+ */
+export const BRIDGE_HOLDER_BSC_URL = `https://bscscan.com/address/${ BRIDGE_HOLDER }`;
+
+/**
  * Raw numbers, never pre-formatted strings, so each locale groups them its own way -
  * Persian renders its own digits and separators off the same value.
  *

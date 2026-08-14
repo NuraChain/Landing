@@ -76,6 +76,8 @@ export const ar: Strings =
         blockHeight: 'ارتفاع الكتلة',
         transactions: 'إجمالي المعاملات',
         tvl: 'إجمالي القيمة المقفلة',
+        holder: 'المحتفِظ بها',
+        breakdown: 'مِمّ يتكوّن هذا الرقم',
         unavailable: 'تعذّر تحميل أحد الأرقام. سيظهر فور استجابة مصدره.'
     },
 

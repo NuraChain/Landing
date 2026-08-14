@@ -76,6 +76,8 @@ export const fa: Strings =
         blockHeight: 'ارتفاع بلاک',
         transactions: 'کل تراکنش‌ها',
         tvl: 'ارزش کل قفل‌شده',
+        holder: 'نگهدارنده',
+        breakdown: 'این عدد از چه تشکیل شده',
         unavailable: 'یکی از اعداد بارگیری نشد. به‌محض پاسخ‌دادن منبع، نمایش داده می‌شود.'
     },
 

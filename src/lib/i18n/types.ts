@@ -111,6 +111,10 @@ export interface Strings
         transactions: string;
         /** Value bridged onto Nura, in USD. Bridged assets - never the coin's own price. */
         tvl: string;
+        /** Labels the explorer link in the TVL breakdown: whose balance these amounts are. */
+        holder: string;
+        /** Accessible name for the button that opens the TVL breakdown. */
+        breakdown: string;
         /** Shown only when nothing has loaded at all, never over stale-but-real figures. */
         unavailable: string;
     };

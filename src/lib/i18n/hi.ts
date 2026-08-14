@@ -76,6 +76,8 @@ export const hi: Strings =
         blockHeight: 'ब्लॉक ऊँचाई',
         transactions: 'कुल ट्रांज़ैक्शन',
         tvl: 'कुल लॉक्ड वैल्यू',
+        holder: 'होल्डर',
+        breakdown: 'यह आंकड़ा किससे बना है',
         unavailable: 'एक आंकड़ा लोड नहीं हो सका। स्रोत के जवाब देते ही वह दिख जाएगा।'
     },
 
