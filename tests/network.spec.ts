@@ -3,7 +3,7 @@
 // would assert whatever the chain happened to be doing that second.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { blockHeight, totalTransactions, resetNetworkStats } from '../src/lib/network';
+import { blockHeight, bridgeTvl, totalTransactions, resetNetworkStats } from '../src/lib/network';
 
 const json = (body: unknown): Response => ({
     ok: true,
@@ -165,5 +165,115 @@ describe('totalTransactions', () =>
 
         await expect(totalTransactions()).rejects.toThrow();
         await expect(blockHeight()).resolves.toBe(4424);
+    });
+});
+
+/** A uint256 word, the shape `eth_call` returns for both totalSupply and decimals. */
+const word = (value: bigint): string => `0x${ value.toString(16).padStart(64, '0') }`;
+
+/**
+ * Batch replies in the order the ids were sent. Order is deliberately REVERSED in one test
+ * below, because a JSON-RPC server is free to answer a batch in any order.
+ */
+const batch = (entries: { id: number; value: bigint }[]): Response =>
+    ({ ok: true, json: async () => entries.map(({ id, value }) => ({ jsonrpc: '2.0', id, result: word(value) })) }) as unknown as Response;
+
+const prices = (body: Record<string, { usd: number }>): Response =>
+    ({ ok: true, json: async () => body }) as unknown as Response;
+
+describe('bridgeTvl', () =>
+{
+    beforeEach(() =>
+    {
+        resetNetworkStats();
+        vi.useFakeTimers();
+    });
+
+    afterEach(() =>
+    {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+    });
+
+    const supplies = (bnb: bigint, usdt: bigint) => [
+        { id: 0, value: bnb }, { id: 1, value: 18n },
+        { id: 2, value: usdt }, { id: 3, value: 18n }
+    ];
+
+    it('prices each bridged supply and sums them', async () =>
+    {
+        const fetchMock = vi.fn().mockImplementation((url: string) =>
+            Promise.resolve(String(url).includes('coingecko')
+                ? prices({ binancecoin: { usd: 600 }, tether: { usd: 1 } })
+                : batch(supplies(2n * 10n ** 18n, 500n * 10n ** 18n))));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        // 2 BNB at $600 plus 500 USDT at $1.
+        await expect(bridgeTvl()).resolves.toMatchObject({ usd: 1700 });
+    });
+
+    it('skips the price call entirely when every supply is zero', async () =>
+    {
+        const fetchMock = vi.fn().mockResolvedValue(batch(supplies(0n, 0n)));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        await expect(bridgeTvl()).resolves.toMatchObject({ usd: 0 });
+
+        // One RPC call and no price feed: zero times any price is zero, so a dead feed
+        // must not blank a figure that is known exactly.
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(String(fetchMock.mock.calls[0][0])).not.toContain('coingecko');
+    });
+
+    it('matches batch replies by id, not by arrival order', async () =>
+    {
+        const fetchMock = vi.fn().mockImplementation((url: string) =>
+            Promise.resolve(String(url).includes('coingecko')
+                ? prices({ binancecoin: { usd: 600 }, tether: { usd: 1 } })
+                : batch([...supplies(1n * 10n ** 18n, 7n * 10n ** 18n)].reverse())));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        await expect(bridgeTvl()).resolves.toMatchObject({ usd: 607 });
+    });
+
+    it('honours a token that does not use 18 decimals', async () =>
+    {
+        const fetchMock = vi.fn().mockImplementation((url: string) =>
+            Promise.resolve(String(url).includes('coingecko')
+                ? prices({ binancecoin: { usd: 600 }, tether: { usd: 1 } })
+                : batch([
+                    { id: 0, value: 0n }, { id: 1, value: 18n },
+                    { id: 2, value: 1_000_000n }, { id: 3, value: 6n }
+                ])));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        // 1,000,000 base units at 6 decimals is 1 USDT, not 1,000,000 of them.
+        await expect(bridgeTvl()).resolves.toMatchObject({ usd: 1 });
+    });
+
+    it('rejects rather than guessing when the price feed omits an asset', async () =>
+    {
+        const fetchMock = vi.fn().mockImplementation((url: string) =>
+            Promise.resolve(String(url).includes('coingecko')
+                ? prices({ binancecoin: { usd: 600 } })
+                : batch(supplies(1n * 10n ** 18n, 0n))));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        await expect(bridgeTvl()).rejects.toThrow('tether');
+    });
+
+    it('surfaces a reverting eth_call as a failure', async () =>
+    {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => [{ jsonrpc: '2.0', id: 0, error: { message: 'execution reverted' } }]
+        } as unknown as Response));
+
+        await expect(bridgeTvl()).rejects.toThrow('execution reverted');
     });
 });

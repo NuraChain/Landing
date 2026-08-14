@@ -74,6 +74,7 @@ export const fr: Strings =
         subtitle: 'Lu en direct depuis le RPC et l\'explorateur Nura, avec une minute de cache.',
         blockHeight: 'Hauteur de bloc',
         transactions: 'Transactions totales',
+        tvl: 'Valeur totale verrouillée',
         unavailable: 'Un chiffre n\'a pas pu être chargé. Il revient dès que sa source répond.'
     },
 

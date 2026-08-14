@@ -38,12 +38,32 @@ beforeEach(() =>
     // slow, flaky, and still in flight when happy-dom tears the window down at the end of
     // the run. Answers are routed by URL so each source gets a shape it can actually parse.
     resetNetworkStats();
-    vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string) => Promise.resolve({
-        ok: true,
-        json: async () => String(url).includes('explorer')
-            ? { indexed: { transactions: 1 } }
-            : { jsonrpc: '2.0', id: 1, result: '0x1148' }
-    } as unknown as Response)));
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string, init?: { body?: string }) =>
+    {
+        // The TVL reader sends a BATCH (a JSON array) to the same RPC url the height reader
+        // uses, so the two are told apart by request body rather than by url.
+        const batched = (init?.body ?? '').trimStart().startsWith('[');
+
+        return Promise.resolve({
+            ok: true,
+            json: async () =>
+            {
+                if (String(url).includes('coingecko'))
+                {
+                    return { binancecoin: { usd: 600 }, tether: { usd: 1 } };
+                }
+
+                if (String(url).includes('explorer'))
+                {
+                    return { indexed: { transactions: 1 } };
+                }
+
+                return batched
+                    ? [0, 1, 2, 3].map((id) => ({ jsonrpc: '2.0', id, result: `0x${ (id % 2 === 0 ? 0 : 18).toString(16).padStart(64, '0') }` }))
+                    : { jsonrpc: '2.0', id: 1, result: '0x1148' };
+            }
+        } as unknown as Response);
+    }));
 });
 
 afterEach(() =>

@@ -74,6 +74,7 @@ export const tr: Strings =
         subtitle: 'Nura RPC\'si ve gezgininden canlı okunur, bir dakika önbelleklenir.',
         blockHeight: 'Blok yüksekliği',
         transactions: 'Toplam işlem',
+        tvl: 'Kilitli toplam değer',
         unavailable: 'Bir veri yüklenemedi. Kaynağı yanıt verir vermez geri gelir.'
     },
 

@@ -74,6 +74,7 @@ export const es: Strings =
         subtitle: 'Leído en directo del RPC y el explorador de Nura, con un minuto de caché.',
         blockHeight: 'Altura de bloque',
         transactions: 'Transacciones totales',
+        tvl: 'Valor total bloqueado',
         unavailable: 'No se pudo cargar una de las cifras. Vuelve en cuanto responda su fuente.'
     },
 

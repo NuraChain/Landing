@@ -1,8 +1,8 @@
 import { Show } from 'azerothjs';
 
-import { ArrowLeftRight, Blocks } from 'lucide';
+import { ArrowLeftRight, Blocks, Lock } from 'lucide';
 
-import { blockHeight, totalTransactions } from '../lib/network';
+import { blockHeight, bridgeTvl, totalTransactions } from '../lib/network';
 
 import Card from '../components/card.component.azeroth';
 import SectionHeading from '../components/section-heading.component.azeroth';
@@ -19,10 +19,14 @@ import { useLocale } from '../stores/locale';
  * unrelated project called Nura Labs. A tile showing THAT number would be worse than no
  * tile - somebody reads a price off a project's own site and believes it.
  *
- * Each tile tracks its own source, because the two fail apart: the height comes from the
- * RPC and resolves today, while the total comes from the explorer and cannot resolve in any
- * browser until it sends CORS headers. Sharing one loading flag would let the blocked tile
- * hide the working one.
+ * Each tile tracks its own source, because they fail apart: height and TVL come from the
+ * RPC and resolve today, while the transaction total comes from the explorer and cannot
+ * resolve in any browser until it sends CORS headers. Sharing one loading flag would let
+ * the blocked tile hide the working ones.
+ *
+ * Price is still absent as a tile of its own, and deliberately: TVL prices BRIDGED assets,
+ * whose markets exist. The coin itself trades nowhere, so a NURA price would have to be
+ * invented.
  */
 export default component NetworkSection()
 {
@@ -34,15 +38,31 @@ export default component NetworkSection()
     state total = null as number | null;
     state totalFailed = false;
 
+    state tvl = null as number | null;
+    state tvlFailed = false;
+
     const number = (value: number): string => new Intl.NumberFormat(locale()).format(value);
+
+    /**
+     * Cents below a thousand dollars, none above it. A TVL of $4,182,905.31 does not need
+     * its cents, but $0 and $12.40 read as broken without them.
+     */
+    const money = (value: number): string => new Intl.NumberFormat(locale(), {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: value >= 1000 ? 0 : 2
+    }).format(value);
 
     /**
      * An em-dash once a read has failed, an ellipsis while the first one is still out. The
      * two read differently on purpose: "we asked and got nothing" is not "we have not asked
      * yet", and a reader watching a stuck ellipsis deserves to learn which it is.
      */
-    const figure = (value: number | null, failed: boolean): string =>
-        value === null ? (failed ? '—' : '…') : number(value);
+    const figure = (
+        value: number | null,
+        failed: boolean,
+        format: (value: number) => string = number
+    ): string => value === null ? (failed ? '—' : '…') : format(value);
 
     // Once on mount, then once a minute. The minute here and the minute in the cache are
     // the same minute by design: a tick landing inside the window is served from memory, so
@@ -88,6 +108,23 @@ export default component NetworkSection()
                         totalFailed = true;
                     }
                 });
+
+            bridgeTvl()
+                .then((value) =>
+                {
+                    if (live)
+                    {
+                        tvl = value.usd;
+                        tvlFailed = false;
+                    }
+                })
+                .catch(() =>
+                {
+                    if (live)
+                    {
+                        tvlFailed = true;
+                    }
+                });
         };
 
         load();
@@ -105,7 +142,7 @@ export default component NetworkSection()
         <div class="mx-auto max-w-4xl">
             <SectionHeading title={ t().network.title } subtitle={ t().network.subtitle } />
 
-            <div class="mt-8 grid gap-3 sm:grid-cols-2">
+            <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <Card>
                     <p class="flex items-center gap-2 text-sm text-muted">
                         { icon(Blocks, 'size-4 shrink-0') }
@@ -125,11 +162,23 @@ export default component NetworkSection()
                         { () => figure(total, totalFailed) }
                     </p>
                 </Card>
+
+                <Card>
+                    <p class="flex items-center gap-2 text-sm text-muted">
+                        { icon(Lock, 'size-4 shrink-0') }
+                        { t().network.tvl }
+                    </p>
+                    <p class="mt-1 font-mono text-2xl font-semibold text-ink sm:text-3xl">
+                        { () => figure(tvl, tvlFailed, money) }
+                    </p>
+                </Card>
             </div>
 
             { /* Only for a tile that has never loaded. A failed REFRESH stays silent,
                  because the figure on screen is still the one this section promised. */ }
-            <Show when={ () => (heightFailed && height === null) || (totalFailed && total === null) }>
+            <Show when={ () => (heightFailed && height === null)
+                || (totalFailed && total === null)
+                || (tvlFailed && tvl === null) }>
                 <p class="mt-3 text-sm text-faint">{ t().network.unavailable }</p>
             </Show>
         </div>

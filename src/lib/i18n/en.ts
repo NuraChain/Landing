@@ -74,6 +74,7 @@ export const en: Strings =
         subtitle: 'Read live from the Nura RPC and explorer, cached for one minute.',
         blockHeight: 'Block height',
         transactions: 'Total transactions',
+        tvl: 'Total value locked',
         unavailable: 'A figure could not be loaded. It returns as soon as its source answers.'
     },
 

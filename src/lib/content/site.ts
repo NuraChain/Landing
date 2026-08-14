@@ -145,6 +145,38 @@ export const ALLOCATIONS: readonly Allocation[] =
     { key: 'airdrop', percent: 5 }
 ];
 
+export interface BridgeToken
+{
+    /** The on-chain symbol. A ticker, not translated copy. */
+    symbol: string;
+    /** The ERC-20 on Nura that represents the bridged asset. */
+    address: string;
+    /** CoinGecko id, used to price a unit of it in USD. */
+    priceId: string;
+}
+
+/**
+ * The bridged assets whose value makes up TVL.
+ *
+ * Both are mint-and-burn ERC-20s on Nura, NOT vaults - they carry no `getBalance`, and
+ * their own token balances are zero. So the figure that means "value bridged in" is
+ * `totalSupply()`: a unit exists here only because a unit was locked on the origin chain,
+ * which is the same way bridged TVL is counted elsewhere. `balanceOf(token)` would instead
+ * count assets mistakenly sent to the contract itself, which is not TVL by any reading.
+ *
+ * The caveat that survives that reasoning: this measures the CLAIM minted on Nura, which
+ * equals the collateral only while the bridge is solvent and 1:1. The custodian balance on
+ * BNB Chain and Ethereum is the authoritative side, and this page cannot see it.
+ *
+ * Decimals are read on-chain rather than listed here, so a redeploy cannot silently move
+ * the decimal point on a dollar figure.
+ */
+export const BRIDGE_TOKENS: readonly BridgeToken[] =
+[
+    { symbol: 'BNB', address: '0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc', priceId: 'binancecoin' },
+    { symbol: 'USDT', address: '0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC', priceId: 'tether' }
+];
+
 /**
  * Raw numbers, never pre-formatted strings, so each locale groups them its own way -
  * Persian renders its own digits and separators off the same value.

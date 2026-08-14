@@ -107,6 +107,8 @@ export interface Strings
         subtitle: string;
         blockHeight: string;
         transactions: string;
+        /** Value bridged onto Nura, in USD. Bridged assets - never the coin's own price. */
+        tvl: string;
         /** Shown only when nothing has loaded at all, never over stale-but-real figures. */
         unavailable: string;
     };
