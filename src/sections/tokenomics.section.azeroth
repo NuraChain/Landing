@@ -40,9 +40,11 @@ export default component TokenomicsSection()
         new Intl.NumberFormat(locale(), { style: 'percent', maximumFractionDigits: 1 }).format(value / 100);
 
     /**
-     * `notes` is keyed by a SUBSET of the allocation keys, so this returns undefined for a
-     * row whose terms are not settled - `publicSale` today - and that row renders no button
-     * at all. The cast is the honest way to index a deliberately partial record.
+     * `notes` is a separate table from `allocations`, so this returns undefined for any row
+     * whose terms are not settled and that row renders no button at all. Every allocation
+     * has a note today, but the lookup stays partial on purpose - it is what let the public
+     * sale ship silent until its price was fixed, rather than carrying invented terms. The
+     * cast is the honest way to index a deliberately partial record.
      */
     const noteFor = (key: string): string | undefined =>
         (t().tokenomics.notes as Record<string, string | undefined>)[key];

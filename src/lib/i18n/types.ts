@@ -76,9 +76,10 @@ export interface Strings
 
         /**
          * The long-form terms behind each slice, shown in the disclosure the legend's info
-         * button opens. Keyed by a SUBSET of the allocation keys on purpose: a row with no
-         * entry here renders no button at all, so an allocation whose terms are not settled
-         * yet stays silent rather than shipping invented copy. `publicSale` is that case.
+         * button opens. Every allocation now has one, but this stays a SEPARATE interface
+         * from `allocations` rather than being merged into it: a row with no entry here
+         * renders no button at all, which is what let `publicSale` ship silent while its
+         * terms were unsettled instead of carrying invented copy.
          *
          * These are paragraphs, not labels - the reason the legend opens a panel instead of
          * floating a tooltip, which no viewport survives at this length.
@@ -88,6 +89,7 @@ export interface Strings
             locked: string;
             liquidity: string;
             community: string;
+            publicSale: string;
             treasury: string;
             airdrop: string;
         };

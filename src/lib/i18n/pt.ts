@@ -61,6 +61,7 @@ export const pt: Strings =
             locked: 'Os 40% restantes do fornecimento total ficarão bloqueados por um ano. Ao fim desse período decide-se como serão usados, e qualquer decisão sobre esses 40% precisa da aprovação de pelo menos 65% da rede em votação.',
             liquidity: '25% do fornecimento total serão destinados ao longo de um ano ao provimento e à gestão de liquidez. O objetivo é liquidez suficiente para negociação e um ecossistema NURA mais estável.',
             community: '10% do fornecimento total irão para membros da comunidade ao longo de um ano. Destina-se a quem, sem pagar nada diretamente, ajuda o NURA a crescer por meio de atividade, participação, desenvolvimento, divulgação ou outras contribuições efetivas. A alocação ocorre após análise e aprovação do conselho de gestão.',
+            publicSale: '10% do fornecimento total é oferecido em venda pública por 24.000 USD no total. Essa parcela contém 100.000.000 de tokens, o que dá 0,00024 USD por NURA.',
             treasury: '10% do fornecimento total irão para a tesouraria do NURA. Ao longo de um ano, sob supervisão do conselho de gestão, financiarão o desenvolvimento do ecossistema, a infraestrutura, os produtos, as parcerias e outras necessidades do projeto.',
             airdrop: '5% do fornecimento total de NURA serão distribuídos como airdrop ao longo de um ano. Os contemplados serão identificados por canais e comunidades selecionados, e a alocação final é confirmada pelo conselho de gestão.'
         },

@@ -184,13 +184,26 @@ describe('App', () =>
         expect(container.textContent).not.toContain('locked for one year');
     });
 
-    it('offers no note button for an allocation whose terms are unsettled', () =>
+    it('offers a note button on every allocation now that all six have terms', () =>
     {
         const { container } = mountApp('/');
 
-        // `publicSale` has no `notes` entry, so it must render the row without the button
-        // rather than an empty panel.
-        expect(container.querySelector('#tokenomics button[aria-label="More about Public sale"]')).toBeNull();
-        expect(container.querySelectorAll('#tokenomics ul button')).toHaveLength(5);
+        expect(container.querySelectorAll('#tokenomics ul button')).toHaveLength(6);
+        expect(container.querySelector('#tokenomics button[aria-label="More about Public sale"]')).not.toBeNull();
+    });
+
+    it('states the public sale price and the unit price it implies', () =>
+    {
+        const { container } = mountApp('/');
+
+        const trigger = container.querySelector<HTMLElement>('#tokenomics button[aria-label="More about Public sale"]');
+
+        fire(trigger!, 'click');
+
+        // Both numbers matter and one is derived from the other, so both are pinned: a
+        // change to supply or raise that silently desyncs them is a change somebody prices
+        // a purchase off.
+        expect(container.textContent).toContain('$24,000');
+        expect(container.textContent).toContain('$0.00024');
     });
 });

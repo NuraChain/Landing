@@ -61,6 +61,7 @@ export const fr: Strings =
             locked: 'Les 40% restants de l\'offre totale seront verrouillés pendant un an. À la fin de cette période, leur usage sera décidé, et toute décision portant sur ces 40% devra être approuvée par au moins 65% du réseau.',
             liquidity: '25% de l\'offre totale seront consacrés sur un an à l\'apport et à la gestion de la liquidité. L\'objectif : une liquidité suffisante pour les échanges et un écosystème NURA plus stable.',
             community: '10% de l\'offre totale iront aux membres de la communauté sur un an. Cette part revient à celles et ceux qui, sans rien payer directement, font grandir NURA par leur activité, leur participation, le développement, la recommandation ou tout autre apport utile. L\'attribution intervient après examen et approbation du conseil de gestion.',
+            publicSale: '10% de l\'offre totale est proposée en vente publique pour 24 000 USD au total. Cette part compte 100 000 000 de jetons, soit 0,00024 USD par NURA.',
             treasury: '10% de l\'offre totale iront à la trésorerie NURA. Sur un an et sous la supervision du conseil de gestion, cette part finance le développement de l\'écosystème, l\'infrastructure, les produits, les partenariats et les autres besoins du projet.',
             airdrop: '5% de l\'offre totale de NURA seront distribués en airdrop sur un an. Les bénéficiaires seront identifiés via des canaux et des communautés sélectionnés, et l\'attribution finale est confirmée par le conseil de gestion.'
         },
