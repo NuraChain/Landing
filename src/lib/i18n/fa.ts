@@ -68,6 +68,15 @@ export const fa: Strings =
         moreAbout: 'درباره'
     },
 
+    network:
+    {
+        title: 'فعالیت شبکه',
+        subtitle: 'به‌صورت زنده از RPC و کاوشگر نورا خوانده می‌شود و یک دقیقه کش می‌ماند.',
+        blockHeight: 'ارتفاع بلاک',
+        transactions: 'کل تراکنش‌ها',
+        unavailable: 'یکی از اعداد بارگیری نشد. به‌محض پاسخ‌دادن منبع، نمایش داده می‌شود.'
+    },
+
     chain:
     {
         title: 'اطلاعات شبکه',

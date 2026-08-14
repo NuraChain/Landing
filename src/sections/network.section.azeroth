@@ -1,0 +1,137 @@
+import { Show } from 'azerothjs';
+
+import { ArrowLeftRight, Blocks } from 'lucide';
+
+import { blockHeight, totalTransactions } from '../lib/network';
+
+import Card from '../components/card.component.azeroth';
+import SectionHeading from '../components/section-heading.component.azeroth';
+import { icon } from '../components/icon';
+
+import { useLocale } from '../stores/locale';
+
+/**
+ * What the chain is doing right now, as opposed to what it is configured to be (the chain
+ * card below) or what it promises (tokenomics above).
+ *
+ * Only two figures, because only two are real. Price and TVL have no source: no exchange
+ * lists the coin and DefiLlama tracks no Nura chain, and the one "NURA" on CoinGecko is an
+ * unrelated project called Nura Labs. A tile showing THAT number would be worse than no
+ * tile - somebody reads a price off a project's own site and believes it.
+ *
+ * Each tile tracks its own source, because the two fail apart: the height comes from the
+ * RPC and resolves today, while the total comes from the explorer and cannot resolve in any
+ * browser until it sends CORS headers. Sharing one loading flag would let the blocked tile
+ * hide the working one.
+ */
+export default component NetworkSection()
+{
+    const { locale, t } = useLocale();
+
+    state height = null as number | null;
+    state heightFailed = false;
+
+    state total = null as number | null;
+    state totalFailed = false;
+
+    const number = (value: number): string => new Intl.NumberFormat(locale()).format(value);
+
+    /**
+     * An em-dash once a read has failed, an ellipsis while the first one is still out. The
+     * two read differently on purpose: "we asked and got nothing" is not "we have not asked
+     * yet", and a reader watching a stuck ellipsis deserves to learn which it is.
+     */
+    const figure = (value: number | null, failed: boolean): string =>
+        value === null ? (failed ? '—' : '…') : number(value);
+
+    // Once on mount, then once a minute. The minute here and the minute in the cache are
+    // the same minute by design: a tick landing inside the window is served from memory, so
+    // several readers on one page still cost one request per source per minute.
+    effect
+    {
+        let live = true;
+
+        const load = (): void =>
+        {
+            blockHeight()
+                .then((value) =>
+                {
+                    if (live)
+                    {
+                        height = value;
+                        heightFailed = false;
+                    }
+                })
+                .catch(() =>
+                {
+                    // A later failure keeps the last good figure on screen rather than
+                    // blanking it: a minute-old height beats an em-dash.
+                    if (live)
+                    {
+                        heightFailed = true;
+                    }
+                });
+
+            totalTransactions()
+                .then((value) =>
+                {
+                    if (live)
+                    {
+                        total = value;
+                        totalFailed = false;
+                    }
+                })
+                .catch(() =>
+                {
+                    if (live)
+                    {
+                        totalFailed = true;
+                    }
+                });
+        };
+
+        load();
+
+        const timer = window.setInterval(load, 60_000);
+
+        cleanup
+        {
+            live = false;
+            window.clearInterval(timer);
+        }
+    }
+
+    <section id="network" class="border-t border-line px-5 py-16 sm:py-20">
+        <div class="mx-auto max-w-4xl">
+            <SectionHeading title={ t().network.title } subtitle={ t().network.subtitle } />
+
+            <div class="mt-8 grid gap-3 sm:grid-cols-2">
+                <Card>
+                    <p class="flex items-center gap-2 text-sm text-muted">
+                        { icon(Blocks, 'size-4 shrink-0') }
+                        { t().network.blockHeight }
+                    </p>
+                    <p class="mt-1 font-mono text-2xl font-semibold text-ink sm:text-3xl">
+                        { () => figure(height, heightFailed) }
+                    </p>
+                </Card>
+
+                <Card>
+                    <p class="flex items-center gap-2 text-sm text-muted">
+                        { icon(ArrowLeftRight, 'size-4 shrink-0') }
+                        { t().network.transactions }
+                    </p>
+                    <p class="mt-1 font-mono text-2xl font-semibold text-ink sm:text-3xl">
+                        { () => figure(total, totalFailed) }
+                    </p>
+                </Card>
+            </div>
+
+            { /* Only for a tile that has never loaded. A failed REFRESH stays silent,
+                 because the figure on screen is still the one this section promised. */ }
+            <Show when={ () => (heightFailed && height === null) || (totalFailed && total === null) }>
+                <p class="mt-3 text-sm text-faint">{ t().network.unavailable }</p>
+            </Show>
+        </div>
+    </section>
+}

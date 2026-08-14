@@ -96,6 +96,21 @@ export interface Strings
         moreAbout: string;
     };
 
+    /**
+     * The live-figures section. `transactions` is the chain-wide total from the explorer's
+     * index, not a per-block count - so it must not be worded as "recent" or "current" in
+     * any locale.
+     */
+    network:
+    {
+        title: string;
+        subtitle: string;
+        blockHeight: string;
+        transactions: string;
+        /** Shown only when nothing has loaded at all, never over stale-but-real figures. */
+        unavailable: string;
+    };
+
     chain:
     {
         title: string;

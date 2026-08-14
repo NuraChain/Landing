@@ -68,6 +68,15 @@ export const fr: Strings =
         moreAbout: 'En savoir plus :'
     },
 
+    network:
+    {
+        title: 'Activité du réseau',
+        subtitle: 'Lu en direct depuis le RPC et l\'explorateur Nura, avec une minute de cache.',
+        blockHeight: 'Hauteur de bloc',
+        transactions: 'Transactions totales',
+        unavailable: 'Un chiffre n\'a pas pu être chargé. Il revient dès que sa source répond.'
+    },
+
     chain:
     {
         title: 'Informations réseau',

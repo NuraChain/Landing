@@ -15,6 +15,7 @@ import { useLocale } from '../stores/locale';
 
 import ChainSection from '../sections/chain.section.azeroth';
 import ExplorerSection from '../sections/explorer.section.azeroth';
+import NetworkSection from '../sections/network.section.azeroth';
 import SocialSection from '../sections/social.section.azeroth';
 import TokenomicsSection from '../sections/tokenomics.section.azeroth';
 
@@ -58,6 +59,11 @@ export default component Home()
                 </div>
             </div>
         </section>
+
+        { /* Directly under the hero, ahead of the download: the claims above are promises,
+             and these are the only numbers on the page read off the live chain. Somebody
+             deciding whether to install a wallet should meet the proof first. */ }
+        <NetworkSection />
 
         <section id="wallet" class="border-t border-line px-5 py-20">
             <div class="mx-auto max-w-5xl">

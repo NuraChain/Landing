@@ -1,0 +1,169 @@
+// The caches are the whole point of this module, so they are tested against a stubbed fetch
+// rather than the live services: a test hitting rpc.nurachain.net would be slow, flaky, and
+// would assert whatever the chain happened to be doing that second.
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+import { blockHeight, totalTransactions, resetNetworkStats } from '../src/lib/network';
+
+const json = (body: unknown): Response => ({
+    ok: true,
+    json: async () => body
+}) as unknown as Response;
+
+const height = (hex: string): Response => json({ jsonrpc: '2.0', id: 1, result: hex });
+
+const stats = (transactions: number): Response =>
+    json({ chain: { chainId: 1020 }, head: 4452, indexed: { blocks: 4452, transactions } });
+
+describe('blockHeight', () =>
+{
+    beforeEach(() =>
+    {
+        resetNetworkStats();
+
+        // Fake timers move Date.now() too, which is what the TTL reads.
+        vi.useFakeTimers();
+    });
+
+    afterEach(() =>
+    {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+    });
+
+    it('parses the hex height the RPC returns', async () =>
+    {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(height('0x1148')));
+
+        await expect(blockHeight()).resolves.toBe(4424);
+    });
+
+    it('serves a second read inside the minute from cache', async () =>
+    {
+        const fetchMock = vi.fn().mockResolvedValue(height('0x1148'));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        await blockHeight();
+        vi.advanceTimersByTime(59_000);
+        await blockHeight();
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('refetches once the minute is up', async () =>
+    {
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(height('0x1148'))
+            .mockResolvedValueOnce(height('0x1149'));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        await blockHeight();
+        vi.advanceTimersByTime(60_001);
+
+        await expect(blockHeight()).resolves.toBe(4425);
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('joins concurrent callers to a single request', async () =>
+    {
+        const fetchMock = vi.fn().mockResolvedValue(height('0x1148'));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        await Promise.all([blockHeight(), blockHeight(), blockHeight()]);
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not cache a failure, so the next read retries', async () =>
+    {
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce({ ok: false, status: 502 } as Response)
+            .mockResolvedValueOnce(height('0x1148'));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        await expect(blockHeight()).rejects.toThrow('502');
+        await expect(blockHeight()).resolves.toBe(4424);
+    });
+
+    it('rejects an unreadable height rather than rendering NaN', async () =>
+    {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(height('not-hex')));
+
+        await expect(blockHeight()).rejects.toThrow();
+    });
+
+    it('surfaces a JSON-RPC error object as a failure', async () =>
+    {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ error: { message: 'method not supported' } })));
+
+        await expect(blockHeight()).rejects.toThrow('method not supported');
+    });
+});
+
+describe('totalTransactions', () =>
+{
+    beforeEach(() =>
+    {
+        resetNetworkStats();
+        vi.useFakeTimers();
+    });
+
+    afterEach(() =>
+    {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+    });
+
+    it('reads the chain-wide total out of the explorer index', async () =>
+    {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(stats(1)));
+
+        await expect(totalTransactions()).resolves.toBe(1);
+    });
+
+    it('reads a zero total as a number, not as missing', async () =>
+    {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(stats(0)));
+
+        await expect(totalTransactions()).resolves.toBe(0);
+    });
+
+    it('caches for a minute like the height does', async () =>
+    {
+        const fetchMock = vi.fn().mockResolvedValue(stats(7));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        await totalTransactions();
+        vi.advanceTimersByTime(59_000);
+        await totalTransactions();
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('rejects when the payload carries no total', async () =>
+    {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ head: 4452, indexed: { blocks: 4452 } })));
+
+        await expect(totalTransactions()).rejects.toThrow('no transaction total');
+    });
+
+    it('keeps its cache separate from the height cache', async () =>
+    {
+        // The explorer is blocked cross-origin while the RPC is not, so the failing reader
+        // must not poison the working one - they are separate memos for exactly this.
+        const fetchMock = vi.fn().mockImplementation((url: string) =>
+            String(url).includes('explorer')
+                ? Promise.reject(new Error('CORS'))
+                : Promise.resolve(height('0x1148')));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        await expect(totalTransactions()).rejects.toThrow();
+        await expect(blockHeight()).resolves.toBe(4424);
+    });
+});

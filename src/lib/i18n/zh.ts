@@ -68,6 +68,15 @@ export const zh: Strings =
         moreAbout: '了解更多：'
     },
 
+    network:
+    {
+        title: '网络活动',
+        subtitle: '实时读取自 Nura RPC 与区块浏览器，缓存一分钟。',
+        blockHeight: '区块高度',
+        transactions: '交易总数',
+        unavailable: '有数据未能加载。数据源恢复响应后会立即显示。'
+    },
+
     chain:
     {
         title: '链信息',

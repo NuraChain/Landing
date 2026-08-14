@@ -68,6 +68,15 @@ export const en: Strings =
         moreAbout: 'More about'
     },
 
+    network:
+    {
+        title: 'Network activity',
+        subtitle: 'Read live from the Nura RPC and explorer, cached for one minute.',
+        blockHeight: 'Block height',
+        transactions: 'Total transactions',
+        unavailable: 'A figure could not be loaded. It returns as soon as its source answers.'
+    },
+
     chain:
     {
         title: 'Chain information',

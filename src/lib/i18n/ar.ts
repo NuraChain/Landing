@@ -68,6 +68,15 @@ export const ar: Strings =
         moreAbout: 'المزيد عن'
     },
 
+    network:
+    {
+        title: 'نشاط الشبكة',
+        subtitle: 'تُقرأ مباشرةً من RPC نورا ومستكشفها، مع تخزين مؤقت لمدة دقيقة واحدة.',
+        blockHeight: 'ارتفاع الكتلة',
+        transactions: 'إجمالي المعاملات',
+        unavailable: 'تعذّر تحميل أحد الأرقام. سيظهر فور استجابة مصدره.'
+    },
+
     chain:
     {
         title: 'معلومات الشبكة',

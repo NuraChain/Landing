@@ -68,6 +68,15 @@ export const hi: Strings =
         moreAbout: 'अधिक जानकारी:'
     },
 
+    network:
+    {
+        title: 'नेटवर्क गतिविधि',
+        subtitle: 'NURA RPC और एक्सप्लोरर से लाइव पढ़ा गया, एक मिनट तक कैश।',
+        blockHeight: 'ब्लॉक ऊँचाई',
+        transactions: 'कुल ट्रांज़ैक्शन',
+        unavailable: 'एक आंकड़ा लोड नहीं हो सका। स्रोत के जवाब देते ही वह दिख जाएगा।'
+    },
+
     chain:
     {
         title: 'नेटवर्क जानकारी',

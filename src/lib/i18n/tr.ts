@@ -68,6 +68,15 @@ export const tr: Strings =
         moreAbout: 'Ayrıntılar:'
     },
 
+    network:
+    {
+        title: 'Ağ etkinliği',
+        subtitle: 'Nura RPC\'si ve gezgininden canlı okunur, bir dakika önbelleklenir.',
+        blockHeight: 'Blok yüksekliği',
+        transactions: 'Toplam işlem',
+        unavailable: 'Bir veri yüklenemedi. Kaynağı yanıt verir vermez geri gelir.'
+    },
+
     chain:
     {
         title: 'Ağ bilgileri',

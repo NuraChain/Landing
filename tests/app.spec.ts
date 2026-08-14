@@ -1,9 +1,10 @@
 // Component tests run against real DOM (happy-dom) through the compiler - the same
 // pipeline that serves the app. App takes a `url` so tests pin the route.
-import { describe, it, expect, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { renderTest, cleanup, fire } from '@azerothjs/testing';
 
 import App from '../src/App.azeroth';
+import { resetNetworkStats } from '../src/lib/network';
 import { useLocale } from '../src/stores/locale';
 
 /**
@@ -31,11 +32,24 @@ beforeEach(() =>
     // Without this, whichever test switches language first decides what every later test
     // renders, down to which digits the percentages use.
     useLocale().choose('en');
+
+    // Mounting the app mounts the network section, which reads the RPC and the explorer.
+    // Unstubbed those are real requests to nurachain.net from every test in this file -
+    // slow, flaky, and still in flight when happy-dom tears the window down at the end of
+    // the run. Answers are routed by URL so each source gets a shape it can actually parse.
+    resetNetworkStats();
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string) => Promise.resolve({
+        ok: true,
+        json: async () => String(url).includes('explorer')
+            ? { indexed: { transactions: 1 } }
+            : { jsonrpc: '2.0', id: 1, result: '0x1148' }
+    } as unknown as Response)));
 });
 
 afterEach(() =>
 {
     cleanup();
+    vi.unstubAllGlobals();
 
     // A language choice persists to localStorage; a test that switched must not leak its
     // choice into the next one.
