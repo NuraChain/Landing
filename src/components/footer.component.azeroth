@@ -13,9 +13,9 @@ export default component Footer()
 
     const year = new Date().getFullYear();
 
-    <footer class="border-t border-line px-5 py-14">
-        <div class="mx-auto max-w-5xl">
-            <div class="flex flex-col gap-10 sm:flex-row sm:justify-between">
+    <footer class="border-t border-line">
+        <div class="px-5 pt-14 pb-10">
+            <div class="mx-auto flex max-w-5xl flex-col gap-10 sm:flex-row sm:justify-between">
                 <div class="max-w-xs">
                     <a href="#top" class="flex items-center gap-2 text-base font-semibold text-ink">
                         <img src="/icon.png" alt="" width="28" height="28" class="size-7 rounded-lg" />
@@ -60,8 +60,14 @@ export default component Footer()
                     </div>
                 </nav>
             </div>
+        </div>
 
-            <div class="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6 text-sm text-faint">
+        { /* Its own band rather than a rule inside the column above, so this line runs the
+             full width of the viewport like every section rule on the page. Its padding is
+             even at 6, because a copyright strip is a bar and not a section: carrying the
+             footer's old py-14 down here left it standing taller than it reads. */ }
+        <div class="border-t border-line px-5 py-6">
+            <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 text-sm text-faint">
                 <p>{ () => `${ year } ${ t().brand }. ${ t().footer.rights }` }</p>
 
                 { /* The product name stays OUTSIDE the translated string. Baked into the
