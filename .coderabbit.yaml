@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+reviews:
+  profile: "assertive"
+  request_changes_workflow: true
+  high_level_summary: true
+  review_status: true
+  review_details: true
+  poem: false
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!**/coverage/**"
+    - "!**/*.lock"
+  path_instructions:
+    - path: "**/*.{ts,tsx,js,jsx}"
+      instructions: |
+        Review as production frontend TypeScript/JavaScript.
+        - Check type safety, async behavior, XSS, unsafe HTML, URL handling, dependency risks, secret exposure, and client-side trust boundaries.
+        - Check responsive behavior, accessibility regressions, RTL/LTR correctness for Persian/English, and localization-safe rendering.
+        - Do not introduce browser-only APIs into server/build paths without justification.
+    - path: "**/*.{css,scss,html}"
+      instructions: |
+        Check CSS/HTML for security issues, layout regressions, accessibility, responsive behavior, and correct Persian/English RTL/LTR handling.
+    - path: "**/*.{md,mdx}"
+      instructions: |
+        Verify links, commands, product claims, network information, and configuration examples.
