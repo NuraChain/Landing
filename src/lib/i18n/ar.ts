@@ -11,6 +11,7 @@ export const ar: Strings =
         tokenomics: 'توكنوميكس',
         chain: 'الشبكة',
         wallet: 'المحفظة',
+        swap: 'تبادل',
         explorer: 'المستكشف',
         social: 'المجتمع',
         download: 'تنزيل',

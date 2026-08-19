@@ -11,6 +11,7 @@ export const fa: Strings =
         tokenomics: 'توکنومیکس',
         chain: 'شبکه',
         wallet: 'کیف‌پول',
+        swap: 'مبادله',
         explorer: 'کاوشگر',
         social: 'انجمن',
         download: 'دانلود',

@@ -11,6 +11,7 @@ export const hi: Strings =
         tokenomics: 'टोकनॉमिक्स',
         chain: 'नेटवर्क',
         wallet: 'वॉलेट',
+        swap: 'स्वैप',
         explorer: 'एक्सप्लोरर',
         social: 'समुदाय',
         download: 'डाउनलोड',

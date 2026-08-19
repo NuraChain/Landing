@@ -11,6 +11,7 @@ export const zh: Strings =
         tokenomics: '代币经济',
         chain: '网络',
         wallet: '钱包',
+        swap: '兑换',
         explorer: '浏览器',
         social: '社区',
         download: '下载',

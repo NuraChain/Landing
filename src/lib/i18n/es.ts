@@ -11,6 +11,7 @@ export const es: Strings =
         tokenomics: 'Tokenomics',
         chain: 'Red',
         wallet: 'Billetera',
+        swap: 'Swap',
         explorer: 'Explorador',
         social: 'Comunidad',
         download: 'Descargar',

@@ -23,6 +23,7 @@ export interface Strings
         tokenomics: string;
         chain: string;
         wallet: string;
+        swap: string;
         explorer: string;
         social: string;
         download: string;

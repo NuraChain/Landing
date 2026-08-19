@@ -11,6 +11,7 @@ export const tr: Strings =
         tokenomics: 'Tokenomi',
         chain: 'Ağ',
         wallet: 'Cüzdan',
+        swap: 'Takas',
         explorer: 'Gezgin',
         social: 'Topluluk',
         download: 'İndir',

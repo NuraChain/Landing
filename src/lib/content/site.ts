@@ -86,6 +86,7 @@ export const NETWORK_NAME = 'Nura Mainnet';
 export const CHAIN_ID = 1020;
 export const RPC_URL = 'https://rpc.nurachain.net';
 export const EXPLORER_URL = 'https://explorer.nurachain.net';
+export const SWAP_URL = 'http://swap.nurachain.net/';
 export const NATIVE_TOKEN = 'Nura Coin';
 
 /** TODO(real-data): ticker, as unconfirmed as the rest. Wallets show it next to balances. */

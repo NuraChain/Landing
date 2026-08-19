@@ -1,6 +1,6 @@
 import { For } from 'azerothjs';
 
-import { EXPLORER_URL, SOCIALS } from '../lib/content/site';
+import { EXPLORER_URL, SOCIALS, SWAP_URL } from '../lib/content/site';
 
 import { useLocale } from '../stores/locale';
 
@@ -48,6 +48,9 @@ export default component Footer()
                     <div>
                         <h2 class="font-semibold text-ink">{ t().footer.product }</h2>
                         <a href="#wallet" class="mt-3 block text-muted hover:text-ink">{ t().nav.wallet }</a>
+                        <a href={ SWAP_URL } target="_blank" rel="noreferrer noopener" class="mt-2 block text-muted hover:text-ink">
+                            { t().nav.swap }
+                        </a>
                         <a href="#tokenomics" class="mt-2 block text-muted hover:text-ink">{ t().nav.tokenomics }</a>
                     </div>
 

@@ -11,6 +11,7 @@ export const ru: Strings =
         tokenomics: 'Токеномика',
         chain: 'Сеть',
         wallet: 'Кошелёк',
+        swap: 'Обмен',
         explorer: 'Обозреватель',
         social: 'Сообщество',
         download: 'Скачать',
