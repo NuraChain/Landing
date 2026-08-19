@@ -12,7 +12,7 @@ the browser, and a download path for every platform.
 
 ```bash
 npm install
-npm run dev        # http://localhost:5174
+npm run dev        # http://localhost:4000
 ```
 
 | Script | What it does |
