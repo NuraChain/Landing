@@ -218,7 +218,7 @@ export const SUPPLY =
     circulating: 600_000_000
 };
 
-export type SocialId = 'github' | 'telegram' | 'x' | 'discord' | 'youtube';
+export type SocialId = 'github' | 'telegram' | 'x' | 'discord' | 'youtube' | 'instagram';
 
 export interface Social
 {
@@ -233,5 +233,6 @@ export const SOCIALS: readonly Social[] =
     { id: 'github', label: 'GitHub', url: 'https://github.com/NuraChain' },
     { id: 'telegram', label: 'Telegram', url: 'https://t.me/nurachain' },
     { id: 'x', label: 'X', url: 'https://x.com/nurachainnet' },
-    { id: 'discord', label: 'Discord', url: 'https://discord.gg/8BMAXTdXQg' }
+    { id: 'discord', label: 'Discord', url: 'https://discord.gg/8BMAXTdXQg' },
+    { id: 'instagram', label: 'Instagram', url: 'https://www.instagram.com/nura.chain/' }
 ];

@@ -1,4 +1,4 @@
-import { siDiscord, siGithub, siTelegram, siX, siYoutube } from 'simple-icons';
+import { siDiscord, siGithub, siInstagram, siTelegram, siX, siYoutube } from 'simple-icons';
 import type { SimpleIcon } from 'simple-icons';
 
 import type { SocialId } from '../lib/content/site';
@@ -18,7 +18,8 @@ const MARK: Record<SocialId, SimpleIcon> =
     telegram: siTelegram,
     x: siX,
     discord: siDiscord,
-    youtube: siYoutube
+    youtube: siYoutube,
+    instagram: siInstagram
 };
 
 /**
