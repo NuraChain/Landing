@@ -5,11 +5,12 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.0] - 2026-08-19
 
 ### Added
 
 - Instagram link (`https://www.instagram.com/nura.chain/`) in the footer's social network row.
+- Swap link (`http://swap.nurachain.net/`) in the footer's product column, translated across all ten languages.
 
 ### Fixed
 
