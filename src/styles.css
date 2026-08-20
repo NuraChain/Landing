@@ -134,6 +134,32 @@
     --brand-linux: #fcc624;
 }
 
+/* The mono stack sits behind a variable of its own because `@theme inline` INLINES the
+   literal value of `--font-mono` straight into the `.font-mono` utility - so redefining
+   `--font-mono` further down the cascade changes nothing, the utility never reads it back.
+   Pointing the theme token at `var(--mono)` restores the indirection, which is exactly how
+   every colour token below already works (`--color-bg: var(--bg)`).
+
+   The reason it needs to vary at all: NO face in the Latin mono stack carries Arabic-Indic
+   digits (U+06F0-U+06F9), and every figure on this site is `font-mono` - block height,
+   supply, percentages, TVL. In Persian and Arabic they all fell through to whatever the
+   system happened to pick, which is neither monospaced nor the face the rest of the page is
+   set in. Vazirmatn is APPENDED rather than substituted: fallback is per glyph, so Latin
+   still takes ui-monospace and only the Persian digits reach the added face - addresses,
+   hashes and URLs stay monospaced while the digits beside them match the body text. */
+
+:root
+{
+    --mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
+}
+
+:root:lang(fa),
+:root:lang(ar)
+{
+    --mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas,
+        'Vazirmatn Variable', Vazirmatn, monospace;
+}
+
 @theme inline
 {
     --color-bg: var(--bg);
@@ -152,7 +178,7 @@
     --color-danger: var(--danger);
 
     --font-sans: 'Inter var', Inter, system-ui, sans-serif;
-    --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
+    --font-mono: var(--mono);
 }
 
 @layer base
