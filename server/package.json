@@ -1,0 +1,39 @@
+{
+    "name": "nura-landing-server",
+    "private": true,
+    "version": "1.4.0",
+    "type": "module",
+    "engines": {
+        "node": ">=22"
+    },
+    "scripts": {
+        "dev": "azeroth dev",
+        "check": "azeroth check",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:shuffle": "vitest run --sequence.shuffle",
+        "coverage": "vitest run --coverage",
+        "start": "node src/main.ts"
+    },
+    "dependencies": {
+        "@azerothjs/http": "2.0.0-beta.2",
+        "@azerothjs/kit": "2.0.0-beta.2",
+        "@azerothjs/logger": "2.0.0-beta.2",
+        "@azerothjs/schema": "2.0.0-beta.2",
+        "azerothjs": "2.0.0-beta.2"
+    },
+    "devDependencies": {
+        "@azerothjs/cli": "2.0.0-beta.2",
+        "@azerothjs/devtools": "2.0.0-beta.2",
+        "@azerothjs/eslint-plugin": "2.0.0-beta.2",
+        "@eslint/js": "^10.0.1",
+        "@types/node": "^26.1.0",
+        "@vitest/coverage-v8": "^4.0.0",
+        "eslint": "^10.7.0",
+        "globals": "^17.7.0",
+        "jiti": "^2.7.0",
+        "typescript": "~6.0.2",
+        "typescript-eslint": "^8.63.0",
+        "vitest": "^4.0.0"
+    }
+}

@@ -6,48 +6,27 @@
     "engines": {
         "node": ">=22"
     },
+    "workspaces": [
+        "application",
+        "server"
+    ],
     "scripts": {
         "dev": "azeroth dev",
         "check": "azeroth check",
         "build": "azeroth build",
-        "test": "vitest run",
-        "test:watch": "vitest",
-        "test:unit": "vitest run tests/wallet.spec.ts tests/stores.spec.ts tests/content.spec.ts tests/i18n.spec.ts tests/network.spec.ts",
-        "test:integration": "vitest run tests/add-chain.spec.ts tests/network-section.spec.ts tests/network-http.spec.ts tests/header.spec.ts tests/components.spec.ts tests/app-shell.spec.ts tests/app.spec.ts",
-        "test:fuzz": "vitest run tests/network.fuzz.spec.ts",
-        "test:security": "vitest run tests/network-http.spec.ts tests/wallet.spec.ts tests/content.spec.ts tests/app-shell.spec.ts",
-        "test:i18n": "vitest run tests/i18n.spec.ts tests/direction.spec.ts tests/prepaint.spec.ts",
-        "coverage": "vitest run --coverage",
-        "qa:visual": "node scripts/visual-qa.mjs",
-        "preview": "vite preview"
-    },
-    "dependencies": {
-        "@fontsource-variable/vazirmatn": "^5.3.0",
-        "azerothjs": "2.0.0-beta.2",
-        "flag-icons": "^7.5.0",
-        "lucide": "^1.28.0",
-        "simple-icons": "^16.28.0"
+        "test": "azeroth test",
+        "start": "npm start --workspace server",
+        "test:watch": "npm run test:watch --workspace application",
+        "test:unit": "npm run test:unit --workspace application",
+        "test:integration": "npm run test:integration --workspace application",
+        "test:fuzz": "npm run test:fuzz --workspace application",
+        "test:security": "npm run test:security --workspace application",
+        "test:i18n": "npm run test:i18n --workspace application",
+        "test:server": "npm test --workspace server",
+        "coverage": "npm run coverage --workspace application",
+        "qa:visual": "node scripts/visual-qa.mjs"
     },
     "devDependencies": {
-        "@axe-core/playwright": "^4.13.0",
-        "@azerothjs/cli": "2.0.0-beta.2",
-        "@azerothjs/compiler": "2.0.0-beta.2",
-        "@azerothjs/eslint-plugin": "2.0.0-beta.2",
-        "@azerothjs/language-server": "2.0.0-beta.2",
-        "@azerothjs/testing": "2.0.0-beta.2",
-        "@azerothjs/typescript-plugin": "2.0.0-beta.2",
-        "@eslint/js": "^10.0.1",
-        "@tailwindcss/vite": "^4.0.0",
-        "@vitest/coverage-v8": "^4.0.0",
-        "eslint": "^10.7.0",
-        "globals": "^17.7.0",
-        "happy-dom": "^20.0.0",
-        "jiti": "^2.7.0",
-        "playwright": "^1.62.1",
-        "tailwindcss": "^4.0.0",
-        "typescript": "~6.0.2",
-        "typescript-eslint": "^8.63.0",
-        "vite": "^8.1.4",
-        "vitest": "^4.0.0"
+        "@azerothjs/cli": "2.0.0-beta.2"
     }
 }

@@ -1,8 +1,20 @@
 node_modules/
 dist/
+dist-server/
 .azeroth-types/
 *.local
 .idea/
 logs/
 coverage/
 artifacts/
+
+# Local configuration. `server/.env` will hold the admin key once the dashboard lands, so this
+# line is the only thing standing between a visitor and that dashboard. `.env.example` is the
+# shape and is committed on purpose; `.env` itself never is.
+.env
+.env.*
+!.env.example
+
+# The sqlite database and its write-ahead log: content, written at runtime and restored from a
+# backup, never from the repository.
+.data/

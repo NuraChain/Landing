@@ -10,6 +10,9 @@ import azeroth from '@azerothjs/eslint-plugin';
 const config: ReturnType<typeof defineConfig> = defineConfig([
     globalIgnores([
         '**/dist/**',
+        // The SSR bundle from `vite build --ssr`: generated output, not source. Without
+        // this, any check run after a build lints a 200kB bundle and drowns in style errors.
+        '**/dist-server/**',
         '**/node_modules/**',
         '**/build/**',
         // Generated .azeroth type mirror (the Vite plugin's emitDeclarations output).

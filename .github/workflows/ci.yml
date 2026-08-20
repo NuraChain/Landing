@@ -63,7 +63,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage
-          path: coverage/
+          path: application/coverage/
           retention-days: 14
 
   determinism:
@@ -104,18 +104,22 @@ jobs:
       - name: Build
         run: npm run build
 
-      # A smoke check on the artefact itself: the bundle must exist, and the pre-paint
-      # script that sets `dir`/`lang` before first paint must survive into the built HTML.
-      - name: Smoke-check the bundle
+      # A smoke check on the artefacts themselves: the client bundle must exist, the SSR
+      # bundle the server imports by name must exist beside it, and the pre-paint script
+      # that settles `dir`/`lang`/theme before first paint must survive into the built HTML.
+      - name: Smoke-check the bundles
         run: |
-          test -f dist/index.html || { echo "dist/index.html missing"; exit 1; }
-          grep -q "documentElement.dir" dist/index.html || { echo "pre-paint direction script missing from build"; exit 1; }
-          grep -q "documentElement.dataset.theme" dist/index.html || { echo "pre-paint theme script missing from build"; exit 1; }
-          echo "bundle ok: $(du -sh dist | cut -f1)"
+          test -f application/dist/index.html || { echo "application/dist/index.html missing"; exit 1; }
+          test -f application/dist-server/entry.server.js || { echo "SSR bundle missing - the server imports it by path"; exit 1; }
+          grep -q "documentElement.dir" application/dist/index.html || { echo "pre-paint direction script missing from build"; exit 1; }
+          grep -q "documentElement.dataset.theme" application/dist/index.html || { echo "pre-paint theme script missing from build"; exit 1; }
+          echo "client ok: $(du -sh application/dist | cut -f1), ssr ok: $(du -sh application/dist-server | cut -f1)"
 
       - name: Upload bundle
         uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: |
+            application/dist/
+            application/dist-server/
           retention-days: 14
