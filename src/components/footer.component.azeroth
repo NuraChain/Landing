@@ -87,11 +87,16 @@ export default component Footer()
                 <p>
                     { t().footer.builtWith }
                     { ' ' }
+                    { /* Underlined at rest, not only on hover: this link sits INSIDE a line of
+                         prose, where colour alone is what tells it apart - and it measured 1.92:1
+                         against the surrounding text, well under the 3:1 that would let colour
+                         carry the distinction by itself. A standing underline is the native
+                         answer and needs no ARIA. */ }
                     <a
                         href="https://github.com/AzerothJS/AzerothJS"
                         target="_blank"
                         rel="noreferrer noopener"
-                        class="text-muted underline-offset-4 transition-colors hover:text-ink hover:underline"
+                        class="text-muted underline underline-offset-4 transition-colors hover:text-ink"
                     >
                         AzerothJS
                     </a>
