@@ -5,6 +5,26 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-08-20
+
+### Added
+
+- Visual and accessibility QA harness (`npm run qa:visual`): three viewports by two
+  text directions, asserting document direction, horizontal overflow and the axe
+  WCAG 2.1 AA rule set, with a screenshot and a JSON report per scenario.
+- `frontend-ui-ux` and `frontend-reviewer` agents, and a `CLAUDE.md` recording the
+  design system, direction rules and QA workflow this repository actually uses.
+
+### Fixed
+
+- The `--faint` token failed WCAG AA for normal-size text in both the dark and light
+  themes (3.56:1 at worst, against a 4.5:1 floor). Every caption, platform note and
+  the copyright line were affected; the token now clears 4.5:1 on all three surfaces
+  and stays visually dimmer than `--muted`.
+- The AzerothJS link in the footer sits inside a line of prose and was distinguished
+  by colour alone at 1.92:1 against the surrounding text. It is now underlined at
+  rest rather than only on hover.
+
 ## [1.3.1] - 2026-08-20
 
 ### Added
