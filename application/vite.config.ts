@@ -28,6 +28,8 @@ export default defineConfig({
 
     test: {
         environment: 'happy-dom',
+        // Node's own experimental localStorage shadows the DOM's - see tests/setup.ts.
+        setupFiles: ['tests/setup.ts'],
 
         coverage: {
             provider: 'v8',
