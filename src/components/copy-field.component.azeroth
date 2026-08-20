@@ -47,13 +47,21 @@ export default component CopyField(props:
     cleanup { window.clearTimeout(timer); }
 
     <div class="flex min-w-0 flex-1 items-center gap-2">
-        { /* `dir="ltr"` pins the value even in Persian, where bidi would otherwise reorder
-             a URL or an ID. Not cosmetic: someone pastes what they read. */ }
+        { /* The value is pinned LTR even in Persian, where bidi would otherwise reorder a
+             URL or an ID. Not cosmetic: someone pastes what they read.
+
+             The pin goes on an inner `<bdi>`, never on the block that carries `text-start`.
+             `start` resolves against the element's OWN direction, so an `ltr` block inside
+             an RTL row aligns its text to the LEFT - which parked every value at the far
+             edge of a 666px flex slot, up to 633px from the Persian label naming it. The
+             outer span keeps the page direction so `start` means "beside the label", and
+             `<bdi>` isolates the value's own bidi run inside it. Same split as the platform
+             note in home.page. */ }
         <Show
             when={ () => props.href }
             fallback={ () =>
-            <span dir="ltr" class="min-w-0 flex-1 truncate text-start font-mono text-sm text-ink">
-                { props.value }
+            <span class="min-w-0 flex-1 truncate text-start font-mono text-sm text-ink">
+                <bdi dir="ltr">{ props.value }</bdi>
             </span>
             }
             let={ href }
@@ -62,10 +70,9 @@ export default component CopyField(props:
                 href={ href }
                 target="_blank"
                 rel="noreferrer noopener"
-                dir="ltr"
                 class="min-w-0 flex-1 truncate text-start font-mono text-sm text-ink underline-offset-4 transition-colors hover:text-accent hover:underline"
             >
-                { props.value }
+                <bdi dir="ltr">{ props.value }</bdi>
             </a>
         </Show>
 

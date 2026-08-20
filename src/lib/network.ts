@@ -89,13 +89,25 @@ export const blockHeight = cachedReader(async (): Promise<number> =>
         throw new Error(body.error.message ?? 'RPC returned an error');
     }
 
-    const height = Number.parseInt(body.result ?? '', 16);
+    const raw = body.result ?? '';
 
-    // A NaN would render as "NaN" in the tile rather than as a failure, so it is treated as
-    // one: the section may honestly say "unavailable", but it must never say NaN.
-    if (!Number.isFinite(height))
+    // The shape is checked BEFORE parsing, because `Number.parseInt` stops at the first
+    // character it cannot read and returns what it got so far: "0x11zz" parses to 17, which
+    // is finite, plausible, and wrong. A NaN at least announces itself - a silently wrong
+    // block height does not, and this section exists to state chain facts accurately.
+    if (!/^0x[0-9a-fA-F]+$/u.test(raw))
     {
         throw new Error(`RPC returned an unreadable height: ${ String(body.result) }`);
+    }
+
+    const height = Number.parseInt(raw, 16);
+
+    // Past 2^53 a hex quantity no longer survives as a JS number, so the tile would render
+    // a rounded figure. Nura would need ~10^9 years at its 3s block time to get there; a
+    // value this large means the reply is wrong, not that the chain is old.
+    if (!Number.isSafeInteger(height))
+    {
+        throw new Error(`RPC returned an out-of-range height: ${ raw }`);
     }
 
     return height;
@@ -186,10 +198,10 @@ export interface Tvl
 const readSupplies = async (): Promise<{ units: number; priceId: string; symbol: string }[]> =>
 {
     const batch = BRIDGE_TOKENS.flatMap((token, index) =>
-    [
-        { jsonrpc: '2.0', id: index * 2, method: 'eth_call', params: [{ to: token.address, data: TOTAL_SUPPLY }, 'latest'] },
-        { jsonrpc: '2.0', id: index * 2 + 1, method: 'eth_call', params: [{ to: token.address, data: DECIMALS }, 'latest'] }
-    ]);
+        [
+            { jsonrpc: '2.0', id: index * 2, method: 'eth_call', params: [{ to: token.address, data: TOTAL_SUPPLY }, 'latest'] },
+            { jsonrpc: '2.0', id: index * 2 + 1, method: 'eth_call', params: [{ to: token.address, data: DECIMALS }, 'latest'] }
+        ]);
 
     const response = await fetch(RPC_URL, {
         method: 'POST',
@@ -225,11 +237,11 @@ const readSupplies = async (): Promise<{ units: number; priceId: string; symbol:
     };
 
     return BRIDGE_TOKENS.map((token, index) =>
-    ({
-        symbol: token.symbol,
-        priceId: token.priceId,
-        units: toUnits(read(index * 2), Number(read(index * 2 + 1)))
-    }));
+        ({
+            symbol: token.symbol,
+            priceId: token.priceId,
+            units: toUnits(read(index * 2), Number(read(index * 2 + 1)))
+        }));
 };
 
 const readPrices = async (ids: readonly string[]): Promise<Record<string, number>> =>
@@ -281,11 +293,11 @@ export const bridgeTvl = cachedReader(async (): Promise<Tvl> =>
     const prices = await readPrices([...new Set(supplies.map((token) => token.priceId))]);
 
     const parts = supplies.map(({ symbol, units, priceId }) =>
-    ({
-        symbol,
-        units,
-        usd: units * prices[priceId]
-    }));
+        ({
+            symbol,
+            units,
+            usd: units * prices[priceId]
+        }));
 
     return { usd: parts.reduce((sum, part) => sum + part.usd, 0), parts };
 });

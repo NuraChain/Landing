@@ -44,9 +44,14 @@ export default component ExplorerSection()
                         class="mt-8 inline-flex h-12 items-center gap-2 rounded-xl bg-accent px-6 font-semibold text-accent-ink transition-colors hover:bg-accent-hover"
                     >
                         { t().explorer.cta }
-                        { /* Not flipped for RTL: the arrow points away from the page, and
-                             an outbound marker reads the same in both directions. */ }
-                        { icon(ArrowUpRight, 'size-[18px]') }
+                        { /* Mirrored, not rotated. The glyph means "away from this page",
+                             and the flex row already moved it to the opposite edge in RTL -
+                             so an unmirrored up-RIGHT arrow sitting at the LEFT edge points
+                             back into the label it trails. Flipping the x axis makes it an
+                             up-LEFT arrow, which is the same "away" it always was. Rotating
+                             180 degrees would instead give a DOWN-left arrow and read as a
+                             download. */ }
+                        { icon(ArrowUpRight, 'size-[18px] rtl:-scale-x-100') }
                     </a>
                 </div>
             </div>

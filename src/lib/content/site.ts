@@ -86,7 +86,11 @@ export const NETWORK_NAME = 'Nura Mainnet';
 export const CHAIN_ID = 1020;
 export const RPC_URL = 'https://rpc.nurachain.net';
 export const EXPLORER_URL = 'https://explorer.nurachain.net';
-export const SWAP_URL = 'http://swap.nurachain.net/';
+// https, not http: the origin already 301s to TLS, so the plaintext hop bought nothing but
+// a redirect that an on-path attacker can strip. This one is a link to a SWAP - the page
+// where somebody connects a wallet and moves funds - so it is the last link on the site
+// that should start in the clear. Verified 2026-08-20: https answers 200 directly.
+export const SWAP_URL = 'https://swap.nurachain.net/';
 export const NATIVE_TOKEN = 'Nura Coin';
 
 /** TODO(real-data): ticker, as unconfirmed as the rest. Wallets show it next to balances. */

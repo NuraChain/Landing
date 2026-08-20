@@ -1,24 +1,38 @@
 // The second route - it exists to prove the router: the nav swap that brought
 // you here changed the URL without a reload. Routing is three pieces, all in
 // this folder's parent.
+//
+// `dir="ltr"` on the section because this page's copy is the ONLY untranslated
+// text on the site - it never goes through `t()`. English prose inherited the
+// document's `rtl` in Persian and Arabic, and bidi then moved every trailing
+// neutral to the far end: the lede rendered ":You navigated here client-side",
+// "Next steps from here:" became ":Next steps from here", and `src/pages/` came
+// out as `/src/pages` - a path that reads as absolute and is simply wrong.
+// Pinning the section is correct while the content is English; translate it and
+// this attribute comes off, which is why the identifiers below carry their own
+// `<bdi>` rather than leaning on it.
 export default component About()
 {
-    <section class="page">
-        <h1 class="font-mono font-semibold tracking-tight text-[clamp(1.6rem,5vw,2.1rem)] mb-3">About</h1>
-        <p class="text-faint leading-relaxed mb-8">
+    <section dir="ltr" class="mx-auto max-w-3xl px-5 py-16">
+        <h1 class="mb-3 font-mono text-[clamp(1.6rem,5vw,2.1rem)] font-semibold tracking-tight">About</h1>
+        <p class="mb-8 leading-relaxed text-faint">
             You navigated here client-side: the URL changed, nothing reloaded,
             and back/forward work. Routing is three pieces:
         </p>
-        <ul class="pt-4 border-t border-line mb-6">
-            <li class="flex items-baseline gap-4 py-1.5"><code class="font-mono text-[0.85rem] min-w-[9.5rem]">src/routes.ts</code><span class="text-faint text-[0.9rem]">the route table - one row per page</span></li>
-            <li class="flex items-baseline gap-4 py-1.5"><code class="font-mono text-[0.85rem] min-w-[9.5rem]">src/pages/</code><span class="text-faint text-[0.9rem]">one component per route</span></li>
-            <li class="flex items-baseline gap-4 py-1.5"><code class="font-mono text-[0.85rem] min-w-[9.5rem]">src/App.azeroth</code><span class="text-faint text-[0.9rem]">the shell: nav links + the route outlet</span></li>
+        { /* File paths and commands are isolated per identifier, so they survive on
+             their own the day this page is translated and the section above stops
+             being `ltr`. A bare `src/pages/` in an RTL paragraph loses its trailing
+             slash to the front of the string. */ }
+        <ul class="mb-6 border-t border-line pt-4">
+            <li class="flex items-baseline gap-4 py-1.5"><code class="min-w-[9.5rem] font-mono text-[0.85rem]"><bdi dir="ltr">src/routes.ts</bdi></code><span class="text-[0.9rem] text-faint">the route table - one row per page</span></li>
+            <li class="flex items-baseline gap-4 py-1.5"><code class="min-w-[9.5rem] font-mono text-[0.85rem]"><bdi dir="ltr">src/pages/</bdi></code><span class="text-[0.9rem] text-faint">one component per route</span></li>
+            <li class="flex items-baseline gap-4 py-1.5"><code class="min-w-[9.5rem] font-mono text-[0.85rem]"><bdi dir="ltr">src/App.azeroth</bdi></code><span class="text-[0.9rem] text-faint">the shell: nav links + the route outlet</span></li>
         </ul>
-        <p class="font-mono text-[0.8rem] text-faint mb-2">Next steps from here:</p>
-        <ul class="pt-4 border-t border-line">
-            <li class="flex items-baseline gap-4 py-1.5"><code class="font-mono text-[0.85rem] min-w-[9.5rem]">npm test</code><span class="text-faint text-[0.9rem]">component tests over real DOM</span></li>
-            <li class="flex items-baseline gap-4 py-1.5"><code class="font-mono text-[0.85rem] min-w-[9.5rem]">npm run check</code><span class="text-faint text-[0.9rem]">typecheck + lint every component</span></li>
-            <li class="flex items-baseline gap-4 py-1.5"><code class="font-mono text-[0.85rem] min-w-[9.5rem]">npm run build</code><span class="text-faint text-[0.9rem]">static dist/ for any host</span></li>
+        <p class="mb-2 font-mono text-[0.8rem] text-faint">Next steps from here:</p>
+        <ul class="border-t border-line pt-4">
+            <li class="flex items-baseline gap-4 py-1.5"><code class="min-w-[9.5rem] font-mono text-[0.85rem]"><bdi dir="ltr">npm test</bdi></code><span class="text-[0.9rem] text-faint">component tests over real DOM</span></li>
+            <li class="flex items-baseline gap-4 py-1.5"><code class="min-w-[9.5rem] font-mono text-[0.85rem]"><bdi dir="ltr">npm run check</bdi></code><span class="text-[0.9rem] text-faint">typecheck + lint every component</span></li>
+            <li class="flex items-baseline gap-4 py-1.5"><code class="min-w-[9.5rem] font-mono text-[0.85rem]"><bdi dir="ltr">npm run build</bdi></code><span class="text-[0.9rem] text-faint">static <bdi dir="ltr">dist/</bdi> for any host</span></li>
             <li class="flex items-baseline gap-4 py-1.5"><a class="font-mono text-[0.85rem] text-ice hover:underline" href="https://github.com/AzerothJS/AzerothJS">docs and examples</a></li>
         </ul>
     </section>

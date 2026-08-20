@@ -1,0 +1,121 @@
+# Every stage runs against the repository alone - no secrets, no services, no network.
+#
+# That is a property of the test suite rather than a limitation of the workflow: the three
+# upstreams this site reads (the Nura RPC, the Nura explorer, CoinGecko) are stubbed at
+# `fetch` in every spec, so CI can never go red because a third party had a bad minute.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A new push to the same branch cancels the run it superseded.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Keep this in step with the `engines.node` floor in package.json.
+  NODE_VERSION: '22'
+
+jobs:
+  check:
+    name: Typecheck and lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      # `azeroth check` is typecheck plus lint in one pass, over .ts and .azeroth alike.
+      - name: Typecheck and lint
+        run: npm run check
+
+  test:
+    name: Tests and coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      # Thresholds live in vite.config.ts, so a real coverage drop fails here.
+      - name: Run tests with coverage
+        run: npm run coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 14
+
+  determinism:
+    name: Determinism
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      # The suite has no sleeps, no real clock and no live network, so running it twice must
+      # produce the same result. A test that only passes on a warm cache, or that leaks state
+      # into the next file, shows up here rather than as an intermittent failure later.
+      # `--sequence.shuffle` also catches order dependence between files.
+      - name: Run the suite twice, second time shuffled
+        run: |
+          npm test
+          npx vitest run --sequence.shuffle --sequence.seed=20260820
+
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # A smoke check on the artefact itself: the bundle must exist, and the pre-paint
+      # script that sets `dir`/`lang` before first paint must survive into the built HTML.
+      - name: Smoke-check the bundle
+        run: |
+          test -f dist/index.html || { echo "dist/index.html missing"; exit 1; }
+          grep -q "documentElement.dir" dist/index.html || { echo "pre-paint direction script missing from build"; exit 1; }
+          grep -q "documentElement.dataset.theme" dist/index.html || { echo "pre-paint theme script missing from build"; exit 1; }
+          echo "bundle ok: $(du -sh dist | cut -f1)"
+
+      - name: Upload bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 14
