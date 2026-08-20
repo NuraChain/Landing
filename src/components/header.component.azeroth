@@ -250,6 +250,12 @@ export default component Header()
                         onClick={ () => langOpen = false }
                     ></div>
 
+                    { /* `left-1/2` with `-translate-x-1/2` is PHYSICAL on purpose and must
+                         stay that way. Centring is symmetric, so it lands identically in
+                         both directions; swapping in the logical `start-1/2` would resolve
+                         to `right: 50%` in Persian while the transform still pulls toward
+                         physical left, throwing the dialog a full half-width off centre.
+                         The dialog's CONTENT still follows the document direction. */ }
                     <div
                         role="dialog"
                         aria-modal="true"
