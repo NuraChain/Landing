@@ -29,8 +29,12 @@ export default component SocialSection()
 
                             <span class="min-w-0 flex-1 truncate font-medium text-ink">{ social.label }</span>
 
+                            { /* Mirrored in RTL for the same reason as the explorer CTA:
+                                 the card's flex row parks this at the inline-end edge, which
+                                 is the LEFT in Persian, and an up-right arrow there points
+                                 back at the label instead of out of the card. */ }
                             <span class="shrink-0 text-faint transition-colors group-hover:text-ink">
-                                { icon(ArrowUpRight, 'size-4') }
+                                { icon(ArrowUpRight, 'size-4 rtl:-scale-x-100') }
                             </span>
                         </Card>
                     </div>
