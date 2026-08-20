@@ -22,7 +22,11 @@
     --elevated: #141d2b;
     --ink: #e6edf7;
     --muted: #97a6bd;
-    --faint: #64748b;
+    /* Measured, not eyeballed: the previous #64748b sat at 4.14:1 on --bg and 3.56:1 on
+       --elevated, so every note, caption and copyright line set in it failed WCAG AA for
+       normal-size text. This clears 4.5:1 on all three surfaces (5.69 / 5.33 / 4.89) and
+       stays clearly dimmer than --muted, which is the job this token has. */
+    --faint: #7c8ba1;
     --line: #1d2839;
     --line-strong: #2a3850;
 
@@ -62,7 +66,9 @@
     --elevated: #f0f4f8;
     --ink: #0d1826;
     --muted: #4d5f78;
-    --faint: #6b7c94;
+    /* Same fix on white: #6b7c94 measured 3.85:1 on --elevated. This is 5.21 / 5.50 / 4.98
+       and still lighter than --muted. */
+    --faint: #5b6a80;
     --line: #dde5ee;
     --line-strong: #c3d0e0;
 
