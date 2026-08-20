@@ -5,6 +5,32 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-08-20
+
+### Added
+
+- Test suite covering the wallet, stores, site constants, string tables and every component,
+  run over real DOM through the compiler; plus CI for typecheck, lint, coverage, determinism
+  and the production build.
+
+### Fixed
+
+- Chain values sit beside their labels in Persian and Arabic again, instead of at the far
+  edge of the row.
+- Outbound arrows point away from the card in right-to-left layouts rather than back into it.
+- Persian and Arabic figures render in a face that actually carries their digits, and the
+  copyright year follows the active locale.
+- The about page keeps a container, and its file paths and commands no longer lose trailing
+  characters to bidi.
+- A truncated block height from the RPC is refused rather than parsed up to the first bad
+  character, which used to render a plausible but wrong figure.
+
+### Security
+
+- The footer's swap link uses `https`. The origin already redirected to TLS, so the plaintext
+  hop added nothing but a redirect an on-path attacker could strip - on the one link that
+  leads to connecting a wallet.
+
 ## [1.3.0] - 2026-08-19
 
 ### Added
