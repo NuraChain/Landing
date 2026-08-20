@@ -18,6 +18,7 @@
         "test:security": "vitest run tests/network-http.spec.ts tests/wallet.spec.ts tests/content.spec.ts tests/app-shell.spec.ts",
         "test:i18n": "vitest run tests/i18n.spec.ts tests/direction.spec.ts tests/prepaint.spec.ts",
         "coverage": "vitest run --coverage",
+        "qa:visual": "node scripts/visual-qa.mjs",
         "preview": "vite preview"
     },
     "dependencies": {
@@ -28,6 +29,7 @@
         "simple-icons": "^16.28.0"
     },
     "devDependencies": {
+        "@axe-core/playwright": "^4.13.0",
         "@azerothjs/cli": "2.0.0-beta.2",
         "@azerothjs/compiler": "2.0.0-beta.2",
         "@azerothjs/eslint-plugin": "2.0.0-beta.2",
@@ -41,6 +43,7 @@
         "globals": "^17.7.0",
         "happy-dom": "^20.0.0",
         "jiti": "^2.7.0",
+        "playwright": "^1.62.1",
         "tailwindcss": "^4.0.0",
         "typescript": "~6.0.2",
         "typescript-eslint": "^8.63.0",
