@@ -186,10 +186,10 @@ export interface Tvl
 const readSupplies = async (): Promise<{ units: number; priceId: string; symbol: string }[]> =>
 {
     const batch = BRIDGE_TOKENS.flatMap((token, index) =>
-    [
-        { jsonrpc: '2.0', id: index * 2, method: 'eth_call', params: [{ to: token.address, data: TOTAL_SUPPLY }, 'latest'] },
-        { jsonrpc: '2.0', id: index * 2 + 1, method: 'eth_call', params: [{ to: token.address, data: DECIMALS }, 'latest'] }
-    ]);
+        [
+            { jsonrpc: '2.0', id: index * 2, method: 'eth_call', params: [{ to: token.address, data: TOTAL_SUPPLY }, 'latest'] },
+            { jsonrpc: '2.0', id: index * 2 + 1, method: 'eth_call', params: [{ to: token.address, data: DECIMALS }, 'latest'] }
+        ]);
 
     const response = await fetch(RPC_URL, {
         method: 'POST',
@@ -225,11 +225,11 @@ const readSupplies = async (): Promise<{ units: number; priceId: string; symbol:
     };
 
     return BRIDGE_TOKENS.map((token, index) =>
-    ({
-        symbol: token.symbol,
-        priceId: token.priceId,
-        units: toUnits(read(index * 2), Number(read(index * 2 + 1)))
-    }));
+        ({
+            symbol: token.symbol,
+            priceId: token.priceId,
+            units: toUnits(read(index * 2), Number(read(index * 2 + 1)))
+        }));
 };
 
 const readPrices = async (ids: readonly string[]): Promise<Record<string, number>> =>
@@ -281,11 +281,11 @@ export const bridgeTvl = cachedReader(async (): Promise<Tvl> =>
     const prices = await readPrices([...new Set(supplies.map((token) => token.priceId))]);
 
     const parts = supplies.map(({ symbol, units, priceId }) =>
-    ({
-        symbol,
-        units,
-        usd: units * prices[priceId]
-    }));
+        ({
+            symbol,
+            units,
+            usd: units * prices[priceId]
+        }));
 
     return { usd: parts.reduce((sum, part) => sum + part.usd, 0), parts };
 });
