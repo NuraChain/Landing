@@ -1,11 +1,14 @@
 import { App, NotFoundError, json, type ErrorObserver, type RequestObserver } from '@azerothjs/http';
-import { feature, manifestOf, register } from '@azerothjs/http/api';
+import { feature, manifestOf, register, reply } from '@azerothjs/http/api';
 import { mountPages, type KitOptions } from '@azerothjs/kit';
 import { array } from '@azerothjs/schema';
 
+import { adminGuards } from './admin/guard.ts';
+import { matchesKey } from './admin/key.ts';
+import { SESSION_TTL_SECONDS, type SessionStore } from './admin/sessions.ts';
 import { pageCount, toCards, toDetail } from './blog/present.ts';
 import type { BlogStore } from './blog/store.ts';
-import { pageQuery, postDetail, postPage, readQuery, tagCount } from './schemas.ts';
+import { adminKeyInput, pageQuery, postDetail, postPage, readQuery, sessionState, tagCount } from './schemas.ts';
 
 /** How many posts a blog index page holds when the caller does not say. */
 const DEFAULT_LIMIT = 10;
@@ -13,9 +16,29 @@ const DEFAULT_LIMIT = 10;
 /** The language a reader gets when they ask for none - the same default the site falls to. */
 const DEFAULT_LOCALE = 'en';
 
+/** The one answer every failed sign-in gives, whatever went wrong. */
+const SIGNED_OUT = { signedIn: false, expiresAt: null };
+
+const iso = (seconds: number): string => new Date(seconds * 1000).toISOString();
+
 export interface ApiDeps
 {
     store: BlogStore;
+    sessions: SessionStore;
+
+    /**
+     * The configured admin key, or null when none is set.
+     *
+     * Null is a real state, not an oversight: development without a key disables the dashboard
+     * outright. "No key configured" must never resolve to "no key required".
+     */
+    adminKey: string | null;
+
+    /** Whether cookies are minted Secure - production, in practice. */
+    secure: boolean;
+
+    /** Behind a reverse proxy this must be on, or every client shares one rate bucket. */
+    trustProxy?: boolean;
 }
 
 /**
@@ -24,13 +47,21 @@ export interface ApiDeps
  * A route's name keys this object, the served manifest, the browser's typed client and the
  * OpenAPI operation, so a route is named in exactly one place.
  *
- * A factory rather than a module constant so the store can be handed in: every spec builds the
- * app over an in-memory database, which is what lets the suite run with nothing on disk and no
- * order dependence between files.
+ * A factory rather than a module constant so the store, the sessions and the key can be handed
+ * in: every spec builds the app over an in-memory database with a key of its own choosing, which
+ * is what lets the suite run with nothing on disk and no order dependence between files.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- the route literal IS the type; naming it would erase per-route inference
-export function createApi({ store }: ApiDeps)
+export function createApi(deps: ApiDeps)
 {
+    const { store, sessions } = deps;
+    const guards = adminGuards({
+        sessions,
+        secure: deps.secure,
+        key: deps.adminKey,
+        trustProxy: deps.trustProxy
+    });
+
     return {
         blog: feature('/blog', (routes) => ({
             /**
@@ -81,6 +112,86 @@ export function createApi({ store }: ApiDeps)
                 }
 
                 return detail;
+            })
+        })),
+
+        admin: feature('/admin', (routes) => ({
+            /**
+             * Whether this browser is signed in.
+             *
+             * Not behind `requireAdmin`: the dashboard calls it on load to choose between the key
+             * form and the editor, and a 401 would be an error to handle where a plain "no" is
+             * the answer. It reports one bit and an expiry, never anything about the key.
+             */
+            session: routes.get('/session', { output: sessionState }, (context) =>
+            {
+                const token = guards.readToken(context.request);
+
+                if (token === undefined || deps.adminKey === null)
+                {
+                    return SIGNED_OUT;
+                }
+
+                const live = sessions.verify(token);
+
+                return live === null ? SIGNED_OUT : { signedIn: true, expiresAt: iso(live.expiresAt) };
+            }),
+
+            /**
+             * Exchanges the key for a session.
+             *
+             * The failure answers are deliberately uniform in BODY: a wrong key and a dashboard
+             * with no key configured say the same nothing. Only the status differs, and only
+             * where a caller has to be told something actionable - 429 so they stop retrying.
+             *
+             * There is no "no such key" versus "wrong key" to leak, because there is one key;
+             * distinguishing them would say whether one is configured at all.
+             */
+            signIn: routes.with(guards.sameOrigin).post('/session', {
+                input: adminKeyInput,
+                output: sessionState,
+                responses: { 401: sessionState, 429: sessionState, 503: sessionState }
+            }, (context) =>
+            {
+                if (guards.throttleLogin(context.request) !== undefined)
+                {
+                    return reply(429, SIGNED_OUT);
+                }
+
+                if (deps.adminKey === null)
+                {
+                    return reply(503, SIGNED_OUT);
+                }
+
+                if (!matchesKey(context.input.key, deps.adminKey))
+                {
+                    return reply(401, SIGNED_OUT);
+                }
+
+                const issued = sessions.create();
+
+                return reply(200, { signedIn: true, expiresAt: iso(issued.expiresAt) }, {
+                    'set-cookie': guards.setCookie(issued.token, SESSION_TTL_SECONDS)
+                });
+            }),
+
+            /**
+             * Ends this session.
+             *
+             * Behind `sameOrigin` but NOT behind `requireAdmin`: signing out has to work even
+             * once the session has expired, and a 401 would leave a stale cookie in the browser
+             * with nothing able to clear it. The cookie is expired either way.
+             */
+            signOut: routes.with(guards.sameOrigin).post('/session/end', { output: sessionState }, (context) =>
+            {
+                const token = guards.readToken(context.request);
+
+                if (token !== undefined)
+                {
+                    sessions.revoke(token);
+                }
+
+                return reply(200, SIGNED_OUT, { 'set-cookie': guards.clearCookie() });
             })
         }))
     };

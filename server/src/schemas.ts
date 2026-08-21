@@ -134,6 +134,25 @@ export const postRecord = object({
 });
 export type PostRecord = Infer<typeof postRecord>;
 
+/** What the sign-in form submits. The key is never logged, echoed or stored. */
+export const adminKeyInput = object({
+    key: string({ trim: true, min: 1, max: 200 })
+});
+export type AdminKeyInput = Infer<typeof adminKeyInput>;
+
+/**
+ * Whether the caller is signed in, and until when.
+ *
+ * Deliberately says nothing else - no key fragment, no hint, no "wrong key" versus "no key".
+ * The dashboard needs exactly one bit to decide what to render.
+ */
+export const sessionState = object({
+    signedIn: boolean(),
+    /** ISO 8601, or null when signed out. The dashboard warns before this passes. */
+    expiresAt: string().nullable()
+});
+export type SessionState = Infer<typeof sessionState>;
+
 /** One tag and how many published posts carry it - the blog's own filter list. */
 export const tagCount = object({
     tag: string(),

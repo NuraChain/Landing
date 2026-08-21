@@ -24,7 +24,8 @@
         "test:i18n": "npm run test:i18n --workspace application",
         "test:server": "npm test --workspace server",
         "coverage": "npm run coverage --workspace application",
-        "qa:visual": "node scripts/visual-qa.mjs"
+        "qa:visual": "node scripts/visual-qa.mjs",
+        "admin:key": "npm run admin:key --workspace server"
     },
     "devDependencies": {
         "@azerothjs/cli": "2.0.0-beta.2"
