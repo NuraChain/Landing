@@ -1,0 +1,40 @@
+import type { Inline } from '../lib/markdown';
+
+/**
+ * A run of inline markdown: text, emphasis, code and links.
+ *
+ * Its own component because four block types need it - a paragraph, a heading, a quote and a
+ * list item - and writing the same five-branch chain four times is how one of them ends up
+ * missing a case. A link in a heading works because this is shared, not because it was
+ * remembered in four places.
+ *
+ * Every node is wrapped in a `span`, which is inline already, so nothing here disturbs the flow
+ * of the sentence it sits in.
+ */
+export default component InlineText(props: { nodes: Inline[] })
+{
+    <For each={ props.nodes } key={ (_node, index) => String(index) } let={ node }>
+        <span>
+            <Show when={ node.kind === 'text' }>{ node.kind === 'text' ? node.text : '' }</Show>
+            <Show when={ node.kind === 'strong' }>
+                <strong class="font-semibold">{ node.kind === 'strong' ? node.text : '' }</strong>
+            </Show>
+            <Show when={ node.kind === 'em' }>
+                <em>{ node.kind === 'em' ? node.text : '' }</em>
+            </Show>
+            <Show when={ node.kind === 'code' }>
+                <code class="rounded bg-elevated px-1.5 py-0.5 font-mono text-[0.9em]">{ node.kind === 'code' ? node.text : '' }</code>
+            </Show>
+            { /* Every outbound link carries the safe rel - the rule the rest of the site already
+                 holds, and a post body is the one place a url arrives from outside the repo.
+                 The href itself was vetted by safeHref before it ever reached this tree. */ }
+            <Show when={ node.kind === 'link' }>
+                <a
+                    class="text-accent underline underline-offset-2"
+                    href={ node.kind === 'link' ? node.href : '#' }
+                    rel="noopener noreferrer"
+                >{ node.kind === 'link' ? node.text : '' }</a>
+            </Show>
+        </span>
+    </For>
+}

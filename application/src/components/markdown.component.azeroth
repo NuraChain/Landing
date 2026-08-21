@@ -1,0 +1,94 @@
+import { parseMarkdown, type Block, type Inline } from '../lib/markdown';
+
+import InlineText from './inline-text.component.azeroth';
+
+/**
+ * A post's body.
+ *
+ * Renders the TREE the parser produced, through real elements. Nothing here builds markup from a
+ * string and nothing touches innerHTML, so an author's text reaches the DOM as text and script in
+ * a post is impossible rather than filtered. See lib/markdown.ts.
+ *
+ * The `contents` wrappers are what a `<For>` row needs: the reconciler moves rows by element
+ * identity, so each row has to BE one element - and `display: contents` keeps that element out of
+ * the layout, so the blocks below are the flex children and the gap between them is real.
+ */
+export default component Markdown(props: { source: string })
+{
+    derived blocks = parseMarkdown(props.source);
+
+    /** Narrowing helpers: a `<Show>` guard does not narrow the union inside an attribute. */
+    const runOf = (block: Block): Inline[] =>
+        block.kind === 'paragraph' || block.kind === 'heading' || block.kind === 'quote' ? block.inline : [];
+
+    const itemsOf = (block: Block): Inline[][] => block.kind === 'list' ? block.items : [];
+
+    <div class="flex flex-col gap-4 text-ink">
+        <For each={ blocks } key={ (block, index) => `${ index }-${ block.kind }` } let={ block }>
+            <div class="contents">
+                <Show when={ block.kind === 'paragraph' }>
+                    <p class="leading-relaxed"><InlineText nodes={ runOf(block) } /></p>
+                </Show>
+
+                { /* Capped at h2: the page's own h1 is the post title, so a `#` in the body is a
+                     section under it. Three levels, each its own element - a heading whose level
+                     came from a variable would be a `Dynamic` for no gain. */ }
+                <Show when={ block.kind === 'heading' && block.level === 2 }>
+                    <h2 class="mt-2 text-2xl font-semibold"><InlineText nodes={ runOf(block) } /></h2>
+                </Show>
+                <Show when={ block.kind === 'heading' && block.level === 3 }>
+                    <h3 class="mt-2 text-xl font-semibold"><InlineText nodes={ runOf(block) } /></h3>
+                </Show>
+                <Show when={ block.kind === 'heading' && block.level === 4 }>
+                    <h4 class="mt-2 text-lg font-semibold"><InlineText nodes={ runOf(block) } /></h4>
+                </Show>
+
+                { /* `border-s` and `ps-`, not their physical twins: the rule sits at the reader's
+                     start edge, so it moves to the right in Persian and Arabic on its own. */ }
+                <Show when={ block.kind === 'quote' }>
+                    <blockquote class="border-s-4 border-line ps-4 italic text-muted">
+                        <InlineText nodes={ runOf(block) } />
+                    </blockquote>
+                </Show>
+
+                { /* `dir="ltr"` on the code, always: a shell command or a JSON body is a Latin
+                     run, and inside a mirrored paragraph it would reorder while reading
+                     identically to a screen reader - the worst kind of wrong. */ }
+                <Show when={ block.kind === 'code' }>
+                    <pre class="overflow-x-auto rounded-lg bg-elevated p-4 text-sm" dir="ltr"><code class="font-mono">{ block.kind === 'code' ? block.text : '' }</code></pre>
+                </Show>
+
+                <Show when={ block.kind === 'rule' }>
+                    <hr class="border-line"/>
+                </Show>
+
+                { /* No intrinsic size to declare - the author supplies the file, not the markup -
+                     so the box is held by CSS and the image cannot shift what is below it. */ }
+                <Show when={ block.kind === 'image' }>
+                    <img
+                        class="w-full rounded-lg"
+                        src={ block.kind === 'image' ? block.src : '' }
+                        alt={ block.kind === 'image' ? block.alt : '' }
+                        loading="lazy"
+                        decoding="async"
+                    />
+                </Show>
+
+                <Show when={ block.kind === 'list' && !block.ordered }>
+                    <ul class="flex list-disc flex-col gap-1 ps-6">
+                        <For each={ itemsOf(block) } key={ (_item, index) => String(index) } let={ item }>
+                            <li class="leading-relaxed"><InlineText nodes={ item } /></li>
+                        </For>
+                    </ul>
+                </Show>
+                <Show when={ block.kind === 'list' && block.ordered }>
+                    <ol class="flex list-decimal flex-col gap-1 ps-6">
+                        <For each={ itemsOf(block) } key={ (_item, index) => String(index) } let={ item }>
+                            <li class="leading-relaxed"><InlineText nodes={ item } /></li>
+                        </For>
+                    </ol>
+                </Show>
+            </div>
+        </For>
+    </div>
+}
