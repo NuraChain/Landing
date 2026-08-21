@@ -1,0 +1,28 @@
+import type { Child } from 'azerothjs';
+
+/**
+ * A labelled control.
+ *
+ * The control is nested INSIDE the `<label>` rather than pointed at by `for`/`id`. Both
+ * associate the two, but the nested form cannot come apart: there is no id to collide with
+ * another field, and no way to end up with a label pointing at an element that was renamed.
+ * Clicking the text focuses the control either way.
+ */
+export default component Field(props:
+{
+    label: string;
+    /** Shown under the control, for the rule a reader cannot guess - a format, a separator. */
+    hint?: string;
+    children?: Child;
+})
+{
+    <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-semibold text-ink">{ () => props.label }</span>
+
+        { props.children }
+
+        <Show when={ () => props.hint !== undefined }>
+            <span class="text-xs text-faint">{ () => props.hint }</span>
+        </Show>
+    </label>
+}

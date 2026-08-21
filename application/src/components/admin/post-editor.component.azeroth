@@ -1,0 +1,397 @@
+import { ApiError, client, type PostEditor, type PostLocale } from '../../api';
+import { LOCALES, directionOf, nativeName, useLocale, type Locale } from '../../stores/locale';
+
+import { CONTROL, CONTROL_BODY, CONTROL_MONO } from './controls';
+
+import Button from '../button.component.azeroth';
+import Field from './field.component.azeroth';
+
+interface Draft
+{
+    title: string;
+    summary: string;
+    body: string;
+}
+
+const EMPTY: Draft = { title: '', summary: '', body: '' };
+
+/**
+ * One post, in every language it has.
+ *
+ * The tab strip shows all ten rather than only the ones present, because the thing an editor
+ * opens this for is seeing what is MISSING - a strip of two tabs answers "what have I written"
+ * and never "what have I not".
+ */
+export default component PostEditorPanel(props:
+{
+    /** null opens the editor on a post that does not exist yet. */
+    id: number | null;
+    onDone: () => void;
+})
+{
+    const { t, locale } = useLocale();
+
+    state post = null as PostEditor | null;
+    state loading = props.id !== null;
+    state busy = false;
+    state error = null as string | null;
+    state saved = false;
+
+    state slug = '';
+    state status = 'draft' as 'draft' | 'published';
+    state coverImage = '';
+    state tags = '';
+    state fallback = 'en' as PostLocale;
+
+    // The reader's own language is the one they are most likely writing first.
+    state active = (LOCALES.includes(locale()) ? locale() : 'en') as PostLocale;
+
+    // Per language, so switching tabs never discards typing that has not been sent yet.
+    state drafts = {} as Partial<Record<PostLocale, Draft>>;
+    state dirty = [] as PostLocale[];
+
+    const creating = (): boolean => post === null;
+
+    /** The languages this post actually holds - the only ones allowed to be its fallback. */
+    const present = (): PostLocale[] => post?.translations.map((row) => row.locale) ?? [];
+
+    const draftFor = (which: PostLocale): Draft => drafts[which] ?? EMPTY;
+
+    const touch = (which: PostLocale, patch: Partial<Draft>): void =>
+    {
+        drafts = { ...drafts, [which]: { ...draftFor(which), ...patch } };
+        dirty = dirty.includes(which) ? dirty : [...dirty, which];
+        saved = false;
+    };
+
+    /** Adopts a server answer as the new truth - every mutation returns the whole editor shape. */
+    const adopt = (fresh: PostEditor): void =>
+    {
+        post = fresh;
+        slug = fresh.slug;
+        status = fresh.status;
+        coverImage = fresh.coverImage ?? '';
+        tags = fresh.tags.join(', ');
+        fallback = fresh.defaultLocale;
+
+        const next: Partial<Record<PostLocale, Draft>> = {};
+
+        for (const row of fresh.translations)
+        {
+            next[row.locale] = { title: row.title, summary: row.summary, body: row.body };
+        }
+
+        drafts = next;
+        dirty = [];
+    };
+
+    effect
+    {
+        let live = true;
+        const id = props.id;
+
+        if (id === null)
+        {
+            return;
+        }
+
+        client.admin.post({ params: { id: String(id) } })
+            .then((found) =>
+            {
+                if (live)
+                {
+                    adopt(found);
+                    active = found.defaultLocale;
+                    loading = false;
+                }
+            })
+            .catch(() =>
+            {
+                if (live)
+                {
+                    error = t().admin.failed;
+                    loading = false;
+                }
+            });
+
+        cleanup
+        {
+            live = false;
+        }
+    }
+
+    /**
+     * Tags arrive as a line and leave as a list.
+     *
+     * Lower-cased and de-duplicated here as well as on the server: the server is what enforces
+     * it, but an editor who types `Mainnet, mainnet` should see one tag rather than have one
+     * silently vanish on the round trip.
+     */
+    const tagList = (): string[] =>
+        [...new Set(tags.split(',').map((tag) => tag.trim().toLowerCase()).filter((tag) => tag !== ''))];
+
+    const fields = () => ({
+        slug: slug.trim().toLowerCase(),
+        status,
+        coverImage: coverImage.trim() === '' ? null : coverImage.trim(),
+        tags: tagList(),
+        defaultLocale: fallback
+    });
+
+    const fail = (thrown: unknown): void =>
+    {
+        error = thrown instanceof ApiError && thrown.status === 409
+            ? t().admin.slugTaken
+            : t().admin.failed;
+        busy = false;
+    };
+
+    const save = (): void =>
+    {
+        const current = draftFor(active);
+
+        if (busy)
+        {
+            return;
+        }
+
+        if (current.title.trim() === '' || current.body.trim() === '')
+        {
+            error = t().admin.required;
+
+            return;
+        }
+
+        busy = true;
+        error = null;
+
+        if (creating())
+        {
+            /*
+             * A post's first language IS its fallback. Offering the choice here would let an
+             * editor name a fallback the post does not have, which every reader then falls
+             * through to and finds empty.
+             */
+            client.admin.create({ input: { ...fields(), defaultLocale: active, locale: active, translation: current } })
+                .then((fresh) =>
+                {
+                    adopt(fresh);
+                    busy = false;
+                    saved = true;
+                })
+                .catch(fail);
+
+            return;
+        }
+
+        const id = String(post!.id);
+
+        // The post's own fields first, then every language touched since the last save. Sequential
+        // rather than parallel: each call answers with the whole editor, and the last answer wins -
+        // racing them would leave the panel showing whichever happened to land last.
+        const queue = dirty.filter((which) => draftFor(which).title.trim() !== '' && draftFor(which).body.trim() !== '');
+
+        queue.reduce(
+            (chain, which) => chain.then(() =>
+                client.admin.translate({ params: { id, locale: which }, input: draftFor(which) })),
+            client.admin.update({ params: { id }, input: fields() })
+        )
+            .then((fresh) =>
+            {
+                adopt(fresh);
+                busy = false;
+                saved = true;
+            })
+            .catch(fail);
+    };
+
+    const drop = (which: PostLocale): void =>
+    {
+        if (busy || creating())
+        {
+            return;
+        }
+
+        busy = true;
+        error = null;
+
+        client.admin.untranslate({ params: { id: String(post!.id), locale: which } })
+            .then((fresh) =>
+            {
+                adopt(fresh);
+                active = fresh.defaultLocale;
+                busy = false;
+            })
+            .catch((thrown: unknown) =>
+            {
+                // 409 is the server refusing to strip a post of the language everything else
+                // falls back to. Named, because the generic failure would read as a bug.
+                error = thrown instanceof ApiError && thrown.status === 409
+                    ? t().admin.cannotRemoveDefault
+                    : t().admin.failed;
+                busy = false;
+            });
+    };
+
+    <div class="flex flex-col gap-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <Button variant="ghost" onClick={ () => props.onDone() }>{ () => t().admin.back }</Button>
+
+            <div class="flex items-center gap-3">
+                <Show when={ () => saved }>
+                    <span class="text-sm text-muted" role="status">{ () => t().admin.saved }</span>
+                </Show>
+                <Button disabled={ busy || loading } onClick={ save }>
+                    { () => busy ? `${ t().admin.saving }…` : t().admin.save }
+                </Button>
+            </div>
+        </div>
+
+        <Show when={ () => error !== null }>
+            <p class="rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
+                { () => error }
+            </p>
+        </Show>
+
+        <Show when={ () => loading }>
+            <p class="text-faint">{ () => `${ t().blog.loading }…` }</p>
+        </Show>
+
+        <Show when={ () => !loading }>
+            <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
+                { /* The language column comes SECOND in the markup and is placed to the side by
+                     grid on wide screens, so on a narrow one it stacks under the text rather
+                     than pushing the editor below the fold. */ }
+                <div class="flex flex-col gap-4">
+                    <div class="flex flex-wrap gap-2" role="tablist" aria-label={ t().admin.translations }>
+                        <For each={ [...LOCALES] } key={ (code) => code } let={ code }>
+                            { /* Every language, not only the ones written. A tab carries three
+                                 states and only one of them is colour: `aria-selected` for the
+                                 open tab, a bullet for a language that exists, and the fallback
+                                 marked in its own text. */ }
+                            <button
+                                type="button"
+                                role="tab"
+                                lang={ code }
+                                aria-selected={ () => active === (code as PostLocale) ? 'true' : 'false' }
+                                class={ () => 'rounded-full border px-3 py-1 text-sm transition-colors '
+                                    + (active === (code as PostLocale)
+                                        ? 'cursor-default border-accent bg-accent text-accent-ink'
+                                        : 'cursor-pointer border-line text-muted hover:text-ink') }
+                                onClick={ () => active = code as PostLocale }
+                            >
+                                { () => present().includes(code as PostLocale) ? `${ nativeName(code as Locale) } •` : nativeName(code as Locale) }
+                            </button>
+                        </For>
+                    </div>
+
+                    <Field label={ t().admin.postTitle }>
+                        <input
+                            class={ CONTROL }
+                            lang={ () => active }
+                            dir={ () => directionOf(active as Locale) }
+                            value={ () => draftFor(active).title }
+                            onInput={ (event: Event) => touch(active, { title: (event.target as HTMLInputElement).value }) }
+                        />
+                    </Field>
+
+                    <Field label={ t().admin.summary }>
+                        <input
+                            class={ CONTROL }
+                            lang={ () => active }
+                            dir={ () => directionOf(active as Locale) }
+                            value={ () => draftFor(active).summary }
+                            onInput={ (event: Event) => touch(active, { summary: (event.target as HTMLInputElement).value }) }
+                        />
+                    </Field>
+
+                    <Field label={ t().admin.body } hint={ t().admin.bodyHint }>
+                        <textarea
+                            class={ CONTROL_BODY }
+                            lang={ () => active }
+                            dir={ () => directionOf(active as Locale) }
+                            value={ () => draftFor(active).body }
+                            onInput={ (event: Event) => touch(active, { body: (event.target as HTMLTextAreaElement).value }) }
+                        ></textarea>
+                    </Field>
+
+                    <Show when={ () => !creating() && present().includes(active) && present().length > 1 && active !== fallback }>
+                        <div>
+                            <Button variant="secondary" disabled={ busy } onClick={ () => drop(active) }>
+                                { () => t().admin.removeLanguage }
+                            </Button>
+                        </div>
+                    </Show>
+                </div>
+
+                <aside class="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
+                    <Field label={ t().admin.slug }>
+                        { /* A slug is a Latin url segment whatever the interface language is, so
+                             it is written left to right even on a mirrored page. */ }
+                        <input
+                            class={ CONTROL_MONO }
+                            dir="ltr"
+                            spellcheck="false"
+                            value={ () => slug }
+                            onInput={ (event: Event) => { slug = (event.target as HTMLInputElement).value; saved = false; } }
+                        />
+                    </Field>
+
+                    <Field label={ t().admin.status }>
+                        <select
+                            class={ CONTROL }
+                            value={ () => status }
+                            onChange={ (event: Event) => { status = (event.target as HTMLSelectElement).value as 'draft' | 'published'; saved = false; } }
+                        >
+                            <option value="draft">{ () => t().admin.draft }</option>
+                            <option value="published">{ () => t().admin.published }</option>
+                        </select>
+                    </Field>
+
+                    <Field label={ t().admin.tags } hint={ t().admin.tagsHint }>
+                        <input
+                            class={ CONTROL_MONO }
+                            dir="ltr"
+                            value={ () => tags }
+                            onInput={ (event: Event) => { tags = (event.target as HTMLInputElement).value; saved = false; } }
+                        />
+                    </Field>
+
+                    <Field label={ t().admin.coverImage }>
+                        <input
+                            class={ CONTROL_MONO }
+                            dir="ltr"
+                            placeholder="/cover.png"
+                            value={ () => coverImage }
+                            onInput={ (event: Event) => { coverImage = (event.target as HTMLInputElement).value; saved = false; } }
+                        />
+                    </Field>
+
+                    { /* Only offered once there is more than one language to choose between, and
+                         only over languages the post HAS: a fallback naming a translation that
+                         does not exist is the one setting that breaks every reader at once. */ }
+                    <Show when={ () => present().length > 1 }>
+                        <Field label={ t().admin.defaultLocale }>
+                            { /* `selected` on the OPTION rather than `value` on the select.
+                                 These options are built by a <For>, so they do not exist yet at
+                                 the moment a `value` would be applied - the select comes up
+                                 blank and the post looks like it has no fallback at all. The
+                                 status select above gets away with `value` only because its two
+                                 options are written inline and are already there. */ }
+                            <select
+                                class={ CONTROL }
+                                onChange={ (event: Event) => { fallback = (event.target as HTMLSelectElement).value as PostLocale; saved = false; } }
+                            >
+                                <For each={ present() } key={ (code) => code } let={ code }>
+                                    <option value={ code } lang={ code } selected={ () => code === fallback }>
+                                        { nativeName(code as Locale) }
+                                    </option>
+                                </For>
+                            </select>
+                        </Field>
+                    </Show>
+                </aside>
+            </div>
+        </Show>
+    </div>
+}

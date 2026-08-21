@@ -1,0 +1,154 @@
+import { client, type PostRecord } from '../../api';
+import { nativeName, useLocale, type Locale } from '../../stores/locale';
+
+import Button from '../button.component.azeroth';
+
+/**
+ * Every post, drafts included, newest first.
+ *
+ * The languages column is the reason this is a list and not a link to the blog: the public
+ * index shows each post resolved to ONE language, which is exactly the view that cannot answer
+ * "what still needs translating".
+ */
+export default component PostsPanel(props: { onOpen: (id: number | null) => void })
+{
+    const { t, locale } = useLocale();
+
+    state rows = null as PostRecord[] | null;
+    state error = null as string | null;
+    state confirming = null as number | null;
+    state busy = false;
+
+    const day = (iso: string): string =>
+        new Intl.DateTimeFormat(locale(), { dateStyle: 'medium' }).format(new Date(iso));
+
+    const load = (): void =>
+    {
+        client.admin.posts()
+            .then((found) => { rows = found; error = null; })
+            .catch(() => { error = t().admin.failed; rows = []; });
+    };
+
+    effect
+    {
+        load();
+    }
+
+    const remove = (id: number): void =>
+    {
+        if (busy)
+        {
+            return;
+        }
+
+        busy = true;
+
+        client.admin.remove({ params: { id: String(id) } })
+            .then(() =>
+            {
+                rows = (rows ?? []).filter((row) => row.id !== id);
+                confirming = null;
+                busy = false;
+            })
+            .catch(() =>
+            {
+                error = t().admin.failed;
+                busy = false;
+            });
+    };
+
+    <div class="flex flex-col gap-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <h1 class="text-xl font-semibold text-ink">{ () => t().admin.posts }</h1>
+            <Button onClick={ () => props.onOpen(null) }>{ () => t().admin.newPost }</Button>
+        </div>
+
+        <Show when={ () => error !== null }>
+            <p class="rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
+                { () => error }
+            </p>
+        </Show>
+
+        <Show when={ () => rows === null }>
+            <p class="text-faint">{ () => `${ t().blog.loading }…` }</p>
+        </Show>
+
+        <Show when={ () => rows !== null && rows.length === 0 }>
+            <div class="rounded-2xl border border-line bg-surface px-5 py-10 text-center">
+                <p class="font-semibold text-ink">{ () => t().admin.noPosts }</p>
+                <p class="mt-1 text-sm text-muted">{ () => t().admin.noPostsHint }</p>
+            </div>
+        </Show>
+
+        { /* A list of cards rather than a table: the same rows have to work at 390px, where a
+             five-column table either scrolls sideways or crushes every column. */ }
+        <Show when={ () => rows !== null && rows.length > 0 }>
+            <ul class="flex flex-col gap-3">
+                <For each={ rows ?? [] } key={ (row) => row.id } let={ row }>
+                    <li class="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
+                        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            { /* The title is in the post's fallback language, which is not
+                                 necessarily the interface's - so it is isolated, like every
+                                 other run of foreign text on this site. */ }
+                            <span class="text-base font-semibold text-ink">
+                                <bdi lang={ row.defaultLocale }>{ row.title }</bdi>
+                            </span>
+
+                            <span
+                                class={ () => 'rounded-full px-2 py-0.5 text-xs '
+                                    + (row.status === 'published' ? 'bg-accent-soft text-accent' : 'border border-line text-faint') }
+                            >
+                                { () => row.status === 'published' ? t().admin.published : t().admin.draft }
+                            </span>
+                        </div>
+
+                        <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-faint">
+                            <bdi dir="ltr" class="font-mono">/blog/{ row.slug }</bdi>
+                            <bdi dir="ltr">{ day(row.updatedAt) }</bdi>
+                        </p>
+
+                        <p class="flex flex-wrap items-center gap-1.5">
+                            <span class="me-1 text-xs text-faint">{ () => t().admin.languages }</span>
+                            <For each={ row.available } key={ (code) => code } let={ code }>
+                                <span class="rounded-full border border-line px-2 py-0.5 text-xs text-muted" lang={ code }>
+                                    { nativeName(code as Locale) }
+                                </span>
+                            </For>
+                        </p>
+
+                        <div class="flex flex-wrap gap-2">
+                            <Show
+                                when={ () => confirming === row.id }
+                                fallback={ () =>
+                                <div class="flex flex-wrap gap-2">
+                                    <Button variant="secondary" onClick={ () => props.onOpen(row.id) }>
+                                        { () => t().admin.edit }
+                                    </Button>
+                                    <Button variant="ghost" onClick={ () => confirming = row.id }>
+                                        { () => t().admin.remove }
+                                    </Button>
+                                </div>
+                            }
+                            >
+                                { /* The confirmation is an inline step rather than `confirm()`:
+                                     a native dialog cannot be translated, cannot be mirrored,
+                                     and steals focus from the page it is asking about. */ }
+                                <div class="flex flex-1 flex-wrap items-center gap-3">
+                                    <span class="text-sm text-muted">{ () => t().admin.confirmRemove }</span>
+                                    <span class="flex gap-2">
+                                        <Button variant="secondary" disabled={ busy } onClick={ () => remove(row.id) }>
+                                            { () => t().admin.remove }
+                                        </Button>
+                                        <Button variant="ghost" onClick={ () => confirming = null }>
+                                            { () => t().admin.cancel }
+                                        </Button>
+                                    </span>
+                                </div>
+                            </Show>
+                        </div>
+                    </li>
+                </For>
+            </ul>
+        </Show>
+    </div>
+}

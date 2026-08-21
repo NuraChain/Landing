@@ -2,9 +2,13 @@
 // is erased at build, so no handler, no store and no server dependency can reach the browser
 // bundle. The runtime half is the MANIFEST: embedded in a server-rendered page by the kit
 // (readManifest, synchronous), and fetched once on a plain vite dev page.
-import { createClient, readManifest, type Manifest } from '@azerothjs/http/api/shared';
+import { ApiError, createClient, readManifest, type Manifest } from '@azerothjs/http/api/shared';
 
 import type { Api } from '../../server/src/app.ts';
+
+// Re-exported so a call site imports its error from the same module as the client that
+// throws it, rather than reaching into the framework for a type it already has in hand.
+export { ApiError };
 
 export type {
     PostCard,

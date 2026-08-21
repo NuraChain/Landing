@@ -1,0 +1,153 @@
+import { FileText } from 'lucide';
+
+import { client, type SessionState } from '../api';
+import { useLocale } from '../stores/locale';
+import type { Strings } from '../lib/i18n/types';
+
+import { icon } from '../components/icon';
+
+import AdminLogin from '../components/admin/admin-login.component.azeroth';
+import Button from '../components/button.component.azeroth';
+import PostEditorPanel from '../components/admin/post-editor.component.azeroth';
+import PostsPanel from '../components/admin/posts-panel.component.azeroth';
+
+/**
+ * The dashboard's sections, as DATA.
+ *
+ * There is one today. It is a list anyway, because the alternative - a single hard-coded panel
+ * with its heading and its nav entry written inline - is the thing that has to be taken apart
+ * before a second section can exist. Adding one is a row here plus its component; the shell,
+ * the nav, the mobile layout and the signed-in gate already handle it.
+ */
+const PANELS = [
+    { id: 'posts', label: (strings: Strings): string => strings.admin.posts, glyph: FileText }
+] as const;
+
+type PanelId = (typeof PANELS)[number]['id'];
+
+/** Under this much time left, the shell says so rather than letting a save fail into a 401. */
+const WARN_WITHIN_MS = 60 * 60 * 1000;
+
+/**
+ * /admin.
+ *
+ * Reached by typing the path - nothing on the site links here, and that is deliberate rather
+ * than an oversight: the key is the only thing guarding it, so the fewer places advertise the
+ * door the fewer people try the handle. `robots.txt` disallows it for the same reason.
+ *
+ * Rendered in the BROWSER. Nothing here is for a reader or a crawler, and server-rendering a
+ * page whose every branch depends on a session cookie would only produce a signed-out shell to
+ * be replaced a moment later.
+ */
+export default component Admin()
+{
+    const { t } = useLocale();
+
+    // null while the session is still being asked about: rendering the key form during that
+    // gap would flash a sign-in at somebody who is already signed in.
+    state session = null as SessionState | null;
+    state panel = 'posts' as PanelId;
+    state mode = 'list' as 'list' | 'edit';
+    state editing = null as number | null;
+    state now = Date.now();
+
+    const check = (): void =>
+    {
+        client.admin.session()
+            .then((state) => session = state)
+            .catch(() => session = { signedIn: false, expiresAt: null });
+    };
+
+    effect
+    {
+        check();
+    }
+
+    // A minute is fine: this drives a warning, not a deadline.
+    effect
+    {
+        const timer = setInterval(() => now = Date.now(), 60_000);
+
+        cleanup
+        {
+            clearInterval(timer);
+        }
+    }
+
+    derived expiring = session?.expiresAt !== null && session?.expiresAt !== undefined
+        && Date.parse(session.expiresAt) - now < WARN_WITHIN_MS;
+
+    const signOut = (): void =>
+    {
+        client.admin.signOut()
+            .then(() => session = { signedIn: false, expiresAt: null })
+            .catch(() => { /* Already gone is the outcome asked for; there is nothing to report. */ });
+    };
+
+    const open = (id: number | null): void =>
+    {
+        editing = id;
+        mode = 'edit';
+    };
+
+    <Show when={ () => session !== null } fallback={ () => <div class="min-h-[70vh]"></div> }>
+        <Show
+            when={ () => session!.signedIn }
+            fallback={ () => <AdminLogin onSignedIn={ check } /> }
+        >
+            <div class="mx-auto grid w-full max-w-6xl gap-6 px-5 py-10 lg:grid-cols-[14rem_minmax(0,1fr)]">
+                { /* The nav is a row on a phone and a column beside the content on a wide
+                     screen. Same markup, so there is no second nav to keep in step. */ }
+                <aside class="flex flex-col gap-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <h2 class="text-sm font-semibold uppercase tracking-wide text-faint">
+                            { () => t().admin.title }
+                        </h2>
+                        <Button variant="ghost" onClick={ signOut }>{ () => t().admin.signOut }</Button>
+                    </div>
+
+                    <nav class="flex flex-wrap gap-2 lg:flex-col">
+                        <For each={ [...PANELS] } key={ (entry) => entry.id } let={ entry }>
+                            <button
+                                type="button"
+                                aria-current={ () => panel === entry.id ? 'page' : undefined }
+                                class={ () => 'flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors '
+                                    + (panel === entry.id
+                                        ? 'cursor-default bg-elevated text-ink'
+                                        : 'cursor-pointer text-muted hover:bg-elevated hover:text-ink') }
+                                onClick={ () => { panel = entry.id; mode = 'list'; } }
+                            >
+                                { icon(entry.glyph, 'size-4') }
+                                { () => entry.label(t()) }
+                            </button>
+                        </For>
+                    </nav>
+
+                    <Show when={ () => expiring }>
+                        { /* Said before a save fails rather than after: a 12-hour session that
+                             lapses mid-edit would otherwise surface as a generic failure on the
+                             one action the operator cared about. */ }
+                        <p class="rounded-xl border border-line px-3 py-2 text-xs text-faint" role="status">
+                            { () => t().admin.expiring }
+                        </p>
+                    </Show>
+                </aside>
+
+                <main>
+                    <Show when={ () => panel === 'posts' }>
+                        <Show
+                            when={ () => mode === 'edit' }
+                            fallback={ () => <PostsPanel onOpen={ open } /> }
+                        >
+                            { /* Rebuilt on every open rather than reused: `mode` flips through
+                                 'list' between posts, and <Show> rebuilds its branch on a
+                                 falsy->truthy flip - so the previous post's unsaved drafts
+                                 cannot survive into the next one's editor. */ }
+                            <PostEditorPanel id={ editing } onDone={ () => mode = 'list' } />
+                        </Show>
+                    </Show>
+                </main>
+            </div>
+        </Show>
+    </Show>
+}

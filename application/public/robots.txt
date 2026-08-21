@@ -1,0 +1,7 @@
+# The dashboard is guarded by a key, not by this file - a disallow is a request, and the
+# crawlers worth worrying about are the ones that ignore it. It is here so an honest crawler
+# does not index a path that is no use to a reader.
+User-agent: *
+Disallow: /admin
+
+Allow: /

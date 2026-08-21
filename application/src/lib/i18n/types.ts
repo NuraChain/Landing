@@ -192,6 +192,58 @@ export interface Strings
         availableIn: string;
     };
 
+    /**
+     * The dashboard at /admin.
+     *
+     * Translated like everything else, and not because a stranger will read it: the operator
+     * writes Persian posts, and a dashboard pinned to English would render a right-to-left
+     * author an interface that mirrors nothing while the content beside it does.
+     */
+    admin:
+    {
+        title: string;
+        signInHint: string;
+        key: string;
+        signIn: string;
+        wrongKey: string;
+        tooMany: string;
+        signOut: string;
+        posts: string;
+        newPost: string;
+        noPosts: string;
+        noPostsHint: string;
+        edit: string;
+        remove: string;
+        confirmRemove: string;
+        languages: string;
+        slug: string;
+        status: string;
+        draft: string;
+        published: string;
+        tags: string;
+        tagsHint: string;
+        coverImage: string;
+        defaultLocale: string;
+        translations: string;
+        addLanguage: string;
+        removeLanguage: string;
+        postTitle: string;
+        summary: string;
+        body: string;
+        bodyHint: string;
+        save: string;
+        saving: string;
+        saved: string;
+        back: string;
+        slugTaken: string;
+        failed: string;
+        required: string;
+        cannotRemoveDefault: string;
+        /** Shown while the 12-hour session is inside its last hour. */
+        expiring: string;
+        cancel: string;
+    };
+
     explorer:
     {
         title: string;
