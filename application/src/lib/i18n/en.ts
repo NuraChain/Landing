@@ -181,7 +181,23 @@ export const en: Strings =
         required: 'A title and a body are required.',
         cannotRemoveDefault: 'The fallback language cannot be removed.',
         expiring: 'This session ends soon. Save your work.',
-        cancel: 'Cancel'
+        cancel: 'Cancel',
+        removed: 'Post deleted'
+    },
+
+    pagination:
+    {
+        label: 'Pagination',
+        first: 'First page',
+        previous: 'Previous page',
+        next: 'Next page',
+        last: 'Last page',
+        page: 'Page'
+    },
+
+    toast:
+    {
+        dismiss: 'Dismiss'
     },
 
     explorer:

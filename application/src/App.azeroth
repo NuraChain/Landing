@@ -2,6 +2,7 @@ import { RouterProvider, Routes, createMemoryHistory, createRouter } from 'azero
 
 import Footer from './components/layout/footer.component.azeroth';
 import Header from './components/layout/header.component.azeroth';
+import Toasts from './components/ui/toasts.component.azeroth';
 
 import { useLocale } from './stores/locale';
 
@@ -39,5 +40,10 @@ export default component App(props: { url?: string })
 
             <Footer />
         </div>
+
+        { /* Outside the routed area and mounted once: a toast raised by a control on one page
+             should survive the navigation away from it, and the live region has to exist
+             before anything is put into it. */ }
+        <Toasts />
     </RouterProvider>
 }

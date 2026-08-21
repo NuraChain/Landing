@@ -289,6 +289,18 @@
 
 /* One keyframe, direction supplied by a custom property, so the drawer enters from the
    right in English and the left in Persian without a second animation to keep in step. */
+/* A toast arrives from the edge it sits on. The drawer's keyframe would slide it in from
+   the SIDE, which reads as a panel rather than a notice - and would borrow
+   `--drawer-from`, a custom property only the drawer sets. */
+@keyframes toast
+{
+    from
+    {
+        opacity: 0;
+        transform: translateY(0.5rem);
+    }
+}
+
 @keyframes drawer
 {
     from

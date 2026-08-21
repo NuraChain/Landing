@@ -183,6 +183,31 @@ export const removed = object({ removed: boolean() });
 /** What the dashboard lists. */
 export const postRecordList = array(postRecord);
 
+/**
+ * A page of dashboard rows.
+ *
+ * The same envelope the public blog has had since it was written. The dashboard shipped with a
+ * bare array and a hard `limit: 200`, which meant the 201st post existed, was served, and was
+ * invisible to the only screen that could edit it - silently, with nothing to indicate a
+ * cut-off had happened.
+ */
+export const postRecordPage = object({
+    rows: postRecordList,
+    total: number({ int: true, min: 0 }),
+    page: number({ int: true, min: 1 }),
+    pages: number({ int: true, min: 1 })
+});
+export type PostRecordPage = Infer<typeof postRecordPage>;
+
+/**
+ * Paging for the dashboard: the reader's language is not a factor, because the list shows each
+ * post in its own fallback language rather than resolving one.
+ */
+export const adminPageQuery = object({
+    page: number({ int: true, min: 1, max: 1_000_000, coerce: true }).optional(),
+    limit: number({ int: true, min: 1, max: 100, coerce: true }).optional()
+});
+
 /** One tag and how many published posts carry it - the blog's own filter list. */
 export const tagCount = object({
     tag: string(),

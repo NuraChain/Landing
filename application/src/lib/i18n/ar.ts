@@ -181,7 +181,23 @@ export const ar: Strings =
         required: 'العنوان والنص مطلوبان.',
         cannotRemoveDefault: 'لا يمكن إزالة لغة الرجوع.',
         expiring: 'تنتهي هذه الجلسة قريبًا. احفظ عملك.',
-        cancel: 'إلغاء'
+        cancel: 'إلغاء',
+        removed: 'حُذفت المقالة'
+    },
+
+    pagination:
+    {
+        label: 'ترقيم الصفحات',
+        first: 'الصفحة الأولى',
+        previous: 'الصفحة السابقة',
+        next: 'الصفحة التالية',
+        last: 'الصفحة الأخيرة',
+        page: 'صفحة'
+    },
+
+    toast:
+    {
+        dismiss: 'إغلاق'
     },
 
     explorer:

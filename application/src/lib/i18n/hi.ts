@@ -181,7 +181,23 @@ export const hi: Strings =
         required: 'शीर्षक और मुख्य पाठ आवश्यक हैं।',
         cannotRemoveDefault: 'वैकल्पिक भाषा हटाई नहीं जा सकती।',
         expiring: 'यह सत्र जल्द समाप्त होगा। अपना काम सहेजें।',
-        cancel: 'रद्द करें'
+        cancel: 'रद्द करें',
+        removed: 'पोस्ट हटाई गई'
+    },
+
+    pagination:
+    {
+        label: 'पृष्ठ क्रमांकन',
+        first: 'पहला पृष्ठ',
+        previous: 'पिछला पृष्ठ',
+        next: 'अगला पृष्ठ',
+        last: 'अंतिम पृष्ठ',
+        page: 'पृष्ठ'
+    },
+
+    toast:
+    {
+        dismiss: 'बंद करें'
     },
 
     explorer:

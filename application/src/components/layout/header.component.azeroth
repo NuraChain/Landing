@@ -7,6 +7,7 @@ import { captureOverlay } from '../../lib/overlay';
 import { useSectionHref } from '../../lib/section-href';
 
 import IconButton from '../ui/icon-button.component.azeroth';
+import Tooltip from '../ui/tooltip.component.azeroth';
 import { useTheme } from '../../stores/theme';
 import type { Theme } from '../../stores/theme';
 
@@ -142,18 +143,25 @@ export default component Header()
                 </Link>
             </nav>
 
-            <IconButton label={ `${ t().theme.label }: ${ t().theme[theme()] }` } onClick={ () => cycle() }>
-                { () => icon(GLYPH[theme()], 'size-[18px]') }
-            </IconButton>
+            { /* `describe={false}`: the bubble shows the SAME string the button already carries
+                 as its accessible name, for the sighted mouse user who cannot see it. It is
+                 marked `aria-hidden`, since announcing it would read the words twice. */ }
+            <Tooltip label={ `${ t().theme.label }: ${ t().theme[theme()] }` } describe={ false }>
+                <IconButton label={ `${ t().theme.label }: ${ t().theme[theme()] }` } onClick={ () => cycle() }>
+                    { () => icon(GLYPH[theme()], 'size-[18px]') }
+                </IconButton>
+            </Tooltip>
 
-            <IconButton
-                label={ t().nav.language }
-                haspopup="dialog"
-                expanded={ langOpen }
-                onClick={ () => langOpen = true }
-            >
-                { icon(Languages, 'size-[18px]') }
-            </IconButton>
+            <Tooltip label={ t().nav.language } describe={ false }>
+                <IconButton
+                    label={ t().nav.language }
+                    haspopup="dialog"
+                    expanded={ langOpen }
+                    onClick={ () => langOpen = true }
+                >
+                    { icon(Languages, 'size-[18px]') }
+                </IconButton>
+            </Tooltip>
 
             <a
                 href={ () => sectionHref('wallet') }

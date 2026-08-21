@@ -242,6 +242,31 @@ export interface Strings
         /** Shown while the 12-hour session is inside its last hour. */
         expiring: string;
         cancel: string;
+        /** The toast after a delete, as opposed to `remove`, which labels the button. */
+        removed: string;
+    };
+
+    pagination:
+    {
+        /** Names the <nav>, so a screen reader can skip the whole control. */
+        label: string;
+        first: string;
+        previous: string;
+        next: string;
+        last: string;
+        /**
+         * Prefixes a page number in a control's accessible name: "Page 3".
+         *
+         * The number is composed on at the call site rather than interpolated - these tables
+         * are plain typed strings with no placeholder machinery, and the digits have to go
+         * through Intl for the reader's own numerals anyway.
+         */
+        page: string;
+    };
+
+    toast:
+    {
+        dismiss: string;
     };
 
     explorer:

@@ -181,7 +181,23 @@ export const fa: Strings =
         required: 'عنوان و متن لازم است.',
         cannotRemoveDefault: 'زبان جایگزین را نمی‌توان حذف کرد.',
         expiring: 'این نشست به‌زودی پایان می‌یابد. کارتان را ذخیره کنید.',
-        cancel: 'انصراف'
+        cancel: 'انصراف',
+        removed: 'نوشته حذف شد'
+    },
+
+    pagination:
+    {
+        label: 'صفحه‌بندی',
+        first: 'نخستین صفحه',
+        previous: 'صفحه پیش',
+        next: 'صفحه بعد',
+        last: 'آخرین صفحه',
+        page: 'صفحه'
+    },
+
+    toast:
+    {
+        dismiss: 'بستن'
     },
 
     explorer:

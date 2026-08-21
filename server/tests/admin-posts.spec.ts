@@ -6,7 +6,7 @@
 // rather than as a 500 that says nothing.
 import { describe, it, expect, afterEach } from 'vitest';
 
-import type { PostEditor, PostRecord } from '../src/schemas.ts';
+import type { PostEditor, PostRecordPage } from '../src/schemas.ts';
 import { closeAll, harness, postFields, postText, type Harness } from './support/fixtures.ts';
 
 afterEach(closeAll);
@@ -158,12 +158,40 @@ describe('editing a post', () =>
         api.store.create(postFields({ slug: 'published' }), 'en', postText());
         api.store.create(postFields({ slug: 'a-draft', status: 'draft' }), 'fa', postText({ title: 'پیش‌نویس' }));
 
-        const rows = (await (await send(api, 'GET', '/api/admin/posts', undefined, cookie)).json()) as PostRecord[];
+        const page = (await (await send(api, 'GET', '/api/admin/posts', undefined, cookie)).json()) as PostRecordPage;
 
-        expect(rows.map((row) => row.slug).sort()).toEqual(['a-draft', 'published']);
+        expect(page.rows.map((row) => row.slug).sort()).toEqual(['a-draft', 'published']);
         // The draft's title comes from Persian, its default language - a post being managed has
         // a name in the list whatever language it was written in.
-        expect(rows.find((row) => row.slug === 'a-draft')?.title).toBe('پیش‌نویس');
+        expect(page.rows.find((row) => row.slug === 'a-draft')?.title).toBe('پیش‌نویس');
+        expect(page.total).toBe(2);
+        expect(page.page).toBe(1);
+        expect(page.pages).toBe(1);
+    });
+
+    it('pages the list, so a post past the first page is still reachable', async () =>
+    {
+        // The dashboard shipped with a hard `limit: 200` and no query, which made the 201st
+        // post invisible to the only screen that can edit it.
+        const { api, cookie } = await signedIn();
+
+        for (let index = 0; index < 25; index++)
+        {
+            api.store.create(postFields({ slug: `post-${ index }` }), 'en', postText());
+        }
+
+        const first = (await (await send(api, 'GET', '/api/admin/posts', undefined, cookie)).json()) as PostRecordPage;
+        const second = (await (await send(api, 'GET', '/api/admin/posts?page=2', undefined, cookie)).json()) as PostRecordPage;
+
+        expect(first.total).toBe(25);
+        expect(first.pages).toBe(2);
+        expect(first.rows).toHaveLength(20);
+        expect(second.rows).toHaveLength(5);
+
+        // No post appears on both pages, and between them they are all there.
+        const seen = new Set([...first.rows, ...second.rows].map((row) => row.slug));
+
+        expect(seen.size).toBe(25);
     });
 
     it('updates the post fields and publishes it', async () =>

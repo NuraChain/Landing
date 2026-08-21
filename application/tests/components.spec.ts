@@ -7,7 +7,9 @@ import Banner from '../src/components/ui/banner.component.azeroth';
 import Button from '../src/components/ui/button.component.azeroth';
 import Card from '../src/components/ui/card.component.azeroth';
 import IconButton from '../src/components/ui/icon-button.component.azeroth';
+import Badge from '../src/components/ui/badge.component.azeroth';
 import Input from '../src/components/ui/input.component.azeroth';
+import { useToasts } from '../src/stores/toasts';
 import CopyField from '../src/components/chain/copy-field.component.azeroth';
 import SectionHeading from '../src/components/layout/section-heading.component.azeroth';
 import { brandIcon } from '../src/components/icons/brand-icon';
@@ -96,6 +98,117 @@ describe('Button', () =>
 
 /** A handler the test does not care about; the repo's brace style rejects `() => {}`. */
 const noop = (): void => undefined;
+
+describe('Badge', () =>
+{
+    it('renders its label as text, so state is never colour alone', () =>
+    {
+        const { container } = renderTest(() => Badge({ tone: 'accent', children: 'Published' }));
+
+        expect(container.textContent).toContain('Published');
+    });
+
+    it('fills for a state and outlines for a label', () =>
+    {
+        const { container: solid } = renderTest(() => Badge({ tone: 'accent', fill: 'solid', children: 'a' }));
+        const { container: outline } = renderTest(() => Badge({ tone: 'neutral', children: 'b' }));
+
+        expect(solid.querySelector('span')?.className).toContain('bg-accent-soft');
+        expect(outline.querySelector('span')?.className).toContain('border-line');
+    });
+
+    it('carries the language of a label written in another script', () =>
+    {
+        const { container } = renderTest(() => Badge({ lang: 'fa', children: 'فارسی' }));
+
+        expect(container.querySelector('span')?.getAttribute('lang')).toBe('fa');
+    });
+});
+
+describe('the toasts store', () =>
+{
+    beforeEach(() =>
+    {
+        vi.useFakeTimers();
+
+        // The store is a module-level singleton, so one test's leftovers are the next test's
+        // starting state - which is exactly what `npm run test:shuffle` would catch later.
+        const toasts = useToasts();
+
+        for (const entry of [...toasts.items()])
+        {
+            toasts.dismiss(entry.id);
+        }
+    });
+
+    afterEach(() =>
+    {
+        vi.useRealTimers();
+    });
+
+    it('holds what was pushed, in order', () =>
+    {
+        const toasts = useToasts();
+
+        toasts.push('success', 'Saved');
+        toasts.push('error', 'That did not save');
+
+        expect(toasts.items().map((entry) => entry.message)).toEqual(['Saved', 'That did not save']);
+    });
+
+    it('keeps at most three, dropping the oldest', () =>
+    {
+        // A stack that grows without bound covers the page it is reporting about.
+        const toasts = useToasts();
+
+        for (const message of ['one', 'two', 'three', 'four'])
+        {
+            toasts.push('success', message);
+        }
+
+        expect(toasts.items().map((entry) => entry.message)).toEqual(['two', 'three', 'four']);
+    });
+
+    it('dismisses itself, because self-dismissal is what a toast IS', () =>
+    {
+        const toasts = useToasts();
+
+        toasts.push('success', 'Saved');
+        expect(toasts.items()).toHaveLength(1);
+
+        vi.advanceTimersByTime(3999);
+        expect(toasts.items()).toHaveLength(1);
+
+        vi.advanceTimersByTime(1);
+        expect(toasts.items()).toHaveLength(0);
+    });
+
+    it('dismisses the one asked for and leaves the rest', () =>
+    {
+        const toasts = useToasts();
+        const first = toasts.push('success', 'first');
+
+        toasts.push('success', 'second');
+        toasts.dismiss(first);
+
+        expect(toasts.items().map((entry) => entry.message)).toEqual(['second']);
+    });
+
+    it('survives a timer firing for something already dismissed', () =>
+    {
+        const toasts = useToasts();
+        const id = toasts.push('success', 'gone early');
+
+        toasts.dismiss(id);
+        toasts.push('success', 'still here');
+
+        vi.advanceTimersByTime(4000);
+
+        // The first timer runs against a list that no longer holds it: a no-op, not a throw,
+        // and it must not take the second toast with it.
+        expect(toasts.items().map((entry) => entry.message)).toEqual([]);
+    });
+});
 
 describe('IconButton', () =>
 {

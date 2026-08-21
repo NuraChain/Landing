@@ -181,7 +181,23 @@ export const fr: Strings =
         required: 'Un titre et un corps sont requis.',
         cannotRemoveDefault: 'La langue de repli ne peut pas etre retiree.',
         expiring: 'Cette session se termine bientot. Enregistrez votre travail.',
-        cancel: 'Annuler'
+        cancel: 'Annuler',
+        removed: 'Article supprime'
+    },
+
+    pagination:
+    {
+        label: 'Pagination',
+        first: 'Premiere page',
+        previous: 'Page precedente',
+        next: 'Page suivante',
+        last: 'Derniere page',
+        page: 'Page'
+    },
+
+    toast:
+    {
+        dismiss: 'Fermer'
     },
 
     explorer:

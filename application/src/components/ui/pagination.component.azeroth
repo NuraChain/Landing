@@ -1,0 +1,181 @@
+import { Link, type NavigateTarget } from 'azerothjs';
+
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide';
+
+import { useLocale } from '../../stores/locale';
+
+import { icon } from '../icons/icon';
+
+/** Slots in the number row. Odd, so the current page sits in the middle of a full window. */
+const SLOTS = 7;
+
+export interface Slot
+{
+    /** Position in the row, and the <For> key: the VALUE repeats when two gaps appear. */
+    at: number;
+    value: number | 'gap';
+}
+
+/**
+ * The page numbers to show, and where the gaps fall.
+ *
+ * Always the same number of slots once there are more pages than slots - including at the
+ * ends. The obvious version of this shrinks to four entries on page 1 (`1 2 ... 20`) and grows
+ * back in the middle, so the row changes width as you page through it and the control moves
+ * under the pointer that is clicking it. The window is clamped into the range instead, so page
+ * 1 of 20 reads `1 2 3 4 5 ... 20` and nothing reflows.
+ *
+ * First and last are always present, and a gap replaces the number that would have sat next to
+ * them - so a gap always stands for at least two pages, never one.
+ *
+ * Exported for its own test: the boundaries are where this kind of arithmetic goes wrong, and
+ * they are far easier to assert on an array than on rendered markup.
+ */
+export const pageWindow = (page: number, pages: number): Slot[] =>
+{
+    if (pages <= SLOTS)
+    {
+        return Array.from({ length: pages }, (_unused, index) => ({ at: index, value: index + 1 }));
+    }
+
+    const half = Math.floor(SLOTS / 2);
+    const start = Math.min(Math.max(page - half, 1), pages - SLOTS + 1);
+    const run = Array.from({ length: SLOTS }, (_unused, index) => start + index);
+
+    return run.map((value, at): Slot =>
+    {
+        if (at === 0)
+        {
+            return { at, value: 1 };
+        }
+
+        if (at === SLOTS - 1)
+        {
+            return { at, value: pages };
+        }
+
+        if (at === 1 && run[0] !== 1)
+        {
+            return { at, value: 'gap' };
+        }
+
+        if (at === SLOTS - 2 && run[SLOTS - 1] !== pages)
+        {
+            return { at, value: 'gap' };
+        }
+
+        return { at, value };
+    });
+};
+
+const STEP = 'grid size-9 shrink-0 place-items-center rounded-lg border border-line text-muted '
+    + 'transition-colors hover:border-accent hover:text-ink';
+
+const NUMBER = 'grid h-9 min-w-9 shrink-0 place-items-center rounded-lg border px-2 text-sm tabular-nums transition-colors ';
+
+/**
+ * First, previous, the numbers, next, last.
+ *
+ * Two modes, following the convention `Button` already sets in this repository: give it `href`
+ * and every page is a real link, so middle-click and open-in-new-tab work and a crawler can
+ * walk back to older posts; give it `onChange` and they are buttons, for a list whose position
+ * has no business being in a URL.
+ */
+export default component Pagination(props:
+{
+    page: number;
+    pages: number;
+    /** Link mode. Takes precedence over `onChange` when both are somehow given. */
+    href?: (page: number) => NavigateTarget;
+    onChange?: (page: number) => void;
+})
+{
+    const { t, locale } = useLocale();
+
+    derived slots = pageWindow(props.page, props.pages);
+
+    /** Digits in the reader's own numerals - a Persian pager should not count in Latin. */
+    const number = (value: number): string => new Intl.NumberFormat(locale()).format(value);
+
+    /*
+     * One control, either element.
+     *
+     * A local function rather than five copies of the same `<Show>` around a `<Link>` and a
+     * `<button>`. `dead` is what "disabled" means in each mode: a button gets the real
+     * attribute, and a link - which has no such thing - stops taking pointer events and dims
+     * to match. Both keep their accessible name, so the control still announces what it would
+     * have done.
+     */
+    const step = (label: string, to: number, glyph: typeof ChevronLeft, dead: boolean): unknown =>
+        props.href !== undefined
+            ? <Link
+                to={ props.href(to) }
+                class={ `${ STEP }${ dead ? ' pointer-events-none opacity-40' : '' }` }
+                aria-label={ label }
+                aria-disabled={ dead ? 'true' : undefined }
+            >
+                { icon(glyph, 'size-4 rtl:-scale-x-100') }
+            </Link>
+            : <button
+                type="button"
+                class={ `${ STEP } disabled:pointer-events-none disabled:opacity-40` }
+                aria-label={ label }
+                disabled={ dead }
+                onClick={ () => dead ? undefined : props.onChange?.(to) }
+            >
+                { icon(glyph, 'size-4 rtl:-scale-x-100') }
+            </button>;
+
+    <Show when={ () => props.pages > 1 }>
+        { /* `gap` and `justify-center` only: the row reverses with the document, so "first"
+             lands on the reader's start side in both directions without a second rule. The
+             chevrons are the one thing that must mirror, which is what `rtl:-scale-x-100`
+             does - the same convention the outbound arrows use. */ }
+        <nav class="flex items-center justify-center gap-1.5 pt-8" aria-label={ () => t().pagination.label }>
+            { () => step(t().pagination.first, 1, ChevronsLeft, props.page <= 1) }
+            { () => step(t().pagination.previous, Math.max(1, props.page - 1), ChevronLeft, props.page <= 1) }
+
+            <For each={ () => slots } key={ (slot) => String(slot.at) } let={ slot }>
+                { /* `contents` so the wrapper is not a flex box of its own and the row's `gap`
+                     still applies between slots. */ }
+                <div class="contents">
+                    { /* The gap is never a control: there is no single page it could sensibly
+                         go to. Hidden from assistive tech, which reads the numbers either side
+                         and needs nothing between them. */ }
+                    <Show
+                        when={ () => slot.value !== 'gap' }
+                        fallback={ () =>
+                        <span class="grid h-9 w-5 shrink-0 place-items-center text-sm text-faint" aria-hidden="true">...</span>
+                    }
+                    >
+                        { () => props.href !== undefined
+                            ? <Link
+                                to={ props.href(slot.value as number) }
+                                class={ NUMBER + (slot.value === props.page
+                                    ? 'cursor-default border-accent bg-accent-soft font-semibold text-accent'
+                                    : 'border-transparent text-muted hover:border-line hover:text-ink') }
+                                aria-label={ `${ t().pagination.page } ${ number(slot.value as number) }` }
+                                aria-current={ slot.value === props.page ? 'page' : undefined }
+                            >
+                                { number(slot.value as number) }
+                            </Link>
+                            : <button
+                                type="button"
+                                class={ NUMBER + (slot.value === props.page
+                                    ? 'cursor-default border-accent bg-accent-soft font-semibold text-accent'
+                                    : 'cursor-pointer border-transparent text-muted hover:border-line hover:text-ink') }
+                                aria-label={ `${ t().pagination.page } ${ number(slot.value as number) }` }
+                                aria-current={ slot.value === props.page ? 'page' : undefined }
+                                onClick={ () => props.onChange?.(slot.value as number) }
+                            >
+                                { number(slot.value as number) }
+                            </button> }
+                    </Show>
+                </div>
+            </For>
+
+            { () => step(t().pagination.next, Math.min(props.pages, props.page + 1), ChevronRight, props.page >= props.pages) }
+            { () => step(t().pagination.last, props.pages, ChevronsRight, props.page >= props.pages) }
+        </nav>
+    </Show>
+}

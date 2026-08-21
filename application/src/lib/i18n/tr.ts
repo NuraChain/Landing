@@ -181,7 +181,23 @@ export const tr: Strings =
         required: 'Baslik ve govde gerekli.',
         cannotRemoveDefault: 'Yedek dil kaldirilamaz.',
         expiring: 'Bu oturum yakinda bitiyor. Calismanizi kaydedin.',
-        cancel: 'Vazgec'
+        cancel: 'Vazgec',
+        removed: 'Yazi silindi'
+    },
+
+    pagination:
+    {
+        label: 'Sayfalama',
+        first: 'Ilk sayfa',
+        previous: 'Onceki sayfa',
+        next: 'Sonraki sayfa',
+        last: 'Son sayfa',
+        page: 'Sayfa'
+    },
+
+    toast:
+    {
+        dismiss: 'Kapat'
     },
 
     explorer:

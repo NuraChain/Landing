@@ -181,7 +181,23 @@ export const es: Strings =
         required: 'Se necesitan un titulo y un cuerpo.',
         cannotRemoveDefault: 'El idioma de respaldo no se puede quitar.',
         expiring: 'Esta sesion termina pronto. Guarda tu trabajo.',
-        cancel: 'Cancelar'
+        cancel: 'Cancelar',
+        removed: 'Entrada eliminada'
+    },
+
+    pagination:
+    {
+        label: 'Paginacion',
+        first: 'Primera pagina',
+        previous: 'Pagina anterior',
+        next: 'Pagina siguiente',
+        last: 'Ultima pagina',
+        page: 'Pagina'
+    },
+
+    toast:
+    {
+        dismiss: 'Cerrar'
     },
 
     explorer:

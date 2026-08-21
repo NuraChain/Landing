@@ -16,7 +16,8 @@ import {
     postEditor,
     postInput,
     postPage,
-    postRecordList,
+    adminPageQuery,
+    postRecordPage,
     readQuery,
     removed,
     sessionState,
@@ -27,6 +28,9 @@ import {
 
 /** How many posts a blog index page holds when the caller does not say. */
 const DEFAULT_LIMIT = 10;
+
+/** The dashboard shows more per page than the blog: it is a work list, not a reading one. */
+const ADMIN_LIMIT = 20;
 
 /** The language a reader gets when they ask for none - the same default the site falls to. */
 const DEFAULT_LOCALE = 'en';
@@ -241,9 +245,25 @@ export function createApi(deps: ApiDeps)
             // Everything below inherits the feature's guards: a live session and same-origin.
             // ------------------------------------------------------------------------------
 
-            /** Every post, drafts included, newest first - the dashboard's own list. */
-            posts: routes.get('/posts', { output: postRecordList }, () =>
-                store.list({ limit: 200, offset: 0, includeDrafts: true }).rows.map(toRecord)),
+            /**
+             * A page of posts, drafts included, newest first - the dashboard's own list.
+             *
+             * `total` is the count BEFORE paging, so the dashboard can draw a pager. It used to
+             * take no query at all and answer with a bare array capped at 200, which made the
+             * 201st post unreachable from the only screen that can edit it.
+             */
+            posts: routes.get('/posts', { query: adminPageQuery, output: postRecordPage }, ({ query }) =>
+            {
+                const limit = query.limit ?? ADMIN_LIMIT;
+                const page = query.page ?? 1;
+                const { rows, total } = store.list({
+                    limit,
+                    offset: (page - 1) * limit,
+                    includeDrafts: true
+                });
+
+                return { rows: rows.map(toRecord), total, page, pages: pageCount(total, limit) };
+            }),
 
             /** One post with every language in full, for the editor. */
             post: routes.get('/posts/:id', { output: postEditor }, ({ params }) =>

@@ -1,0 +1,174 @@
+import { Portal, type Child } from 'azerothjs';
+
+let nextId = 1;
+
+/**
+ * A supplementary hint attached to a control.
+ *
+ * SUPPLEMENTARY is the contract, and it decides everything else here. The label must ADD
+ * something the trigger does not already say - a unit, a caveat, where a number came from.
+ * It is wired with `aria-describedby`, so a screen reader reads it after the trigger's own
+ * name; a tooltip that merely repeated that name would announce it twice.
+ *
+ * This is NOT the component for a paragraph. The tokenomics and network sections have panels
+ * of real explanation behind a button, and those are disclosures on purpose: the text runs
+ * long, and it has to be reachable and dismissible on a phone. See the comments there before
+ * moving anything into a bubble.
+ *
+ * Opens on hover, on keyboard focus, and on tap. The tap case is why there is an outside-press
+ * listener at all - a device with no hover has no way to "leave" the trigger, so without a
+ * dismissal path a bubble opened by a thumb would simply stay.
+ */
+export default component Tooltip(props:
+{
+    /** Already translated. */
+    label: string;
+    /**
+     * Whether the label ADDS to the trigger's accessible name or merely reveals it.
+     *
+     * Default is that it adds, and it is wired with `aria-describedby` so a screen reader
+     * reads it after the name. Pass `false` for the other case - an icon-only control whose
+     * `aria-label` is exactly this string, shown on hover for the sighted mouse user who
+     * cannot see it. There the bubble is `aria-hidden`, because announcing it would read the
+     * same words twice.
+     */
+    describe?: boolean;
+    /** The wrapper's display; pass `flex` where the trigger owns its line. */
+    class?: string;
+    children?: Child;
+})
+{
+    const id = `tip-${ nextId++ }`;
+
+    state open = false;
+    state left = 0;
+    state top = 0;
+    state below = false;
+
+    let wrap: HTMLElement | null = null;
+
+    /*
+     * Asked per event rather than cached.
+     *
+     * There is no `matchMedia` during server rendering, and a value resolved once at setup
+     * would pin the pre-hydration answer for the element's whole life - so a page rendered on
+     * the server and hydrated on a laptop would behave as though it had no pointer.
+     */
+    const hoverable = (): boolean =>
+        typeof matchMedia !== 'undefined' && matchMedia('(hover: hover)').matches;
+
+    const place = (): void =>
+    {
+        if (wrap === null)
+        {
+            return;
+        }
+
+        const rect = wrap.getBoundingClientRect();
+        // No room above - flip under the trigger rather than off the top of the viewport.
+        const flip = rect.top < 48;
+
+        below = flip;
+        top = flip ? rect.bottom + 8 : rect.top - 8;
+
+        // Clamped against the bubble's OWN half-width: a fixed inset would still overflow for
+        // a long label on a narrow screen. Kept in step with `max-w` in the markup below.
+        const half = Math.min(window.innerWidth - 24, 320) / 2;
+
+        left = Math.min(Math.max(rect.left + rect.width / 2, half + 12), window.innerWidth - half - 12);
+    };
+
+    /*
+     * The description is attached to the TRIGGER, not to this wrapper.
+     *
+     * `aria-describedby` on a non-interactive span is ignored, and the trigger arrives as
+     * arbitrary children - there is no attribute to write on it declaratively. So it is set
+     * once, on the first focusable descendant, after mount.
+     *
+     * It points at an id that only exists while the bubble is open, which is harmless: a
+     * dangling `aria-describedby` is skipped, and focus is one of the things that opens the
+     * bubble, so by the time a keyboard reader is on the trigger the target is there.
+     */
+    effect
+    {
+        if (props.describe === false)
+        {
+            return;
+        }
+
+        const trigger = wrap?.querySelector<HTMLElement>(
+            'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+
+        trigger?.setAttribute('aria-describedby', id);
+    }
+
+    const show = (): void =>
+    {
+        place();
+        open = true;
+    };
+
+    const hide = (): void =>
+    {
+        open = false;
+    };
+
+    // A press anywhere else closes it. Only while open, so the document carries no listener
+    // for the tooltips that are merely sitting there.
+    effect
+    {
+        if (!open)
+        {
+            return;
+        }
+
+        const onDown = (event: PointerEvent): void =>
+        {
+            if (wrap !== null && !wrap.contains(event.target as Node))
+            {
+                hide();
+            }
+        };
+
+        document.addEventListener('pointerdown', onDown);
+
+        cleanup
+        {
+            document.removeEventListener('pointerdown', onDown);
+        }
+    }
+
+    <span
+        class={ () => props.class ?? 'inline-flex' }
+        ref={ (node: HTMLElement) => wrap = node }
+        onPointerEnter={ () => hoverable() ? show() : undefined }
+        onPointerLeave={ () => hoverable() ? hide() : undefined }
+        onClick={ () => hoverable() ? undefined : (open ? hide() : show()) }
+        onFocusIn={ show }
+        onFocusOut={ hide }
+        onKeyDown={ (event: KeyboardEvent) => event.key === 'Escape' ? hide() : undefined }
+    >
+        { props.children }
+
+        <Show when={ () => open }>
+            { /* Portalled to the body: a z-index only orders siblings inside its own stacking
+                 context, so in place this would sit under the sticky header - which has one of
+                 its own and a backdrop filter - and be clipped by any scroller above it.
+
+                 ONE transform, written inline. A Tailwind `-translate-x-1/2` sets the CSS
+                 `translate` property, which COMPOSES with `transform` rather than losing to
+                 it, and the bubble ends up a full width off to the side. */ }
+            <Portal>
+                <span
+                    id={ id }
+                    role={ props.describe === false ? undefined : 'tooltip' }
+                    aria-hidden={ props.describe === false ? 'true' : undefined }
+                    class="pointer-events-none fixed z-[80] max-w-[min(20rem,calc(100vw-1.5rem))] text-balance rounded-lg border border-line bg-elevated px-2.5 py-1.5 text-center text-xs leading-relaxed text-ink shadow-lg"
+                    style={ () => `left: ${ left }px; top: ${ top }px; transform: translate(-50%, ${ below ? '0' : '-100%' })` }
+                >
+                    { () => props.label }
+                </span>
+            </Portal>
+        </Show>
+    </span>
+}

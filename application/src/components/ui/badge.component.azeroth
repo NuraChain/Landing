@@ -1,0 +1,38 @@
+import type { Child } from 'azerothjs';
+
+import { TONE_OUTLINE, TONE_SOLID, type Tone } from './variants';
+
+/**
+ * A small label: a tag, a status, a language.
+ *
+ * PRESENTATIONAL only, and that boundary is the point. The pills that filter the blog and the
+ * tabs that switch the editor's language look almost exactly like this and are not this - they
+ * are controls, and a control needs a `<button>`, a pressed state and a name a screen reader
+ * can act on. Collapsing the two would turn every tag on a post into something that looks
+ * clickable and is not, or take the semantics away from the ones that are.
+ *
+ * `fill` is not decoration either. `solid` reads as a state the row is IN - published, live,
+ * failed; `outline` reads as a label attached to it - a tag, a language. The dashboard's
+ * status badge already used both shapes before either had a name.
+ */
+export default component Badge(props:
+{
+    tone?: Tone;
+    fill?: 'solid' | 'outline';
+    /** The language of the label, when it is not the page's - a language name in its own script. */
+    lang?: string;
+    class?: string;
+    children?: Child;
+})
+{
+    derived classes = 'inline-flex items-center rounded-full px-2 py-0.5 text-xs '
+        + (props.fill === 'solid'
+            ? TONE_SOLID[props.tone ?? 'neutral']
+            : TONE_OUTLINE[props.tone ?? 'neutral'])
+        + (props.class !== undefined ? ` ${ props.class }` : '');
+
+    { /* The label is always rendered as text. A badge that said "published" only by being
+         green would say nothing at all to a colourblind reader, to a screen reader, or to
+         anyone printing the page - which is why there is no icon-only form of this. */ }
+    <span class={ () => classes } lang={ () => props.lang }>{ props.children }</span>
+}

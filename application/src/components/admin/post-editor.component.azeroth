@@ -6,6 +6,8 @@ import { LOCALES, directionOf, nativeName, useLocale, type Locale } from '../../
 import { CONTROL } from '../ui/controls';
 
 import Button from '../ui/button.component.azeroth';
+import { useToasts } from '../../stores/toasts';
+
 import Banner from '../ui/banner.component.azeroth';
 import Field from '../ui/field.component.azeroth';
 import Input from '../ui/input.component.azeroth';
@@ -34,6 +36,19 @@ export default component PostEditorPanel(props:
 })
 {
     const { t, locale } = useLocale();
+
+    /*
+     * Success is a toast; failure stays a Banner.
+     *
+     * The Save button and the Banner both live at the TOP of this panel, and a body long
+     * enough to be worth writing scrolls both off the screen - so a save that worked would
+     * report to nobody. A toast reaches the reader wherever they are.
+     *
+     * A failure does not become a toast, because it has something to say that four seconds is
+     * not long enough for: which slug collided, or that the fallback language cannot go. It
+     * belongs next to the control, where it can be read and acted on.
+     */
+    const toasts = useToasts();
 
     state post = null as PostEditor | null;
     state loading = props.id !== null;
@@ -182,6 +197,7 @@ export default component PostEditorPanel(props:
                     adopt(fresh);
                     busy = false;
                     saved = true;
+                    toasts.push('success', t().admin.saved);
                 })
                 .catch(fail);
 
@@ -205,6 +221,7 @@ export default component PostEditorPanel(props:
                 adopt(fresh);
                 busy = false;
                 saved = true;
+                toasts.push('success', t().admin.saved);
             })
             .catch(fail);
     };

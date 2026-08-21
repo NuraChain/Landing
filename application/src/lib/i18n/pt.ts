@@ -181,7 +181,23 @@ export const pt: Strings =
         required: 'Sao necessarios um titulo e um corpo.',
         cannotRemoveDefault: 'O idioma de recurso nao pode ser removido.',
         expiring: 'Esta sessao termina em breve. Guarde o seu trabalho.',
-        cancel: 'Cancelar'
+        cancel: 'Cancelar',
+        removed: 'Publicacao eliminada'
+    },
+
+    pagination:
+    {
+        label: 'Paginacao',
+        first: 'Primeira pagina',
+        previous: 'Pagina anterior',
+        next: 'Pagina seguinte',
+        last: 'Ultima pagina',
+        page: 'Pagina'
+    },
+
+    toast:
+    {
+        dismiss: 'Fechar'
     },
 
     explorer:

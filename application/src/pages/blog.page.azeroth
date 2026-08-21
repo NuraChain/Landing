@@ -1,7 +1,14 @@
-import { Link } from 'azerothjs';
+import { Link, useQuery, type NavigateTarget } from 'azerothjs';
 
 import { client, type PostCard, type TagCount } from '../api';
 import { directionOf, useLocale } from '../stores/locale';
+
+import Banner from '../components/ui/banner.component.azeroth';
+import Pagination from '../components/ui/pagination.component.azeroth';
+
+const CHIP = 'rounded-full border px-3 py-1 text-sm transition-colors ';
+const CHIP_ON = 'cursor-default border-accent bg-accent text-accent-ink';
+const CHIP_OFF = 'cursor-pointer border-line text-muted hover:text-ink';
 
 /**
  * The blog index.
@@ -13,30 +20,79 @@ import { directionOf, useLocale } from '../stores/locale';
 export default component Blog()
 {
     const { t, locale } = useLocale();
+    const query = useQuery();
 
     state posts = null as PostCard[] | null;
     state tags = [] as TagCount[];
     state failed = false;
-    state tag = null as string | null;
+    state pageCount = 1;
+
+    /*
+     * The page and the tag live in the URL, not in state.
+     *
+     * So page two can be linked, bookmarked and followed by a crawler back through older
+     * posts, and so Back steps through the pages rather than leaving the blog entirely. It
+     * also means there is one source of truth for both: the address bar.
+     *
+     * A `Query` value is `string | string[]` - a repeated `?page=1&page=2` arrives as an array
+     * - so everything read out of it is narrowed and clamped before it is sent anywhere.
+     */
+    const one = (value: string | string[] | undefined): string | null =>
+    {
+        const first = Array.isArray(value) ? value[0] : value;
+
+        return first === undefined || first === '' ? null : first;
+    };
+
+    const tag = (): string | null => one(query().tag);
+
+    const page = (): number =>
+    {
+        const raw = Number(one(query().page));
+
+        return Number.isSafeInteger(raw) && raw >= 1 ? raw : 1;
+    };
+
+    /** Where a given page lives. Page one drops the parameter, so `/blog` stays canonical. */
+    const at = (to: number): NavigateTarget =>
+    {
+        const parts: Record<string, string> = {};
+        const only = tag();
+
+        if (only !== null)
+        {
+            parts.tag = only;
+        }
+
+        if (to > 1)
+        {
+            parts.page = String(to);
+        }
+
+        return { pathname: '/blog', query: parts };
+    };
 
     /** Dates go through Intl in the reader's locale - no hand formatting, years included. */
     const day = (iso: string | null): string =>
         iso === null ? '' : new Intl.DateTimeFormat(locale(), { dateStyle: 'medium' }).format(new Date(iso));
 
-    // Re-runs when the language changes: which translation a card carries is decided by the
-    // server, so a language switch is a new request rather than a re-render of stale copy.
+    // Re-runs when the language changes, and when the URL does: which translation a card
+    // carries is decided by the server, so a language switch is a new request rather than a
+    // re-render of stale copy.
     effect
     {
         let live = true;
         const wanted = locale();
-        const only = tag;
+        const only = tag();
+        const which = page();
 
-        client.blog.list({ query: { locale: wanted, limit: 50, ...(only === null ? {} : { tag: only }) } })
-            .then((page) =>
+        client.blog.list({ query: { locale: wanted, page: which, ...(only === null ? {} : { tag: only }) } })
+            .then((found) =>
             {
                 if (live)
                 {
-                    posts = page.rows;
+                    posts = found.rows;
+                    pageCount = found.pages;
                     failed = false;
                 }
             })
@@ -78,20 +134,26 @@ export default component Blog()
         <Show when={ tags.length > 0 }>
             { /* `gap` rather than margins on the children: gap is direction-neutral, so the row
                  survives Persian and Arabic without a second rule. */ }
+            { /* Links, not buttons, now that the filter is in the URL: a filtered view is a
+                 place, and a control that goes to a place must BE a link or middle-click and
+                 open-in-new-tab stop working.
+
+                 `aria-current` carries the selection. It used to be signalled by colour alone,
+                 so the chosen filter and the rest announced identically to a screen reader. */ }
             <nav class="flex flex-wrap gap-2" aria-label={ t().blog.everyTag }>
-                <button
-                    type="button"
-                    class={ () => 'rounded-full border px-3 py-1 text-sm transition-colors '
-                        + (tag === null ? 'border-accent bg-accent text-accent-ink' : 'border-line text-muted hover:text-ink') }
-                    onClick={ () => tag = null }
-                >{ t().blog.everyTag }</button>
+                <Link
+                    to={ () => ({ pathname: '/blog', query: {} }) }
+                    class={ () => CHIP + (tag() === null ? CHIP_ON : CHIP_OFF) }
+                    aria-current={ () => tag() === null ? 'true' : undefined }
+                >{ t().blog.everyTag }</Link>
                 <For each={ tags } key={ (row) => row.tag } let={ row }>
-                    <button
-                        type="button"
-                        class={ () => 'rounded-full border px-3 py-1 text-sm transition-colors '
-                            + (tag === row.tag ? 'border-accent bg-accent text-accent-ink' : 'border-line text-muted hover:text-ink') }
-                        onClick={ () => tag = row.tag }
-                    >{ row.tag }</button>
+                    <span class="contents">
+                        <Link
+                            to={ () => ({ pathname: '/blog', query: { tag: row.tag } }) }
+                            class={ () => CHIP + (tag() === row.tag ? CHIP_ON : CHIP_OFF) }
+                            aria-current={ () => tag() === row.tag ? 'true' : undefined }
+                        >{ row.tag }</Link>
+                    </span>
                 </For>
             </nav>
         </Show>
@@ -100,10 +162,17 @@ export default component Blog()
             <p class="text-faint">{ t().blog.loading }…</p>
         </Show>
 
-        <Show when={ posts !== null && posts.length === 0 }>
+        { /* A failure is NOT an empty blog, and used to render as one - same box, same
+             heading, only the hint line differing. A reader whose network dropped was told
+             there was nothing to read. */ }
+        <Show when={ () => failed }>
+            <Banner tone="danger">{ t().blog.notFoundHint }</Banner>
+        </Show>
+
+        <Show when={ () => !failed && posts !== null && posts!.length === 0 }>
             <div class="rounded-xl border border-line bg-surface px-5 py-10 text-center">
                 <p class="font-semibold text-ink">{ t().blog.empty }</p>
-                <p class="mt-1 text-sm text-muted">{ failed ? t().blog.notFoundHint : t().blog.emptyHint }</p>
+                <p class="mt-1 text-sm text-muted">{ t().blog.emptyHint }</p>
             </div>
         </Show>
 
@@ -154,5 +223,8 @@ export default component Blog()
                 </For>
             </ul>
         </Show>
+
+        { /* Links, so a reader can open page two in a new tab and a crawler can follow it. */ }
+        <Pagination page={ page() } pages={ pageCount } href={ at } />
     </section>
 }

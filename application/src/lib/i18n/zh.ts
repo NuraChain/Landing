@@ -181,7 +181,23 @@ export const zh: Strings =
         required: '标题和正文为必填。',
         cannotRemoveDefault: '回退语言无法移除。',
         expiring: '此会话即将结束，请保存你的工作。',
-        cancel: '取消'
+        cancel: '取消',
+        removed: '文章已删除'
+    },
+
+    pagination:
+    {
+        label: '分页',
+        first: '第一页',
+        previous: '上一页',
+        next: '下一页',
+        last: '最后一页',
+        page: '第'
+    },
+
+    toast:
+    {
+        dismiss: '关闭'
     },
 
     explorer:

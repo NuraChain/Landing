@@ -1,8 +1,12 @@
 import { client, type PostRecord } from '../../api';
 import { nativeName, useLocale, type Locale } from '../../stores/locale';
 
-import Button from '../ui/button.component.azeroth';
+import { useToasts } from '../../stores/toasts';
+
+import Badge from '../ui/badge.component.azeroth';
 import Banner from '../ui/banner.component.azeroth';
+import Button from '../ui/button.component.azeroth';
+import Pagination from '../ui/pagination.component.azeroth';
 
 /**
  * Every post, drafts included, newest first.
@@ -14,25 +18,59 @@ import Banner from '../ui/banner.component.azeroth';
 export default component PostsPanel(props: { onOpen: (id: number | null) => void })
 {
     const { t, locale } = useLocale();
+    const toasts = useToasts();
 
-    state rows = null as PostRecord[] | null;
+    state records = null as PostRecord[] | null;
     state error = null as string | null;
     state confirming = null as number | null;
     state busy = false;
+    state page = 1;
+    state pageCount = 1;
+    /** Bumped to re-ask for the SAME page - assigning `page` its own value would not re-fire. */
+    state reloads = 0;
 
     const day = (iso: string): string =>
         new Intl.DateTimeFormat(locale(), { dateStyle: 'medium' }).format(new Date(iso));
 
-    const load = (): void =>
-    {
-        client.admin.posts()
-            .then((found) => { rows = found; error = null; })
-            .catch(() => { error = t().admin.failed; rows = []; });
-    };
-
+    /*
+     * Keyed on the page, so asking for another one re-runs it.
+     *
+     * That is also what fixes a bug this panel shipped with: `load` ran once, from an effect
+     * with nothing to re-trigger it, so a list that failed to load stayed failed for the rest
+     * of the session with no way back short of a refresh. Now every page change - and every
+     * delete - is another attempt.
+     */
     effect
     {
-        load();
+        let live = true;
+        const wanted = page;
+
+        // Read so the effect subscribes to it; the value itself is never used.
+        void reloads;
+
+        client.admin.posts({ query: { page: wanted } })
+            .then((found) =>
+            {
+                if (live)
+                {
+                    records = found.rows;
+                    pageCount = found.pages;
+                    error = null;
+                }
+            })
+            .catch(() =>
+            {
+                if (live)
+                {
+                    error = t().admin.failed;
+                    records = [];
+                }
+            });
+
+        cleanup
+        {
+            live = false;
+        }
     }
 
     const remove = (id: number): void =>
@@ -47,14 +85,34 @@ export default component PostsPanel(props: { onOpen: (id: number | null) => void
         client.admin.remove({ params: { id: String(id) } })
             .then(() =>
             {
-                rows = (rows ?? []).filter((row) => row.id !== id);
                 confirming = null;
                 busy = false;
+                toasts.push('success', t().admin.removed);
+
+                /*
+                 * Re-asked rather than filtered out locally: with a pager on screen, dropping
+                 * the row would leave `pageCount` describing a list that no longer exists, and the
+                 * page one row short until something else reloaded it.
+                 *
+                 * Deleting the last row of the last page steps back instead, because asking
+                 * for a page that no longer exists answers with nothing and the operator would
+                 * be looking at an empty list with a pager saying otherwise. Handled here and
+                 * not in the effect: the effect reads `page`, so writing it there is a loop.
+                 */
+                if ((records ?? []).length === 1 && page > 1)
+                {
+                    page--;
+                }
+                else
+                {
+                    reloads++;
+                }
             })
             .catch(() =>
             {
                 error = t().admin.failed;
                 busy = false;
+                toasts.push('error', t().admin.failed);
             });
     };
 
@@ -68,11 +126,11 @@ export default component PostsPanel(props: { onOpen: (id: number | null) => void
             <Banner tone="danger">{ () => error }</Banner>
         </Show>
 
-        <Show when={ () => rows === null }>
+        <Show when={ () => records === null }>
             <p class="text-faint">{ () => `${ t().blog.loading }…` }</p>
         </Show>
 
-        <Show when={ () => rows !== null && rows.length === 0 }>
+        <Show when={ () => records !== null && records.length === 0 }>
             <div class="rounded-2xl border border-line bg-surface px-5 py-10 text-center">
                 <p class="font-semibold text-ink">{ () => t().admin.noPosts }</p>
                 <p class="mt-1 text-sm text-muted">{ () => t().admin.noPostsHint }</p>
@@ -81,9 +139,9 @@ export default component PostsPanel(props: { onOpen: (id: number | null) => void
 
         { /* A list of cards rather than a table: the same rows have to work at 390px, where a
              five-column table either scrolls sideways or crushes every column. */ }
-        <Show when={ () => rows !== null && rows.length > 0 }>
+        <Show when={ () => records !== null && records.length > 0 }>
             <ul class="flex flex-col gap-3">
-                <For each={ rows ?? [] } key={ (row) => row.id } let={ row }>
+                <For each={ records ?? [] } key={ (row) => row.id } let={ row }>
                     <li class="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
                         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                             { /* The title is in the post's fallback language, which is not
@@ -93,24 +151,28 @@ export default component PostsPanel(props: { onOpen: (id: number | null) => void
                                 <bdi lang={ row.defaultLocale }>{ row.title }</bdi>
                             </span>
 
-                            <span
-                                class={ () => 'rounded-full px-2 py-0.5 text-xs '
-                                    + (row.status === 'published' ? 'bg-accent-soft text-accent' : 'border border-line text-faint') }
+                            { /* Filled for a state the post is IN, outlined for one it merely
+                                 has yet to reach - the distinction Badge's `fill` exists for. */ }
+                            <Badge
+                                tone={ row.status === 'published' ? 'accent' : 'neutral' }
+                                fill={ row.status === 'published' ? 'solid' : 'outline' }
                             >
                                 { () => row.status === 'published' ? t().admin.published : t().admin.draft }
-                            </span>
+                            </Badge>
                         </div>
 
                         <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-faint">
                             <bdi dir="ltr" class="font-mono">/blog/{ row.slug }</bdi>
-                            <bdi dir="ltr">{ day(row.updatedAt) }</bdi>
+                            <span>{ t().blog.updated } <bdi dir="ltr">{ day(row.updatedAt) }</bdi></span>
                         </p>
 
                         <p class="flex flex-wrap items-center gap-1.5">
                             <span class="me-1 text-xs text-faint">{ () => t().admin.languages }</span>
+                            { /* `contents` so the wrapper adds no box of its own: a <For> row
+                                 has to be one host element, and a component root is not one. */ }
                             <For each={ row.available } key={ (code) => code } let={ code }>
-                                <span class="rounded-full border border-line px-2 py-0.5 text-xs text-muted" lang={ code }>
-                                    { nativeName(code as Locale) }
+                                <span class="contents">
+                                    <Badge lang={ code }>{ nativeName(code as Locale) }</Badge>
                                 </span>
                             </For>
                         </p>
@@ -148,6 +210,12 @@ export default component PostsPanel(props: { onOpen: (id: number | null) => void
                     </li>
                 </For>
             </ul>
+        </Show>
+
+        { /* Buttons, not links: this list is behind a key and its position has no business in
+             a shareable URL. The blog's pager is the other mode. */ }
+        <Show when={ () => records !== null }>
+            <Pagination page={ page } pages={ pageCount } onChange={ (next: number) => page = next } />
         </Show>
     </div>
 }

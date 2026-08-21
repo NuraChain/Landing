@@ -1,0 +1,61 @@
+import { Check, CircleAlert, X } from 'lucide';
+
+import { useLocale } from '../../stores/locale';
+import { useToasts, type ToastEntry } from '../../stores/toasts';
+
+import { icon } from '../icons/icon';
+
+import IconButton from './icon-button.component.azeroth';
+
+const MARK: Record<ToastEntry['tone'], { tint: string; glyph: typeof Check }> = {
+    success: { tint: 'text-accent', glyph: Check },
+    error: { tint: 'text-danger', glyph: CircleAlert }
+};
+
+/**
+ * Where toasts land. Mounted ONCE, in App.azeroth.
+ *
+ * The container is always in the document even with nothing in it, and that is not an
+ * oversight: a live region inserted at the same moment as its first message does not announce
+ * - the region has to pre-exist for the insertion to be an update to it. Only the cards come
+ * and go.
+ *
+ * `role="status"` with `aria-live="polite"` rather than `alert`/`assertive`: a save that
+ * worked should not interrupt whatever the reader is in the middle of. The one thing that
+ * SHOULD interrupt is a failed write, and that is reported in place by `Banner`, next to the
+ * control that failed, where the reader can act on it.
+ */
+export default component Toasts()
+{
+    const { t } = useLocale();
+    const toasts = useToasts();
+
+    { /* `inset-x-0` is already symmetric, so the stack sits centred in both directions with no
+         second rule. `pointer-events-none` on the strip and `auto` on each card keeps the
+         empty space click-through - otherwise an invisible full-width box would swallow taps
+         meant for the page underneath it. */ }
+    <div
+        class="pointer-events-none fixed inset-x-0 bottom-4 z-[70] flex flex-col items-center gap-2 px-4"
+        role="status"
+        aria-live="polite"
+    >
+        <For each={ () => toasts.items() } key={ (entry) => String(entry.id) } let={ entry }>
+            <div class="pointer-events-auto flex w-full max-w-sm items-center gap-2.5 rounded-xl border border-line bg-elevated px-3.5 py-2.5 text-sm shadow-lg motion-safe:animate-[toast_180ms_ease-out]">
+                <span class={ () => `shrink-0 ${ MARK[entry.tone].tint }` }>
+                    { () => icon(MARK[entry.tone].glyph, 'size-[18px]') }
+                </span>
+
+                <span class="flex-1 text-ink">{ entry.message }</span>
+
+                <IconButton
+                    label={ t().toast.dismiss }
+                    size="sm"
+                    tone="faint"
+                    onClick={ () => toasts.dismiss(entry.id) }
+                >
+                    { icon(X, 'size-4') }
+                </IconButton>
+            </div>
+        </For>
+    </div>
+}

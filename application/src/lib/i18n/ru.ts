@@ -181,7 +181,23 @@ export const ru: Strings =
         required: 'Нужны заголовок и текст.',
         cannotRemoveDefault: 'Запасной язык убрать нельзя.',
         expiring: 'Эта сессия скоро завершится. Сохраните работу.',
-        cancel: 'Отмена'
+        cancel: 'Отмена',
+        removed: 'Запись удалена'
+    },
+
+    pagination:
+    {
+        label: 'Постраничная навигация',
+        first: 'Первая страница',
+        previous: 'Предыдущая страница',
+        next: 'Следующая страница',
+        last: 'Последняя страница',
+        page: 'Страница'
+    },
+
+    toast:
+    {
+        dismiss: 'Закрыть'
     },
 
     explorer:
