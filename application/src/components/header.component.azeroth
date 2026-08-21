@@ -142,7 +142,7 @@ export default component Header()
 
             <button
                 type="button"
-                class="grid size-11 place-items-center rounded-lg text-muted transition-colors hover:bg-elevated hover:text-ink sm:size-9"
+                class="grid size-9 place-items-center rounded-lg text-muted transition-colors hover:bg-elevated hover:text-ink"
                 aria-label={ `${ t().theme.label }: ${ t().theme[theme()] }` }
                 onClick={ () => cycle() }
             >
@@ -151,7 +151,7 @@ export default component Header()
 
             <button
                 type="button"
-                class="grid size-11 place-items-center rounded-lg text-muted transition-colors hover:bg-elevated hover:text-ink sm:size-9"
+                class="grid size-9 place-items-center rounded-lg text-muted transition-colors hover:bg-elevated hover:text-ink"
                 aria-label={ t().nav.language }
                 aria-haspopup="dialog"
                 aria-expanded={ () => langOpen ? 'true' : 'false' }
@@ -169,7 +169,7 @@ export default component Header()
 
             <button
                 type="button"
-                class="grid size-11 place-items-center rounded-lg text-muted hover:bg-elevated hover:text-ink sm:size-9 md:hidden"
+                class="grid size-9 place-items-center rounded-lg text-muted hover:bg-elevated hover:text-ink md:hidden"
                 aria-label={ () => menuOpen ? t().nav.closeMenu : t().nav.openMenu }
                 aria-expanded={ () => menuOpen ? 'true' : 'false' }
                 onClick={ () => menuOpen = !menuOpen }
@@ -276,7 +276,7 @@ export default component Header()
 
                             <button
                                 type="button"
-                                class="grid size-11 place-items-center rounded-lg text-muted hover:bg-elevated hover:text-ink sm:size-9"
+                                class="grid size-9 place-items-center rounded-lg text-muted hover:bg-elevated hover:text-ink"
                                 aria-label={ t().nav.closeMenu }
                                 onClick={ () => langOpen = false }
                             >
