@@ -66,7 +66,12 @@ export default component Home()
         <NetworkSection />
 
         <section id="wallet" class="border-t border-line px-5 py-20">
-            <div class="mx-auto max-w-5xl">
+            { /* `max-w-4xl`, the same measure as every other section. It was 5xl, which
+                 put this one block 64px wider on each side than the sections above and
+                 below it - not obviously wrong on its own, but scrolling past it the left
+                 edge of the page steps out and back again. Its grids were never using
+                 the extra room for anything. */ }
+            <div class="mx-auto max-w-4xl">
                 <h2 class="text-3xl font-bold tracking-tight text-ink sm:text-4xl">{ t().wallet.title }</h2>
                 <p class="mt-3 text-muted">{ t().wallet.subtitle }</p>
 
