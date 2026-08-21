@@ -2,8 +2,7 @@
 
 set -euo pipefail
 
-# NOT `NODE_PATH` - that name belongs to Node itself (a module search path), and a machine
-# that still exports it for legacy resolution would have it read here as an interpreter.
+# Resolve Node binary.
 NODE_BIN="${NODE_BIN:-$(command -v node || true)}"
 
 if [ -z "$NODE_BIN" ]; then
@@ -18,41 +17,42 @@ fi
 
 SERVICE_NAME="nura-landing"
 
-# The repo root, and the server half inside it. The server IS the service: it runs the API,
-# owns the sqlite blog, and in production serves the built client and renders the server
-# pages itself, so there is only ever one unit.
+# Repository root.
+# This script is expected to live at:
+#   /home/Landing/scripts/<this-file>.sh
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SERVER_DIR="$ROOT/server"
 
-# No build step for the server - Node runs the TypeScript source directly (>= 22.18, which
-# is what package.json's engines field asks for), so this is `npm start` without the npm.
-# WorkingDirectory is the SERVER directory, not the repo root: main.ts calls loadEnvFile()
-# against the working directory, and CLIENT_DIR/SSR_ENTRY default to paths relative to it.
-SERVICE_ENTRY="src/main.ts"
+# Node runs the TypeScript source directly.
+SERVICE_ENTRY="$SERVER_DIR/src/main.ts"
 
 SERVICE_DIR="${SERVICE_DIR:-/etc/systemd/system}"
 SERVICE_FILE="$SERVICE_DIR/${SERVICE_NAME}.service"
 
-# The CLIENT half does have a build step, and production imports the SSR bundle at boot and
-# serves the client bundle beside it - a missing one is a service that restart-loops. Say so
-# here rather than in the log at 3am. `npm run build` writes both.
-for artifact in application/dist/index.html application/dist-server/entry.server.js; do
+# Production client artifacts.
+for artifact in \
+  application/dist/index.html \
+  application/dist-server/entry.server.js
+do
   if [ ! -f "$ROOT/$artifact" ]; then
     echo "warning: $artifact is missing - run 'npm run build' before starting" >&2
   fi
 done
 
-# The unit pins NODE_ENV=production, and production refuses to boot without an admin key.
-# Without this file that is the first thing the service does: exit, and try again forever.
+# Production environment.
 if [ ! -f "$SERVER_DIR/.env" ]; then
   echo "warning: server/.env is missing - production will not boot without ADMIN_KEY in it" >&2
   echo "         copy server/.env.example and run 'npm run admin:key'" >&2
 fi
 
-# systemd does not create the directory it is told to log into.
+# systemd does not create log directories automatically.
 mkdir -p "$SERVER_DIR/logs"
 
 echo "> Installing systemd service (${SERVICE_FILE})..."
+echo "> Repository: $ROOT"
+echo "> Server:     $SERVER_DIR"
+echo "> Node:       $NODE_BIN"
+echo "> Entry:      $SERVICE_ENTRY"
 
 cat > "$SERVICE_FILE" <<EOF
 [Unit]
@@ -60,17 +60,20 @@ Description=Nura Landing - site, blog and dashboard
 After=network.target
 
 [Service]
-RestartSec=5
-Restart=always
-# Without this the server runs its DEVELOPMENT path: no SSR, and the devtools bridge attaches.
-Environment=NODE_ENV=production
-WorkingDirectory=$SERVER_DIR
-# Quoted: systemd splits ExecStart on whitespace, and an interpreter installed under a path with
-# a space in it (nvm on some setups, /opt installs) would otherwise be read as two arguments.
-ExecStart="$NODE_BIN" $SERVICE_ENTRY
+Type=simple
 
-# append:, not file: - file: truncates on every start, and Restart=always means a crash loop
-# would erase the very output that explains it. The logger's own NDJSON lands in logs/ too.
+Restart=always
+RestartSec=5
+
+Environment=NODE_ENV=production
+
+# Keep the server as the working directory because main.ts loads
+# .env and other relative paths from here.
+WorkingDirectory=$SERVER_DIR
+
+# Absolute path: the service no longer depends on the shell's current directory.
+ExecStart=$NODE_BIN $SERVICE_ENTRY
+
 StandardOutput=append:$SERVER_DIR/logs/service_output.log
 StandardError=append:$SERVER_DIR/logs/service_error.log
 
@@ -81,7 +84,19 @@ WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload
-
 systemctl enable "$SERVICE_NAME"
 
-echo "> Service Installed."
+echo "> Service installed successfully."
+echo "> Unit: $SERVICE_FILE"
+
+# If the service already exists, restart it immediately.
+if systemctl is-active --quiet "$SERVICE_NAME"; then
+  echo "> Restarting $SERVICE_NAME..."
+  systemctl restart "$SERVICE_NAME"
+else
+  echo "> Starting $SERVICE_NAME..."
+  systemctl start "$SERVICE_NAME"
+fi
+
+echo
+systemctl status "$SERVICE_NAME" --no-pager
