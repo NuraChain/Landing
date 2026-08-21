@@ -83,10 +83,14 @@ jobs:
       # produce the same result. A test that only passes on a warm cache, or that leaks state
       # into the next file, shows up here rather than as an intermittent failure later.
       # `--sequence.shuffle` also catches order dependence between files.
+      # Through the workspace scripts, NOT a bare `npx vitest`. There is no vitest config at
+      # the repository root - the two halves each carry their own, and the browser half needs
+      # its happy-dom environment and its setup file. Run from here, vitest found the specs,
+      # loaded neither, and failed 27 of them; this job had been red since the split.
       - name: Run the suite twice, second time shuffled
         run: |
           npm test
-          npx vitest run --sequence.shuffle --sequence.seed=20260820
+          npm run test:shuffle
 
   build:
     name: Production build

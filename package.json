@@ -22,7 +22,8 @@
         "test:fuzz": "npm run test:fuzz --workspace application",
         "test:security": "npm run test:security --workspace application",
         "test:i18n": "npm run test:i18n --workspace application",
-        "test:server": "npm test --workspace server",
+        "test:shuffle": "npm run test:shuffle --workspaces --if-present",
+    "test:server": "npm test --workspace server",
         "coverage": "npm run coverage --workspace application",
         "qa:visual": "node scripts/visual-qa.mjs",
         "admin:key": "npm run admin:key --workspace server"
