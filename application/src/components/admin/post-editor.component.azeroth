@@ -10,6 +10,7 @@ import { useToasts } from '../../stores/toasts';
 
 import Banner from '../ui/banner.component.azeroth';
 import Field from '../ui/field.component.azeroth';
+import Skeleton from '../ui/skeleton.component.azeroth';
 import Input from '../ui/input.component.azeroth';
 
 interface Draft
@@ -273,7 +274,11 @@ export default component PostEditorPanel(props:
         </Show>
 
         <Show when={ () => loading }>
-            <p class="text-faint">{ () => `${ t().blog.loading }…` }</p>
+            <div class="flex flex-col gap-4" aria-hidden="true">
+                <Skeleton class="h-8 w-2/3" />
+                <Skeleton class="h-10 w-full" />
+                <Skeleton class="h-40 w-full" />
+            </div>
         </Show>
 
         <Show when={ () => !loading }>

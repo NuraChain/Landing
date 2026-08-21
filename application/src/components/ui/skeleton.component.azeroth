@@ -1,0 +1,18 @@
+/**
+ * A placeholder in the shape of what is coming.
+ *
+ * There is deliberately **no `count` prop**. Building the repeat inside the component needs a
+ * control-flow block whose only job is to count, and in the sibling project that broke server
+ * rendering outright. `/blog` and `/blog/:slug` server-render here, so that is a live hazard
+ * rather than a story about somewhere else - callers repeat the element by hand.
+ *
+ * Inert to assistive tech: there is nothing to announce until the data arrives, and a screen
+ * reader that read out three grey boxes would be worse off than one that read nothing.
+ */
+export default component Skeleton(props: { class?: string })
+{
+    <span
+        class={ () => `block animate-pulse rounded-lg bg-elevated ${ props.class ?? 'h-4 w-full' }` }
+        aria-hidden="true"
+    ></span>
+}

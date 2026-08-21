@@ -197,7 +197,8 @@ export const pt: Strings =
 
     toast:
     {
-        dismiss: 'Fechar'
+        dismiss: 'Fechar',
+        copyFailed: 'Nao foi possivel copiar. Selecione o valor e copie a mao.'
     },
 
     explorer:

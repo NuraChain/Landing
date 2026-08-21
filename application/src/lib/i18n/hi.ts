@@ -197,7 +197,8 @@ export const hi: Strings =
 
     toast:
     {
-        dismiss: 'बंद करें'
+        dismiss: 'बंद करें',
+        copyFailed: 'कॉपी नहीं हो सका। मान चुनें और हाथ से कॉपी करें।'
     },
 
     explorer:

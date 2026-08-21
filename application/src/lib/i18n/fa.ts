@@ -197,7 +197,8 @@ export const fa: Strings =
 
     toast:
     {
-        dismiss: 'بستن'
+        dismiss: 'بستن',
+        copyFailed: 'کپی نشد. مقدار را انتخاب و دستی کپی کنید.'
     },
 
     explorer:

@@ -1,0 +1,48 @@
+import type { IconNode } from 'lucide';
+
+import { icon } from '../icons/icon';
+
+/**
+ * The box that stands in for a list with nothing in it.
+ *
+ * Three of these were written by hand and had already drifted - two `rounded-xl`, one
+ * `rounded-2xl`. Takes translated strings as props, like every other primitive here: the
+ * component owns the shape, the page owns the words.
+ *
+ * The hint should say what WILL appear here rather than apologise for the blank.
+ */
+export default component EmptyState(props:
+{
+    title: string;
+    hint?: string;
+    glyph?: IconNode;
+    /**
+     * Renders the title as the page's `<h1>` rather than a paragraph.
+     *
+     * For the one case where this box IS the page: a post that does not exist has no other
+     * heading, and a document whose only heading is missing reads as untitled. Everywhere
+     * else it is a paragraph, so an empty list cannot invent a heading the outline does not
+     * have room for.
+     */
+    heading?: boolean;
+})
+{
+    <div class="flex flex-col items-center gap-2 rounded-xl border border-line bg-surface px-5 py-10 text-center">
+        <Show when={ () => props.glyph !== undefined }>
+            <span class="grid size-10 place-items-center rounded-full bg-elevated text-faint">
+                { () => icon(props.glyph!, 'size-[18px]') }
+            </span>
+        </Show>
+
+        <Show
+            when={ () => props.heading === true }
+            fallback={ () => <p class="font-semibold text-ink">{ () => props.title }</p> }
+        >
+            <h1 class="font-semibold text-ink">{ () => props.title }</h1>
+        </Show>
+
+        <Show when={ () => props.hint !== undefined }>
+            <p class="max-w-sm text-sm leading-relaxed text-muted">{ () => props.hint }</p>
+        </Show>
+    </div>
+}

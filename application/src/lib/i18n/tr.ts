@@ -197,7 +197,8 @@ export const tr: Strings =
 
     toast:
     {
-        dismiss: 'Kapat'
+        dismiss: 'Kapat',
+        copyFailed: 'Kopyalanamadi. Degeri secip elle kopyalayin.'
     },
 
     explorer:

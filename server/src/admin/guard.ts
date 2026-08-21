@@ -63,6 +63,16 @@ const deny = (status: number, code: string, message: string): Response =>
 const LOGIN_LIMIT = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
+/*
+ * Return type left inferred, deliberately.
+ *
+ * `guard()` answers with `GuardOf<R>`, which encodes what that particular guard adds to
+ * the handler context - and the three here add different things. Writing the shape out by
+ * hand would restate an inferred generic in a second place, and the day one guard starts
+ * contributing another field the annotation would be a lie the compiler still accepts.
+ * `AdminGuards` below is the name callers use.
+ */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function adminGuards(deps: GuardDeps)
 {
     const loginAttempts = new MemoryRateStore();

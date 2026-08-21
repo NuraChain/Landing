@@ -44,7 +44,12 @@ export function resolve(stored: StoredPost, wanted: PostLocale): TranslationRow 
 }
 
 /** The fields every served shape shares, resolved for one reader. */
-function served(post: PostRow, chosen: TranslationRow, available: PostLocale[], wanted: PostLocale)
+/*
+ * Annotated with the WIRE type it feeds rather than left inferred: `toCard` returns this
+ * value directly as a `PostCard`, so naming it here is what makes a field added to one and
+ * not the other a compile error instead of a silently thinner card.
+ */
+function served(post: PostRow, chosen: TranslationRow, available: PostLocale[], wanted: PostLocale): PostCard
 {
     return {
         slug: post.slug,

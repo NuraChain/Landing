@@ -197,7 +197,8 @@ export const zh: Strings =
 
     toast:
     {
-        dismiss: '关闭'
+        dismiss: '关闭',
+        copyFailed: '无法复制。请选中该值手动复制。'
     },
 
     explorer:

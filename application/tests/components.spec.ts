@@ -8,7 +8,9 @@ import Button from '../src/components/ui/button.component.azeroth';
 import Card from '../src/components/ui/card.component.azeroth';
 import IconButton from '../src/components/ui/icon-button.component.azeroth';
 import Badge from '../src/components/ui/badge.component.azeroth';
+import EmptyState from '../src/components/ui/empty-state.component.azeroth';
 import Input from '../src/components/ui/input.component.azeroth';
+import Skeleton from '../src/components/ui/skeleton.component.azeroth';
 import { useToasts } from '../src/stores/toasts';
 import CopyField from '../src/components/chain/copy-field.component.azeroth';
 import SectionHeading from '../src/components/layout/section-heading.component.azeroth';
@@ -98,6 +100,55 @@ describe('Button', () =>
 
 /** A handler the test does not care about; the repo's brace style rejects `() => {}`. */
 const noop = (): void => undefined;
+
+describe('Skeleton', () =>
+{
+    it('is inert to assistive tech, since there is nothing to announce yet', () =>
+    {
+        const { container } = renderTest(() => Skeleton({}));
+
+        expect(container.querySelector('span')?.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('takes its shape from the caller, so a placeholder can match what is coming', () =>
+    {
+        const { container } = renderTest(() => Skeleton({ class: 'h-28 w-full' }));
+        const className = container.querySelector('span')!.className;
+
+        expect(className).toContain('h-28');
+        expect(className).toContain('animate-pulse');
+    });
+});
+
+describe('EmptyState', () =>
+{
+    it('is a paragraph by default, so an empty list invents no heading', () =>
+    {
+        const { container } = renderTest(() => EmptyState({ title: 'No posts yet' }));
+
+        expect(container.querySelector('h1')).toBeNull();
+        expect(container.querySelector('p')?.textContent).toBe('No posts yet');
+    });
+
+    it('becomes the h1 when the box IS the page', () =>
+    {
+        // A post that does not exist has no other heading; without this the document would
+        // have none at all.
+        const { container } = renderTest(() =>
+            EmptyState({ heading: true, title: 'That post does not exist' }));
+
+        expect(container.querySelector('h1')?.textContent).toBe('That post does not exist');
+    });
+
+    it('renders the hint only when there is one', () =>
+    {
+        const { container: bare } = renderTest(() => EmptyState({ title: 'a' }));
+        const { container: hinted } = renderTest(() => EmptyState({ title: 'a', hint: 'and a hint' }));
+
+        expect(bare.querySelectorAll('p')).toHaveLength(1);
+        expect(hinted.textContent).toContain('and a hint');
+    });
+});
 
 describe('Badge', () =>
 {

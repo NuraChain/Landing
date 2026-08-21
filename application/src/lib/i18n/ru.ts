@@ -197,7 +197,8 @@ export const ru: Strings =
 
     toast:
     {
-        dismiss: 'Закрыть'
+        dismiss: 'Закрыть',
+        copyFailed: 'Не удалось скопировать. Выделите значение и скопируйте вручную.'
     },
 
     explorer:

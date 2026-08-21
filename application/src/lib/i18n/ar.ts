@@ -197,7 +197,8 @@ export const ar: Strings =
 
     toast:
     {
-        dismiss: 'إغلاق'
+        dismiss: 'إغلاق',
+        copyFailed: 'تعذّر النسخ. حدّد القيمة وانسخها يدويًا.'
     },
 
     explorer:

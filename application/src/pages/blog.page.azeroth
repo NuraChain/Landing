@@ -5,6 +5,8 @@ import { directionOf, useLocale } from '../stores/locale';
 
 import Banner from '../components/ui/banner.component.azeroth';
 import Pagination from '../components/ui/pagination.component.azeroth';
+import EmptyState from '../components/ui/empty-state.component.azeroth';
+import Skeleton from '../components/ui/skeleton.component.azeroth';
 
 const CHIP = 'rounded-full border px-3 py-1 text-sm transition-colors ';
 const CHIP_ON = 'cursor-default border-accent bg-accent text-accent-ink';
@@ -26,6 +28,8 @@ export default component Blog()
     state tags = [] as TagCount[];
     state failed = false;
     state pageCount = 1;
+    /** Everything published, for the count on the unfiltered chip. */
+    state publishedCount = 0;
 
     /*
      * The page and the tag live in the URL, not in state.
@@ -72,6 +76,14 @@ export default component Blog()
         return { pathname: '/blog', query: parts };
     };
 
+    /**
+     * Counts go through Intl too, not just dates.
+     *
+     * The tags endpoint has always returned `{ tag, count }` and the page printed only the
+     * tag - so how much sits behind each filter was fetched on every load and thrown away.
+     */
+    const count = (value: number): string => new Intl.NumberFormat(locale()).format(value);
+
     /** Dates go through Intl in the reader's locale - no hand formatting, years included. */
     const day = (iso: string | null): string =>
         iso === null ? '' : new Intl.DateTimeFormat(locale(), { dateStyle: 'medium' }).format(new Date(iso));
@@ -94,6 +106,13 @@ export default component Blog()
                     posts = found.rows;
                     pageCount = found.pages;
                     failed = false;
+
+                    // Only when nothing is filtered: with a tag applied this is that tag's
+                    // count, which is already on its own chip.
+                    if (only === null)
+                    {
+                        publishedCount = found.total;
+                    }
                 }
             })
             .catch(() =>
@@ -145,21 +164,36 @@ export default component Blog()
                     to={ () => ({ pathname: '/blog', query: {} }) }
                     class={ () => CHIP + (tag() === null ? CHIP_ON : CHIP_OFF) }
                     aria-current={ () => tag() === null ? 'true' : undefined }
-                >{ t().blog.everyTag }</Link>
+                >
+                    { t().blog.everyTag }
+                    <span class="ms-1.5 tabular-nums text-faint">{ () => count(publishedCount) }</span>
+                </Link>
                 <For each={ tags } key={ (row) => row.tag } let={ row }>
                     <span class="contents">
                         <Link
                             to={ () => ({ pathname: '/blog', query: { tag: row.tag } }) }
                             class={ () => CHIP + (tag() === row.tag ? CHIP_ON : CHIP_OFF) }
                             aria-current={ () => tag() === row.tag ? 'true' : undefined }
-                        >{ row.tag }</Link>
+                        >
+                            { row.tag }
+                            { /* `tabular-nums` so the chips do not jitter as counts change, and
+                                 `text-faint` so the tag stays the thing being read. */ }
+                            <span class="ms-1.5 tabular-nums text-faint">{ () => count(row.count) }</span>
+                        </Link>
                     </span>
                 </For>
             </nav>
         </Show>
 
+        { /* Shaped like the cards that are coming, rather than the word "Loading": the row
+             heights are known, so the page can hold its layout instead of collapsing and
+             pushing the footer up for a moment. Repeated by hand - see Skeleton. */ }
         <Show when={ posts === null }>
-            <p class="text-faint">{ t().blog.loading }…</p>
+            <div class="flex flex-col gap-4" aria-hidden="true">
+                <Skeleton class="h-28 w-full" />
+                <Skeleton class="h-28 w-full" />
+                <Skeleton class="h-28 w-full" />
+            </div>
         </Show>
 
         { /* A failure is NOT an empty blog, and used to render as one - same box, same
@@ -170,10 +204,7 @@ export default component Blog()
         </Show>
 
         <Show when={ () => !failed && posts !== null && posts!.length === 0 }>
-            <div class="rounded-xl border border-line bg-surface px-5 py-10 text-center">
-                <p class="font-semibold text-ink">{ t().blog.empty }</p>
-                <p class="mt-1 text-sm text-muted">{ t().blog.emptyHint }</p>
-            </div>
+            <EmptyState title={ t().blog.empty } hint={ t().blog.emptyHint } />
         </Show>
 
         <Show when={ posts !== null && posts.length > 0 }>

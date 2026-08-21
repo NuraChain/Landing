@@ -6,6 +6,8 @@ import { useToasts } from '../../stores/toasts';
 import Badge from '../ui/badge.component.azeroth';
 import Banner from '../ui/banner.component.azeroth';
 import Button from '../ui/button.component.azeroth';
+import EmptyState from '../ui/empty-state.component.azeroth';
+import Skeleton from '../ui/skeleton.component.azeroth';
 import Pagination from '../ui/pagination.component.azeroth';
 
 /**
@@ -127,14 +129,15 @@ export default component PostsPanel(props: { onOpen: (id: number | null) => void
         </Show>
 
         <Show when={ () => records === null }>
-            <p class="text-faint">{ () => `${ t().blog.loading }…` }</p>
+            <div class="flex flex-col gap-3" aria-hidden="true">
+                <Skeleton class="h-36 w-full" />
+                <Skeleton class="h-36 w-full" />
+                <Skeleton class="h-36 w-full" />
+            </div>
         </Show>
 
         <Show when={ () => records !== null && records.length === 0 }>
-            <div class="rounded-2xl border border-line bg-surface px-5 py-10 text-center">
-                <p class="font-semibold text-ink">{ () => t().admin.noPosts }</p>
-                <p class="mt-1 text-sm text-muted">{ () => t().admin.noPostsHint }</p>
-            </div>
+            <EmptyState title={ t().admin.noPosts } hint={ t().admin.noPostsHint } />
         </Show>
 
         { /* A list of cards rather than a table: the same rows have to work at 390px, where a

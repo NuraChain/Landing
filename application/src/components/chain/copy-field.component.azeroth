@@ -1,5 +1,8 @@
 import { Check, Copy } from 'lucide';
 
+import { useLocale } from '../../stores/locale';
+import { useToasts } from '../../stores/toasts';
+
 import { icon } from '../icons/icon';
 
 import IconButton from '../ui/icon-button.component.azeroth';
@@ -25,6 +28,9 @@ export default component CopyField(props:
     href?: string;
 })
 {
+    const { t } = useLocale();
+    const toasts = useToasts();
+
     state copied = false;
 
     let timer = 0;
@@ -41,8 +47,17 @@ export default component CopyField(props:
         }
         catch
         {
-            // Clipboard is permission-gated and blocked in some embedded browsers. The
-            // value is on screen and selectable, so a failure costs convenience only.
+            /*
+             * Clipboard is permission-gated and blocked in some embedded browsers.
+             *
+             * This used to be silent, on the grounds that the value is on screen and
+             * selectable so a failure "costs convenience only". That was true of the cost and
+             * wrong about the risk: the reader is not told, so they walk away believing they
+             * hold an RPC endpoint or a contract address and paste whatever was in the
+             * clipboard before. Saying so is the whole difference, and there is somewhere to
+             * say it now.
+             */
+            toasts.push('error', t().toast.copyFailed);
         }
     };
 

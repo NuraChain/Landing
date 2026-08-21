@@ -267,6 +267,8 @@ export interface Strings
     toast:
     {
         dismiss: string;
+        /** Raised when the clipboard refuses - the one copy outcome the button cannot show. */
+        copyFailed: string;
     };
 
     explorer:
