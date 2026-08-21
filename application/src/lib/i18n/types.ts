@@ -271,6 +271,24 @@ export interface Strings
         copyFailed: string;
     };
 
+    /**
+     * The roadmap. Milestone COPY is keyed by the ids in `ROADMAP` (lib/content/site.ts), the
+     * same way the tokenomics allocations key theirs - so adding a milestone is a compile error
+     * until all ten tables carry its line.
+     */
+    roadmap:
+    {
+        title: string;
+        subtitle: string;
+        status:
+        {
+            done: string;
+            now: string;
+            next: string;
+        };
+        milestones: Record<string, string>;
+    };
+
     explorer:
     {
         title: string;

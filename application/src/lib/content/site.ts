@@ -223,6 +223,30 @@ export const SUPPLY =
     circulating: 600_000_000
 };
 
+export type MilestoneStatus = 'done' | 'now' | 'next';
+
+export interface Milestone
+{
+    /**
+     * Keys this milestone's copy in every locale table (`roadmap.milestones[id]`), the same
+     * way an allocation keys its label. A milestone added here without those ten lines does
+     * not compile.
+     */
+    id: string;
+    status: MilestoneStatus;
+}
+
+/**
+ * The roadmap, in order.
+ *
+ * TODO(real-data): EMPTY, and the section renders nothing while it is - which is the point.
+ * A roadmap is a set of promises about a live chain; inventing one to fill a gap on a page
+ * would be the same class of mistake as inventing a chain id. Add the real milestones here
+ * and the section appears; the header nav entry goes in at the same moment, because a link
+ * to a hidden section is a dead click.
+ */
+export const ROADMAP: readonly Milestone[] = [];
+
 export type SocialId = 'github' | 'telegram' | 'x' | 'discord' | 'youtube' | 'instagram';
 
 export interface Social

@@ -1,0 +1,55 @@
+import { For } from 'azerothjs';
+
+import { ROADMAP, type MilestoneStatus } from '../lib/content/site';
+
+import Badge from '../components/ui/badge.component.azeroth';
+import SectionHeading from '../components/layout/section-heading.component.azeroth';
+
+import { useLocale } from '../stores/locale';
+import type { Tone } from '../components/ui/variants';
+
+/**
+ * Which tone each state wears. Data, so the mapping is named once and the section body has no
+ * colour in it at all.
+ */
+const TONE: Record<MilestoneStatus, Tone> = { done: 'accent', now: 'warning', next: 'neutral' };
+
+/**
+ * The roadmap.
+ *
+ * Whether this belongs on the page at all is decided by the PAGE, which only includes it once
+ * `ROADMAP` has entries - a roadmap is a set of promises about a live chain, and a placeholder
+ * one would be a promise nobody made. The guard is at the call site rather than here because a
+ * component whose root is a `<Show>` resolves to a fragment rather than one host element, and a
+ * fragment in a child slot renders nothing at all - silently, which is how this was written the
+ * first time.
+ */
+export default component RoadmapSection()
+{
+    const { t } = useLocale();
+
+    <section id="roadmap" class="border-t border-line px-5 py-16 sm:py-20">
+        <div class="mx-auto max-w-4xl">
+            <SectionHeading title={ t().roadmap.title } subtitle={ t().roadmap.subtitle } />
+
+            { /* An ordered list, because a roadmap IS one: a screen reader announces "3 of 7"
+                 and the order carries meaning that a stack of divs would throw away. */ }
+            <ol class="mt-8 flex flex-col gap-3">
+                <For each={ () => [...ROADMAP] } key={ (milestone) => milestone.id } let={ milestone }>
+                    <li class="flex flex-wrap items-baseline gap-x-4 gap-y-2 rounded-2xl border border-line bg-surface p-5">
+                        <span class="min-w-0 flex-1 text-ink">
+                            { () => t().roadmap.milestones[milestone.id] }
+                        </span>
+
+                        { /* The state is a word, not a colour: `done` and `next` differ by
+                             hue alone to anyone who can see hue, and by nothing at all to
+                             anyone who cannot. Badge always renders its label. */ }
+                        <Badge tone={ TONE[milestone.status] } fill="solid">
+                            { () => t().roadmap.status[milestone.status] }
+                        </Badge>
+                    </li>
+                </For>
+            </ol>
+        </div>
+    </section>
+}

@@ -201,6 +201,21 @@ export const ar: Strings =
         copyFailed: 'تعذّر النسخ. حدّد القيمة وانسخها يدويًا.'
     },
 
+    roadmap:
+    {
+        title: 'خارطة الطريق',
+        subtitle: 'ما أُنجز، وما يجري بناؤه، وما هو قادم.',
+        status:
+        {
+            done: 'مكتمل',
+            now: 'قيد التنفيذ',
+            next: 'مخطط له'
+        },
+        // Keyed by the ids in ROADMAP. Empty while ROADMAP is: a milestone added there
+        // fails the build until its line exists in all ten tables.
+        milestones: {}
+    },
+
     explorer:
     {
         title: 'مستكشف نورا',

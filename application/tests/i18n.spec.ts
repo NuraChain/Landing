@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 
 import { LOCALES, nativeName } from '../src/stores/locale';
 import type { Locale } from '../src/stores/locale';
-import { ALLOCATIONS } from '../src/lib/content/site';
+import { ALLOCATIONS, ROADMAP } from '../src/lib/content/site';
 import { en } from '../src/lib/i18n/en';
 import type { Strings } from '../src/lib/i18n/types';
 
@@ -147,6 +147,33 @@ describe('translation completeness', () =>
             {
                 expect(TABLES[locale].tokenomics.allocations[slice.key], `${ locale }/${ slice.key }`).toBeTruthy();
                 expect(TABLES[locale].tokenomics.notes[slice.key], `${ locale }/${ slice.key }`).toBeTruthy();
+            }
+        }
+    });
+
+    it('keeps a line for every milestone the roadmap lists', () =>
+    {
+        // ROADMAP ships empty, so this passes trivially today. It exists for the day somebody
+        // adds a milestone: the section renders `roadmap.milestones[id]`, and without this the
+        // first sign of a missing translation would be a blank row on the live page.
+        for (const locale of LOCALES)
+        {
+            for (const milestone of ROADMAP)
+            {
+                expect(TABLES[locale].roadmap.milestones[milestone.id], `${ locale }/${ milestone.id }`).toBeTruthy();
+            }
+        }
+    });
+
+    it('names all three roadmap states in every locale', () =>
+    {
+        // These carry the status when colour cannot - a badge that renders an empty word is
+        // a badge that means nothing.
+        for (const locale of LOCALES)
+        {
+            for (const status of ['done', 'now', 'next'] as const)
+            {
+                expect(TABLES[locale].roadmap.status[status], `${ locale }/${ status }`).toBeTruthy();
             }
         }
     });

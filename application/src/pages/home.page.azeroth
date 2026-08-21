@@ -2,7 +2,7 @@ import { For } from 'azerothjs';
 
 import { ArrowRight, Code2, Terminal, Zap } from 'lucide';
 
-import { DOWNLOADS, RELEASES_URL } from '../lib/content/site';
+import { DOWNLOADS, RELEASES_URL, ROADMAP } from '../lib/content/site';
 import type { Download } from '../lib/content/site';
 
 import AddChainButton from '../components/chain/add-chain-button.component.azeroth';
@@ -15,6 +15,7 @@ import { useLocale } from '../stores/locale';
 
 import ChainSection from '../sections/chain.section.azeroth';
 import ExplorerSection from '../sections/explorer.section.azeroth';
+import RoadmapSection from '../sections/roadmap.section.azeroth';
 import NetworkSection from '../sections/network.section.azeroth';
 import SocialSection from '../sections/social.section.azeroth';
 import TokenomicsSection from '../sections/tokenomics.section.azeroth';
@@ -158,6 +159,15 @@ export default component Home()
 
         <TokenomicsSection />
         <ChainSection />
+        { /* Between the chain facts and the explorer: somebody who has just read what the
+             chain IS is the one asking what happens to it next.
+
+             Off the page entirely while ROADMAP is empty, rather than rendering an empty
+             section - a bordered strip with a heading and nothing under it is worse than no
+             section at all. */ }
+        <Show when={ () => ROADMAP.length > 0 }>
+            <RoadmapSection />
+        </Show>
 
         <ExplorerSection />
         <SocialSection />

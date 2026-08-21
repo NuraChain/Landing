@@ -201,6 +201,21 @@ export const zh: Strings =
         copyFailed: '无法复制。请选中该值手动复制。'
     },
 
+    roadmap:
+    {
+        title: '路线图',
+        subtitle: '已完成的、正在做的，以及接下来的。',
+        status:
+        {
+            done: '已完成',
+            now: '进行中',
+            next: '计划中'
+        },
+        // Keyed by the ids in ROADMAP. Empty while ROADMAP is: a milestone added there
+        // fails the build until its line exists in all ten tables.
+        milestones: {}
+    },
+
     explorer:
     {
         title: 'Nura 浏览器',

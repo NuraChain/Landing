@@ -201,6 +201,21 @@ export const fr: Strings =
         copyFailed: 'Copie impossible. Selectionnez la valeur et copiez-la a la main.'
     },
 
+    roadmap:
+    {
+        title: 'Feuille de route',
+        subtitle: 'Ce qui est fait, ce qui se construit, et ce qui suit.',
+        status:
+        {
+            done: 'Fait',
+            now: 'En cours',
+            next: 'Prevu'
+        },
+        // Keyed by the ids in ROADMAP. Empty while ROADMAP is: a milestone added there
+        // fails the build until its line exists in all ten tables.
+        milestones: {}
+    },
+
     explorer:
     {
         title: 'Nura Explorer',

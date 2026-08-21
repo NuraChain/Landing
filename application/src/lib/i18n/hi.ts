@@ -201,6 +201,21 @@ export const hi: Strings =
         copyFailed: 'कॉपी नहीं हो सका। मान चुनें और हाथ से कॉपी करें।'
     },
 
+    roadmap:
+    {
+        title: 'रोडमैप',
+        subtitle: 'जो बन चुका है, जो बन रहा है, और आगे क्या आ रहा है।',
+        status:
+        {
+            done: 'पूर्ण',
+            now: 'प्रगति पर',
+            next: 'नियोजित'
+        },
+        // Keyed by the ids in ROADMAP. Empty while ROADMAP is: a milestone added there
+        // fails the build until its line exists in all ten tables.
+        milestones: {}
+    },
+
     explorer:
     {
         title: 'नूरा एक्सप्लोरर',

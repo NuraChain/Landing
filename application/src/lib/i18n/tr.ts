@@ -201,6 +201,21 @@ export const tr: Strings =
         copyFailed: 'Kopyalanamadi. Degeri secip elle kopyalayin.'
     },
 
+    roadmap:
+    {
+        title: 'Yol haritasi',
+        subtitle: 'Yapilanlar, yapilmakta olanlar ve sirada olanlar.',
+        status:
+        {
+            done: 'Tamamlandi',
+            now: 'Devam ediyor',
+            next: 'Planlandi'
+        },
+        // Keyed by the ids in ROADMAP. Empty while ROADMAP is: a milestone added there
+        // fails the build until its line exists in all ten tables.
+        milestones: {}
+    },
+
     explorer:
     {
         title: 'Nura Explorer',

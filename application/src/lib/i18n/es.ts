@@ -201,6 +201,21 @@ export const es: Strings =
         copyFailed: 'No se pudo copiar. Selecciona el valor y copialo a mano.'
     },
 
+    roadmap:
+    {
+        title: 'Hoja de ruta',
+        subtitle: 'Lo construido, lo que se esta construyendo y lo que viene.',
+        status:
+        {
+            done: 'Hecho',
+            now: 'En curso',
+            next: 'Planeado'
+        },
+        // Keyed by the ids in ROADMAP. Empty while ROADMAP is: a milestone added there
+        // fails the build until its line exists in all ten tables.
+        milestones: {}
+    },
+
     explorer:
     {
         title: 'Nura Explorer',

@@ -201,6 +201,21 @@ export const ru: Strings =
         copyFailed: 'Не удалось скопировать. Выделите значение и скопируйте вручную.'
     },
 
+    roadmap:
+    {
+        title: 'Дорожная карта',
+        subtitle: 'Что готово, что делается и что будет дальше.',
+        status:
+        {
+            done: 'Готово',
+            now: 'В работе',
+            next: 'Запланировано'
+        },
+        // Keyed by the ids in ROADMAP. Empty while ROADMAP is: a milestone added there
+        // fails the build until its line exists in all ten tables.
+        milestones: {}
+    },
+
     explorer:
     {
         title: 'Nura Explorer',

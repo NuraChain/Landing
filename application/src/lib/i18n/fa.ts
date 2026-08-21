@@ -201,6 +201,21 @@ export const fa: Strings =
         copyFailed: 'کپی نشد. مقدار را انتخاب و دستی کپی کنید.'
     },
 
+    roadmap:
+    {
+        title: 'نقشه راه',
+        subtitle: 'آنچه ساخته شده، آنچه در دست ساخت است، و آنچه در پیش است.',
+        status:
+        {
+            done: 'انجام شد',
+            now: 'در حال انجام',
+            next: 'برنامه‌ریزی‌شده'
+        },
+        // Keyed by the ids in ROADMAP. Empty while ROADMAP is: a milestone added there
+        // fails the build until its line exists in all ten tables.
+        milestones: {}
+    },
+
     explorer:
     {
         title: 'کاوشگر نورا',
