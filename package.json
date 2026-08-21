@@ -23,10 +23,17 @@
         "test:security": "npm run test:security --workspace application",
         "test:i18n": "npm run test:i18n --workspace application",
         "test:shuffle": "npm run test:shuffle --workspaces --if-present",
-    "test:server": "npm test --workspace server",
+        "test:server": "npm test --workspace server",
         "coverage": "npm run coverage --workspace application",
         "qa:visual": "node scripts/visual-qa.mjs",
-        "admin:key": "npm run admin:key --workspace server"
+        "admin:key": "npm run admin:key --workspace server",
+        "service:install": "bash scripts/service-install.sh",
+        "service:start": "bash scripts/service-start.sh",
+        "service:stop": "bash scripts/service-stop.sh",
+        "service:restart": "bash scripts/service-restart.sh",
+        "service:status": "bash scripts/service-status.sh",
+        "service:deploy": "npm run build && npm run service:restart",
+        "service:uninstall": "bash scripts/service-uninstall.sh"
     },
     "devDependencies": {
         "@azerothjs/cli": "2.0.0-beta.2"
