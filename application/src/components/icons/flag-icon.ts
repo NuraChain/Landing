@@ -9,7 +9,7 @@ import sa from 'flag-icons/flags/4x3/sa.svg';
 import tr from 'flag-icons/flags/4x3/tr.svg';
 import us from 'flag-icons/flags/4x3/us.svg';
 
-import type { Locale } from '../stores/locale';
+import type { Locale } from '../../stores/locale';
 
 /**
  * A flag per language for the picker. A language is not a country, so every row of this

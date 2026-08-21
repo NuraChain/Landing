@@ -1,12 +1,12 @@
 import { For, Link } from 'azerothjs';
 
-import { EXPLORER_URL, SOCIALS, SWAP_URL } from '../lib/content/site';
+import { EXPLORER_URL, SOCIALS, SWAP_URL } from '../../lib/content/site';
 
-import { useSectionHref } from '../lib/section-href';
-import { useLocale } from '../stores/locale';
+import { useSectionHref } from '../../lib/section-href';
+import { useLocale } from '../../stores/locale';
 
-import AddChainButton from './add-chain-button.component.azeroth';
-import { brandIcon } from './brand-icon';
+import AddChainButton from '../chain/add-chain-button.component.azeroth';
+import { brandIcon } from '../icons/brand-icon';
 
 export default component Footer()
 {

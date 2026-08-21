@@ -1,7 +1,8 @@
 import type { Child } from 'azerothjs';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
-export type ButtonSize = 'md' | 'lg';
+import { BUTTON_SIZE, BUTTON_VARIANT, type ButtonSize, type ButtonVariant } from './variants';
+
+export type { ButtonSize, ButtonVariant };
 
 interface ButtonProps
 {
@@ -19,15 +20,6 @@ interface ButtonProps
     children?: Child;
 }
 
-const VARIANT: Record<ButtonVariant, string> =
-{
-    primary: 'bg-accent text-accent-ink hover:bg-accent-hover',
-    secondary: 'border border-line text-ink hover:border-line-strong hover:bg-elevated',
-    ghost: 'text-muted hover:bg-elevated hover:text-ink'
-};
-
-const SIZE: Record<ButtonSize, string> = { md: 'h-10 px-4 text-sm', lg: 'h-12 px-6' };
-
 /**
  * The one button. Every call site was repeating the same class string, so a change to the
  * hover treatment meant finding all of them; now it lands here.
@@ -35,8 +27,8 @@ const SIZE: Record<ButtonSize, string> = { md: 'h-10 px-4 text-sm', lg: 'h-12 px
 export default component Button(props: ButtonProps)
 {
     derived classes = 'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-colors '
-        + SIZE[props.size ?? 'md']
-        + ' ' + VARIANT[props.variant ?? 'primary']
+        + BUTTON_SIZE[props.size ?? 'md']
+        + ' ' + BUTTON_VARIANT[props.variant ?? 'primary']
         + (props.disabled === true ? ' cursor-not-allowed opacity-55' : '')
         + (props.class !== undefined ? ` ${ props.class }` : '');
 

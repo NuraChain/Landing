@@ -3,7 +3,7 @@ import { Link, useParams } from 'azerothjs';
 import { client, type PostDetail } from '../api';
 import { directionOf, nativeName, useLocale, type Locale } from '../stores/locale';
 
-import Markdown from '../components/markdown.component.azeroth';
+import Markdown from '../components/content/markdown.component.azeroth';
 
 /**
  * One post.

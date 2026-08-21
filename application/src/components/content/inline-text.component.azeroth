@@ -1,4 +1,4 @@
-import type { Inline } from '../lib/markdown';
+import type { Inline } from '../../lib/markdown';
 
 /**
  * A run of inline markdown: text, emphasis, code and links.

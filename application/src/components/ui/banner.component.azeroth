@@ -1,0 +1,45 @@
+import type { Child } from 'azerothjs';
+
+import { CircleAlert, Info, TriangleAlert } from 'lucide';
+
+import { icon } from '../icons/icon';
+
+export type BannerTone = 'warn' | 'info' | 'danger';
+
+const SKIN: Record<BannerTone, { box: string; mark: string; glyph: typeof Info }> = {
+    warn: { box: 'border-warm/40 bg-warm/10 text-ink', mark: 'text-warm', glyph: TriangleAlert },
+    info: { box: 'border-line bg-elevated text-ink', mark: 'text-muted', glyph: Info },
+    danger: { box: 'border-danger/40 bg-danger/10 text-danger', mark: 'text-danger', glyph: CircleAlert }
+};
+
+/**
+ * An inline notice.
+ *
+ * Every tone carries a real icon rather than colour alone, because a message that only reads
+ * as a colour is invisible to a colourblind reader and to anyone printing the page.
+ *
+ * The three tones announce differently on purpose. `danger` is `role="alert"` - it reports
+ * that something the reader just asked for did not happen, and it should interrupt. `warn` is
+ * `role="status"`, which waits for a pause. `info` announces nothing at all: it is ordinary
+ * prose that happens to sit in a box, and a live region would read it again on every render.
+ */
+export default component Banner(props: { tone?: BannerTone; children?: Child })
+{
+    derived skin = SKIN[props.tone ?? 'warn'];
+    derived role = ((): string | undefined =>
+    {
+        const tone = props.tone ?? 'warn';
+
+        return tone === 'danger' ? 'alert' : (tone === 'warn' ? 'status' : undefined);
+    })();
+
+    <p
+        class={ () => `flex items-start gap-2.5 rounded-xl border p-3.5 text-sm leading-relaxed ${ skin.box }` }
+        role={ () => role }
+    >
+        <span class={ () => `mt-0.5 shrink-0 ${ skin.mark }` }>
+            { () => icon(skin.glyph, 'size-[18px]') }
+        </span>
+        { props.children }
+    </p>
+}

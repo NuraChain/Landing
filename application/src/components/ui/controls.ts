@@ -21,12 +21,11 @@ export const CONTROL = `${ BASE } h-10`;
 export const CONTROL_MONO = `${ CONTROL } font-mono text-sm`;
 
 /**
- * A multi-line control. `field-sizing-content` grows the box with the text where it is
- * supported and is ignored where it is not, so the `min-h` is what actually guarantees the
- * size - a body editor that starts one line tall is unusable, and browser support is not
- * something to bet the layout on.
+ * A multi-line control, in the mono face: a body is read back while it still has its
+ * markdown syntax in it.
+ *
+ * `field-sizing-content` grows the box with the text where it is supported and is ignored
+ * where it is not, so `min-h` is what actually guarantees the size - a body editor that
+ * starts one line tall is unusable, and browser support is not something to bet a layout on.
  */
-export const CONTROL_AREA = `${ BASE } min-h-40 resize-y py-2 leading-relaxed [field-sizing:content]`;
-
-/** The same, for markdown: a body is read back in a mono face while it still has its syntax in it. */
-export const CONTROL_BODY = `${ CONTROL_AREA } font-mono text-sm`;
+export const CONTROL_BODY = `${ BASE } min-h-40 resize-y py-2 font-mono text-sm leading-relaxed [field-sizing:content]`;

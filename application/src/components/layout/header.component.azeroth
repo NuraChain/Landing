@@ -2,14 +2,16 @@ import { For, Link, Show } from 'azerothjs';
 
 import { Check, Contrast, Languages, Menu, Moon, Sun, X } from 'lucide';
 
-import { LOCALES, nativeName, useLocale } from '../stores/locale';
-import { captureOverlay } from '../lib/overlay';
-import { useSectionHref } from '../lib/section-href';
-import { useTheme } from '../stores/theme';
-import type { Theme } from '../stores/theme';
+import { LOCALES, nativeName, useLocale } from '../../stores/locale';
+import { captureOverlay } from '../../lib/overlay';
+import { useSectionHref } from '../../lib/section-href';
 
-import { flagSrc } from './flag-icon';
-import { icon } from './icon';
+import IconButton from '../ui/icon-button.component.azeroth';
+import { useTheme } from '../../stores/theme';
+import type { Theme } from '../../stores/theme';
+
+import { flagSrc } from '../icons/flag-icon';
+import { icon } from '../icons/icon';
 
 type SectionId = 'wallet' | 'tokenomics' | 'chain' | 'explorer' | 'social';
 
@@ -140,25 +142,18 @@ export default component Header()
                 </Link>
             </nav>
 
-            <button
-                type="button"
-                class="grid size-9 place-items-center rounded-lg text-muted transition-colors hover:bg-elevated hover:text-ink"
-                aria-label={ `${ t().theme.label }: ${ t().theme[theme()] }` }
-                onClick={ () => cycle() }
-            >
+            <IconButton label={ `${ t().theme.label }: ${ t().theme[theme()] }` } onClick={ () => cycle() }>
                 { () => icon(GLYPH[theme()], 'size-[18px]') }
-            </button>
+            </IconButton>
 
-            <button
-                type="button"
-                class="grid size-9 place-items-center rounded-lg text-muted transition-colors hover:bg-elevated hover:text-ink"
-                aria-label={ t().nav.language }
-                aria-haspopup="dialog"
-                aria-expanded={ () => langOpen ? 'true' : 'false' }
+            <IconButton
+                label={ t().nav.language }
+                haspopup="dialog"
+                expanded={ langOpen }
                 onClick={ () => langOpen = true }
             >
                 { icon(Languages, 'size-[18px]') }
-            </button>
+            </IconButton>
 
             <a
                 href={ () => sectionHref('wallet') }
@@ -167,15 +162,14 @@ export default component Header()
                 { t().nav.download }
             </a>
 
-            <button
-                type="button"
-                class="grid size-9 place-items-center rounded-lg text-muted hover:bg-elevated hover:text-ink md:hidden"
-                aria-label={ () => menuOpen ? t().nav.closeMenu : t().nav.openMenu }
-                aria-expanded={ () => menuOpen ? 'true' : 'false' }
+            <IconButton
+                label={ menuOpen ? t().nav.closeMenu : t().nav.openMenu }
+                expanded={ menuOpen }
+                class="md:hidden"
                 onClick={ () => menuOpen = !menuOpen }
             >
                 { () => icon(menuOpen ? X : Menu, 'size-5') }
-            </button>
+            </IconButton>
         </div>
 
         <Show when={ menuOpen }>
@@ -200,14 +194,14 @@ export default component Header()
                         style="padding-top: max(1rem, env(safe-area-inset-top)); padding-bottom: max(1rem, env(safe-area-inset-bottom));"
                         aria-label={ t().nav.wallet }
                     >
-                        <button
-                            type="button"
-                            class="mb-2 grid size-11 place-items-center self-end rounded-lg text-muted hover:bg-elevated hover:text-ink"
-                            aria-label={ t().nav.closeMenu }
+                        <IconButton
+                            label={ t().nav.closeMenu }
+                            size="lg"
+                            class="mb-2 self-end"
                             onClick={ () => menuOpen = false }
                         >
-                        { icon(X, 'size-5') }
-                        </button>
+                            { icon(X, 'size-5') }
+                        </IconButton>
 
                         <For each={ SECTIONS } key={ (id) => id } let={ id }>
                             <a
@@ -274,14 +268,9 @@ export default component Header()
                                 { t().nav.language }
                             </h2>
 
-                            <button
-                                type="button"
-                                class="grid size-9 place-items-center rounded-lg text-muted hover:bg-elevated hover:text-ink"
-                                aria-label={ t().nav.closeMenu }
-                                onClick={ () => langOpen = false }
-                            >
+                            <IconButton label={ t().nav.closeMenu } onClick={ () => langOpen = false }>
                                 { icon(X, 'size-5') }
-                            </button>
+                            </IconButton>
                         </div>
 
                         <div class="grid grid-cols-2 gap-1.5">

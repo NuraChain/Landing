@@ -1,10 +1,14 @@
 import { ApiError, client, type PostEditor, type PostLocale } from '../../api';
 import { LOCALES, directionOf, nativeName, useLocale, type Locale } from '../../stores/locale';
 
-import { CONTROL, CONTROL_BODY, CONTROL_MONO } from './controls';
+// The two <select>s below stay raw: `controls.ts` styles them, and the fallback one sets
+// `selected` per option rather than `value` on the select - see the comment at its call site.
+import { CONTROL } from '../ui/controls';
 
-import Button from '../button.component.azeroth';
-import Field from './field.component.azeroth';
+import Button from '../ui/button.component.azeroth';
+import Banner from '../ui/banner.component.azeroth';
+import Field from '../ui/field.component.azeroth';
+import Input from '../ui/input.component.azeroth';
 
 interface Draft
 {
@@ -248,9 +252,7 @@ export default component PostEditorPanel(props:
         </div>
 
         <Show when={ () => error !== null }>
-            <p class="rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
-                { () => error }
-            </p>
+            <Banner tone="danger">{ () => error }</Banner>
         </Show>
 
         <Show when={ () => loading }>
@@ -286,33 +288,31 @@ export default component PostEditorPanel(props:
                     </div>
 
                     <Field label={ t().admin.postTitle }>
-                        <input
-                            class={ CONTROL }
-                            lang={ () => active }
-                            dir={ () => directionOf(active as Locale) }
-                            value={ () => draftFor(active).title }
-                            onInput={ (event: Event) => touch(active, { title: (event.target as HTMLInputElement).value }) }
+                        <Input
+                            lang={ active }
+                            dir={ directionOf(active as Locale) }
+                            value={ draftFor(active).title }
+                            onInput={ (next: string) => touch(active, { title: next }) }
                         />
                     </Field>
 
                     <Field label={ t().admin.summary }>
-                        <input
-                            class={ CONTROL }
-                            lang={ () => active }
-                            dir={ () => directionOf(active as Locale) }
-                            value={ () => draftFor(active).summary }
-                            onInput={ (event: Event) => touch(active, { summary: (event.target as HTMLInputElement).value }) }
+                        <Input
+                            lang={ active }
+                            dir={ directionOf(active as Locale) }
+                            value={ draftFor(active).summary }
+                            onInput={ (next: string) => touch(active, { summary: next }) }
                         />
                     </Field>
 
                     <Field label={ t().admin.body } hint={ t().admin.bodyHint }>
-                        <textarea
-                            class={ CONTROL_BODY }
-                            lang={ () => active }
-                            dir={ () => directionOf(active as Locale) }
-                            value={ () => draftFor(active).body }
-                            onInput={ (event: Event) => touch(active, { body: (event.target as HTMLTextAreaElement).value }) }
-                        ></textarea>
+                        <Input
+                            multiline
+                            lang={ active }
+                            dir={ directionOf(active as Locale) }
+                            value={ draftFor(active).body }
+                            onInput={ (next: string) => touch(active, { body: next }) }
+                        />
                     </Field>
 
                     <Show when={ () => !creating() && present().includes(active) && present().length > 1 && active !== fallback }>
@@ -328,12 +328,12 @@ export default component PostEditorPanel(props:
                     <Field label={ t().admin.slug }>
                         { /* A slug is a Latin url segment whatever the interface language is, so
                              it is written left to right even on a mirrored page. */ }
-                        <input
-                            class={ CONTROL_MONO }
+                        <Input
+                            face="mono"
                             dir="ltr"
-                            spellcheck="false"
-                            value={ () => slug }
-                            onInput={ (event: Event) => { slug = (event.target as HTMLInputElement).value; saved = false; } }
+                            spellcheck={ false }
+                            value={ slug }
+                            onInput={ (next: string) => { slug = next; saved = false; } }
                         />
                     </Field>
 
@@ -349,21 +349,21 @@ export default component PostEditorPanel(props:
                     </Field>
 
                     <Field label={ t().admin.tags } hint={ t().admin.tagsHint }>
-                        <input
-                            class={ CONTROL_MONO }
+                        <Input
+                            face="mono"
                             dir="ltr"
-                            value={ () => tags }
-                            onInput={ (event: Event) => { tags = (event.target as HTMLInputElement).value; saved = false; } }
+                            value={ tags }
+                            onInput={ (next: string) => { tags = next; saved = false; } }
                         />
                     </Field>
 
                     <Field label={ t().admin.coverImage }>
-                        <input
-                            class={ CONTROL_MONO }
+                        <Input
+                            face="mono"
                             dir="ltr"
                             placeholder="/cover.png"
-                            value={ () => coverImage }
-                            onInput={ (event: Event) => { coverImage = (event.target as HTMLInputElement).value; saved = false; } }
+                            value={ coverImage }
+                            onInput={ (next: string) => { coverImage = next; saved = false; } }
                         />
                     </Field>
 

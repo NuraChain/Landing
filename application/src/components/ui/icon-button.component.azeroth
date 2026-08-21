@@ -1,0 +1,68 @@
+import type { Child } from 'azerothjs';
+
+import { ICON_BUTTON_SIZE, type IconButtonSize } from './variants';
+
+interface IconButtonProps
+{
+    /**
+     * Required, and the whole reason this component is worth having: a control whose only
+     * content is a glyph has no accessible name unless one is given to it.
+     */
+    label: string;
+    size?: IconButtonSize;
+    /**
+     * Quieter by default (`faint`), for an affordance sitting inside a line of text. `muted`
+     * is the bar control that should read as part of the furniture.
+     */
+    tone?: 'muted' | 'faint';
+    /**
+     * Widens the CLICKABLE box without moving anything in the layout.
+     *
+     * Off by default, and that is not laziness. `styles.css` already inflates every control
+     * to 44px under a coarse pointer, so this is only for the case that rule cannot reach: a
+     * small button under a MOUSE, where WCAG 2.5.8 still wants 24px. Turning it on where
+     * controls sit close together makes each one start catching its neighbour's clicks - the
+     * six allocation toggles in the tokenomics section are 12px apart and must not have it.
+     */
+    pad?: boolean;
+    disabled?: boolean;
+    expanded?: boolean;
+    /** For a control that opens an overlay rather than toggling a region in place. */
+    haspopup?: 'dialog' | 'menu';
+    /** The id of the region this toggles, when it is a disclosure. */
+    controls?: string;
+    class?: string;
+    onClick?: () => void;
+    children?: Child;
+}
+
+/**
+ * The square icon control.
+ *
+ * Written out eight times before this existed, across four sizes and five radii, and one of
+ * the eight had lost its `transition-colors` somewhere - which is the failure mode this fixes.
+ * `Button` does not cover the shape: it is a pill with a font weight and a text size, built
+ * for a word rather than a glyph.
+ */
+export default component IconButton(props: IconButtonProps)
+{
+    derived classes = 'grid shrink-0 place-items-center transition-colors '
+        + ICON_BUTTON_SIZE[props.size ?? 'md']
+        + (props.tone === 'faint' ? ' text-faint hover:text-ink' : ' text-muted hover:bg-elevated hover:text-ink')
+        + (props.pad === true ? " relative after:absolute after:-inset-2.5 after:content-['']" : '')
+        + (props.disabled === true ? ' cursor-not-allowed opacity-55' : ' cursor-pointer')
+        + (props.class !== undefined ? ` ${ props.class }` : '');
+
+    <button
+        type="button"
+        class={ () => classes }
+        aria-label={ () => props.label }
+        aria-expanded={ () => props.expanded === undefined ? undefined : (props.expanded ? 'true' : 'false') }
+        aria-haspopup={ () => props.haspopup }
+        aria-controls={ () => props.controls }
+        disabled={ () => props.disabled === true }
+        onClick={ () => props.disabled === true ? undefined : props.onClick?.() }
+    >
+        { props.children }
+    </button>
+}

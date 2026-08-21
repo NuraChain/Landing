@@ -6,9 +6,10 @@ import { BRIDGE_HOLDER, BRIDGE_HOLDER_BSC_URL, EXPLORER_URL } from '../lib/conte
 import { blockHeight, bridgeTvl, totalTransactions } from '../lib/network';
 import type { Tvl } from '../lib/network';
 
-import Card from '../components/card.component.azeroth';
-import SectionHeading from '../components/section-heading.component.azeroth';
-import { icon } from '../components/icon';
+import Card from '../components/ui/card.component.azeroth';
+import SectionHeading from '../components/layout/section-heading.component.azeroth';
+import { icon } from '../components/icons/icon';
+import IconButton from '../components/ui/icon-button.component.azeroth';
 
 import { useLocale } from '../stores/locale';
 
@@ -216,23 +217,24 @@ export default component NetworkSection()
                              appeared for anyone whose cursor merely crossed the tile. A
                              button is the honest control: it works by click, by Enter, by
                              tap, and it says whether it is open. */ }
-                        { /* Sized here, which styles.css otherwise forbids - so the exception is
+                        { /* `pad` widens the hit area to 44px without moving the row, which
+                             styles.css otherwise forbids per component - so the exception is
                              written down. The global rule inflates controls under a COARSE
-                             pointer, and this button was 20px, which is under WCAG 2.5.8's 24px
-                             floor for a mouse as well. The `after` box widens the hit area to
-                             44px without moving the row; safe here only because the button sits
-                             alone at the end of its line. The six allocation toggles in the
-                             tokenomics section do NOT get one - they are 12px apart, and each
-                             would start catching its neighbour's taps. */ }
-                        <button
-                            type="button"
-                            class="relative ms-auto grid size-6 shrink-0 place-items-center rounded text-faint transition-colors hover:text-ink after:absolute after:-inset-2.5 after:content-['']"
-                            aria-label={ t().network.breakdown }
-                            aria-expanded={ () => showParts ? 'true' : 'false' }
+                             pointer, and this button is 24px, which is the floor for a mouse
+                             and no more. Safe here only because it sits alone at the end of
+                             its line; the six allocation toggles in the tokenomics section do
+                             NOT get it. */ }
+                        <IconButton
+                            label={ t().network.breakdown }
+                            size="sm"
+                            tone="faint"
+                            pad
+                            expanded={ showParts }
+                            class="ms-auto"
                             onClick={ () => showParts = !showParts }
                         >
                             { icon(CircleAlert, 'size-4') }
-                        </button>
+                        </IconButton>
                     </p>
                     <p class="mt-1 font-mono text-2xl font-semibold text-ink sm:text-3xl">
                         { () => figure(tvl === null ? null : tvl.usd, tvlFailed, money) }

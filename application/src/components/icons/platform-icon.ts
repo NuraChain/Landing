@@ -2,7 +2,7 @@ import { siAndroid, siApple, siLinux } from 'simple-icons';
 import type { SimpleIcon } from 'simple-icons';
 
 import { svgMark } from './svg-mark';
-import type { PlatformId } from '../lib/content/site';
+import type { PlatformId } from '../../lib/content/site';
 
 /**
  * The real mark for each platform, not a generic stand-in.

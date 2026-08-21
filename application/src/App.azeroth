@@ -1,7 +1,7 @@
 import { RouterProvider, Routes, createMemoryHistory, createRouter } from 'azerothjs';
 
-import Footer from './components/footer.component.azeroth';
-import Header from './components/header.component.azeroth';
+import Footer from './components/layout/footer.component.azeroth';
+import Header from './components/layout/header.component.azeroth';
 
 import { useLocale } from './stores/locale';
 

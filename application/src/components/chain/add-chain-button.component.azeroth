@@ -2,13 +2,13 @@ import { createSignal } from 'azerothjs';
 
 import { Check, TriangleAlert, Wallet } from 'lucide';
 
-import { addChainToWallet } from '../lib/wallet';
+import { addChainToWallet } from '../../lib/wallet';
 
-import { useLocale } from '../stores/locale';
+import { useLocale } from '../../stores/locale';
 
-import Button from './button.component.azeroth';
-import type { ButtonSize, ButtonVariant } from './button.component.azeroth';
-import { icon } from './icon';
+import Button from '../ui/button.component.azeroth';
+import type { ButtonSize, ButtonVariant } from '../ui/button.component.azeroth';
+import { icon } from '../icons/icon';
 
 type Status = 'idle' | 'pending' | 'added' | 'failed';
 

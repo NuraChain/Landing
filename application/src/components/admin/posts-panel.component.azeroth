@@ -1,7 +1,8 @@
 import { client, type PostRecord } from '../../api';
 import { nativeName, useLocale, type Locale } from '../../stores/locale';
 
-import Button from '../button.component.azeroth';
+import Button from '../ui/button.component.azeroth';
+import Banner from '../ui/banner.component.azeroth';
 
 /**
  * Every post, drafts included, newest first.
@@ -64,9 +65,7 @@ export default component PostsPanel(props: { onOpen: (id: number | null) => void
         </div>
 
         <Show when={ () => error !== null }>
-            <p class="rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
-                { () => error }
-            </p>
+            <Banner tone="danger">{ () => error }</Banner>
         </Show>
 
         <Show when={ () => rows === null }>

@@ -1,6 +1,8 @@
 import { Check, Copy } from 'lucide';
 
-import { icon } from './icon';
+import { icon } from '../icons/icon';
+
+import IconButton from '../ui/icon-button.component.azeroth';
 
 /**
  * A value with a copy button that confirms itself.
@@ -77,14 +79,13 @@ export default component CopyField(props:
         </Show>
 
         <Show when={ () => props.copyable !== false }>
-            <button
-                type="button"
-                class="grid size-9 shrink-0 place-items-center rounded-lg text-faint transition-colors hover:bg-elevated hover:text-ink"
-                aria-label={ () => copied ? props.copiedLabel : props.copyLabel }
+            <IconButton
+                label={ copied ? props.copiedLabel : props.copyLabel }
+                tone="faint"
                 onClick={ () => void run() }
             >
                 { () => copied ? icon(Check, 'size-[18px] text-accent') : icon(Copy, 'size-[18px]') }
-            </button>
+            </IconButton>
         </Show>
     </div>
 }

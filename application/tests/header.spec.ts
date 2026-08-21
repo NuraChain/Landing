@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderTest, cleanup, fire } from '@azerothjs/testing';
 import { RouterProvider, createMemoryHistory, createRouter } from 'azerothjs';
 
-import Header from '../src/components/header.component.azeroth';
+import Header from '../src/components/layout/header.component.azeroth';
 import { LOCALES, nativeName, useLocale } from '../src/stores/locale';
 import { useTheme } from '../src/stores/theme';
 import { en } from '../src/lib/i18n/en';

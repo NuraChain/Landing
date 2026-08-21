@@ -2,7 +2,7 @@ import { ArrowUpRight, Blocks, Receipt, Wallet } from 'lucide';
 
 import { EXPLORER_URL } from '../lib/content/site';
 
-import { icon } from '../components/icon';
+import { icon } from '../components/icons/icon';
 
 import { useLocale } from '../stores/locale';
 

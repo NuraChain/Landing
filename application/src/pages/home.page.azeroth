@@ -5,11 +5,11 @@ import { ArrowRight, Code2, Terminal, Zap } from 'lucide';
 import { DOWNLOADS, RELEASES_URL } from '../lib/content/site';
 import type { Download } from '../lib/content/site';
 
-import AddChainButton from '../components/add-chain-button.component.azeroth';
-import { brandIcon } from '../components/brand-icon';
-import Button from '../components/button.component.azeroth';
-import { icon } from '../components/icon';
-import { platformIcon } from '../components/platform-icon';
+import AddChainButton from '../components/chain/add-chain-button.component.azeroth';
+import { brandIcon } from '../components/icons/brand-icon';
+import Button from '../components/ui/button.component.azeroth';
+import { icon } from '../components/icons/icon';
+import { platformIcon } from '../components/icons/platform-icon';
 
 import { useLocale } from '../stores/locale';
 

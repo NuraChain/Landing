@@ -2,8 +2,8 @@ import { For } from 'azerothjs';
 
 import { CHAIN } from '../lib/content/site';
 
-import CopyField from '../components/copy-field.component.azeroth';
-import SectionHeading from '../components/section-heading.component.azeroth';
+import CopyField from '../components/chain/copy-field.component.azeroth';
+import SectionHeading from '../components/layout/section-heading.component.azeroth';
 
 import { useLocale } from '../stores/locale';
 

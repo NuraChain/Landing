@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderTest, cleanup, fire } from '@azerothjs/testing';
 
-import AddChainButton from '../src/components/add-chain-button.component.azeroth';
+import AddChainButton from '../src/components/chain/add-chain-button.component.azeroth';
 import { useLocale } from '../src/stores/locale';
 import { en } from '../src/lib/i18n/en';
 

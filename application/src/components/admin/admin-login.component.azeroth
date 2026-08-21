@@ -1,9 +1,10 @@
 import { ApiError, client } from '../../api';
 import { useLocale } from '../../stores/locale';
 
-import { CONTROL_MONO } from './controls';
-
-import Button from '../button.component.azeroth';
+import Button from '../ui/button.component.azeroth';
+import Banner from '../ui/banner.component.azeroth';
+import Field from '../ui/field.component.azeroth';
+import Input from '../ui/input.component.azeroth';
 
 /**
  * The key form.
@@ -59,32 +60,31 @@ export default component AdminLogin(props: { onSignedIn: () => void })
                 <p class="text-sm text-muted">{ () => t().admin.signInHint }</p>
             </div>
 
-            <label class="flex flex-col gap-1.5">
-                <span class="text-sm font-semibold text-ink">{ () => t().admin.key }</span>
-
-                { /* `dir="ltr"` and centred: the key is a Latin/digit group whatever the
-                     interface language is, and in a mirrored page an un-isolated one would
-                     render its groups in the wrong order while reading identically to a
-                     screen reader - the failure that looks like a typo and is not.
-                     `autocomplete="off"`, because a shared operational key is not a password
-                     belonging to a person and does not belong in a personal keychain. */ }
-                <input
+            { /* `dir="ltr"` and centred: the key is a Latin/digit group whatever the interface
+                 language is, and in a mirrored page an un-isolated one would render its groups
+                 in the wrong order while reading identically to a screen reader - the failure
+                 that looks like a typo and is not. `autocomplete="off"`, because a shared
+                 operational key is not a password belonging to a person and does not belong in
+                 a personal keychain. */ }
+            <Field label={ t().admin.key }>
+                <Input
                     type="password"
-                    class={ `${ CONTROL_MONO } text-center tracking-[0.2em]` }
+                    face="mono"
+                    class="text-center tracking-[0.2em]"
                     dir="ltr"
                     placeholder="XXXX-XXXX-XXXX-XXXX"
                     autocomplete="off"
-                    spellcheck="false"
-                    value={ () => key }
-                    onInput={ (event: Event) => key = (event.target as HTMLInputElement).value }
+                    spellcheck={ false }
+                    value={ key }
+                    onInput={ (next: string) => key = next }
                 />
-            </label>
+            </Field>
 
-            { /* `role="alert"` so the refusal is announced: a sighted operator sees the line
-                 appear, and without this a screen-reader user gets silence and an unchanged
-                 form. */ }
+            { /* Banner's danger tone is `role="alert"`, so the refusal is announced: a sighted
+                 operator sees the line appear, and without it a screen-reader user gets silence
+                 and an unchanged form. */ }
             <Show when={ () => error !== null }>
-                <p class="text-sm text-danger" role="alert">{ () => error }</p>
+                <Banner tone="danger">{ () => error }</Banner>
             </Show>
 
             <Button type="submit" disabled={ busy || key.trim() === '' }>

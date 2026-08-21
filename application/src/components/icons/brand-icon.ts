@@ -2,7 +2,7 @@ import { siDiscord, siGithub, siInstagram, siTelegram, siX, siYoutube } from 'si
 import type { SimpleIcon } from 'simple-icons';
 
 import { svgMark } from './svg-mark';
-import type { SocialId } from '../lib/content/site';
+import type { SocialId } from '../../lib/content/site';
 
 /**
  * Official brand marks, not lookalikes.

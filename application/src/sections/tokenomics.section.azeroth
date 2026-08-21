@@ -4,9 +4,11 @@ import { Info } from 'lucide';
 
 import { ALLOCATIONS, SUPPLY } from '../lib/content/site';
 
-import Card from '../components/card.component.azeroth';
-import SectionHeading from '../components/section-heading.component.azeroth';
-import { icon } from '../components/icon';
+import Card from '../components/ui/card.component.azeroth';
+import SectionHeading from '../components/layout/section-heading.component.azeroth';
+import { icon } from '../components/icons/icon';
+
+import IconButton from '../components/ui/icon-button.component.azeroth';
 
 import { useLocale } from '../stores/locale';
 
@@ -141,16 +143,18 @@ export default component TokenomicsSection()
                             <span class="shrink-0 font-mono text-sm text-muted">{ () => percent(slice.percent) }</span>
 
                             <Show when={ () => noteFor(slice.key) !== undefined }>
-                                <button
-                                    type="button"
-                                    class="grid size-6 shrink-0 place-items-center rounded-md text-faint transition-colors hover:bg-elevated hover:text-ink"
-                                    aria-label={ () => `${ t().tokenomics.moreAbout } ${ t().tokenomics.allocations[slice.key] }` }
-                                    aria-expanded={ () => openNote === slice.key ? 'true' : 'false' }
-                                    aria-controls={ `allocation-note-${ slice.key }` }
+                                { /* No `pad`: these six sit 12px apart, and a widened hit area
+                                     would have each one catching its neighbour's taps. */ }
+                                <IconButton
+                                    label={ `${ t().tokenomics.moreAbout } ${ t().tokenomics.allocations[slice.key] }` }
+                                    size="sm"
+                                    tone="faint"
+                                    expanded={ openNote === slice.key }
+                                    controls={ `allocation-note-${ slice.key }` }
                                     onClick={ () => openNote = openNote === slice.key ? null : slice.key }
                                 >
                                     { icon(Info, 'size-4') }
-                                </button>
+                                </IconButton>
                             </Show>
                         </div>
 

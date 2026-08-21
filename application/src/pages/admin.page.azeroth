@@ -4,10 +4,10 @@ import { client, type SessionState } from '../api';
 import { useLocale } from '../stores/locale';
 import type { Strings } from '../lib/i18n/types';
 
-import { icon } from '../components/icon';
+import { icon } from '../components/icons/icon';
 
 import AdminLogin from '../components/admin/admin-login.component.azeroth';
-import Button from '../components/button.component.azeroth';
+import Button from '../components/ui/button.component.azeroth';
 import PostEditorPanel from '../components/admin/post-editor.component.azeroth';
 import PostsPanel from '../components/admin/posts-panel.component.azeroth';
 
