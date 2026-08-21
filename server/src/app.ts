@@ -1,4 +1,4 @@
-import { App, NotFoundError, json, type ErrorObserver, type RequestObserver } from '@azerothjs/http';
+import { App, ConflictError, NotFoundError, json, type ErrorObserver, type RequestObserver } from '@azerothjs/http';
 import { feature, manifestOf, register, reply } from '@azerothjs/http/api';
 import { mountPages, type KitOptions } from '@azerothjs/kit';
 import { array } from '@azerothjs/schema';
@@ -6,9 +6,24 @@ import { array } from '@azerothjs/schema';
 import { adminGuards } from './admin/guard.ts';
 import { matchesKey } from './admin/key.ts';
 import { SESSION_TTL_SECONDS, type SessionStore } from './admin/sessions.ts';
-import { pageCount, toCards, toDetail } from './blog/present.ts';
+import { pageCount, toCards, toDetail, toEditor, toRecord } from './blog/present.ts';
 import type { BlogStore } from './blog/store.ts';
-import { adminKeyInput, pageQuery, postDetail, postPage, readQuery, sessionState, tagCount } from './schemas.ts';
+import {
+    adminKeyInput,
+    createPostInput,
+    pageQuery,
+    postDetail,
+    postEditor,
+    postInput,
+    postPage,
+    postRecordList,
+    readQuery,
+    removed,
+    sessionState,
+    tagCount,
+    translationInput,
+    type PostLocale
+} from './schemas.ts';
 
 /** How many posts a blog index page holds when the caller does not say. */
 const DEFAULT_LIMIT = 10;
@@ -20,6 +35,17 @@ const DEFAULT_LOCALE = 'en';
 const SIGNED_OUT = { signedIn: false, expiresAt: null };
 
 const iso = (seconds: number): string => new Date(seconds * 1000).toISOString();
+
+/** Turns a store miss into the 404 every admin route would otherwise repeat by hand. */
+function found<T>(value: T | null): T
+{
+    if (value === null)
+    {
+        throw new NotFoundError('No such post.');
+    }
+
+    return value;
+}
 
 export interface ApiDeps
 {
@@ -115,15 +141,32 @@ export function createApi(deps: ApiDeps)
             })
         })),
 
-        admin: feature('/admin', (routes) => ({
+        /*
+         * Guarded at the FEATURE, so authentication is what a route gets by default and any
+         * route added here later is protected without anyone remembering to say so.
+         *
+         * The session routes step back out with `routes.only(...)`: sign-in and sign-out to
+         * same-origin alone, and the read-only "am I signed in" to nothing at all. Dropping an
+         * inherited guard is the one thing here that turns a protected route into an open one,
+         * which is why it has its own name - `grep -rn 'routes.only'` is the complete list of
+         * every place this feature's protection stops, and it is three lines long.
+         */
+        admin: feature('/admin', [guards.sameOrigin, guards.requireAdmin], (routes) => ({
             /**
              * Whether this browser is signed in.
              *
+             * Unguarded, and both halves of that are deliberate.
+             *
              * Not behind `requireAdmin`: the dashboard calls it on load to choose between the key
              * form and the editor, and a 401 would be an error to handle where a plain "no" is
-             * the answer. It reports one bit and an expiry, never anything about the key.
+             * the answer.
+             *
+             * Not behind `sameOrigin` either. That guard exists to stop a cross-site request
+             * CHANGING something, and this changes nothing - it reads a cookie the browser will
+             * not send cross-site anyway (SameSite=Strict) and reports one bit. Guarding it
+             * would only add a way for a non-browser caller to fail.
              */
-            session: routes.get('/session', { output: sessionState }, (context) =>
+            session: routes.only().get('/session', { output: sessionState }, (context) =>
             {
                 const token = guards.readToken(context.request);
 
@@ -147,7 +190,7 @@ export function createApi(deps: ApiDeps)
              * There is no "no such key" versus "wrong key" to leak, because there is one key;
              * distinguishing them would say whether one is configured at all.
              */
-            signIn: routes.with(guards.sameOrigin).post('/session', {
+            signIn: routes.only(guards.sameOrigin).post('/session', {
                 input: adminKeyInput,
                 output: sessionState,
                 responses: { 401: sessionState, 429: sessionState, 503: sessionState }
@@ -182,7 +225,7 @@ export function createApi(deps: ApiDeps)
              * once the session has expired, and a 401 would leave a stale cookie in the browser
              * with nothing able to clear it. The cookie is expired either way.
              */
-            signOut: routes.with(guards.sameOrigin).post('/session/end', { output: sessionState }, (context) =>
+            signOut: routes.only(guards.sameOrigin).post('/session/end', { output: sessionState }, (context) =>
             {
                 const token = guards.readToken(context.request);
 
@@ -192,6 +235,87 @@ export function createApi(deps: ApiDeps)
                 }
 
                 return reply(200, SIGNED_OUT, { 'set-cookie': guards.clearCookie() });
+            }),
+
+            // ------------------------------------------------------------------------------
+            // Everything below inherits the feature's guards: a live session and same-origin.
+            // ------------------------------------------------------------------------------
+
+            /** Every post, drafts included, newest first - the dashboard's own list. */
+            posts: routes.get('/posts', { output: postRecordList }, () =>
+                store.list({ limit: 200, offset: 0, includeDrafts: true }).rows.map(toRecord)),
+
+            /** One post with every language in full, for the editor. */
+            post: routes.get('/posts/:id', { output: postEditor }, ({ params }) =>
+                toEditor(found(store.byId(Number(params.id))))),
+
+            create: routes.post('/posts', { input: createPostInput, output: postEditor }, ({ input }) =>
+            {
+                // Checked before the insert so the answer is a 409 a form can show against the
+                // slug field, rather than a 500 from the UNIQUE index saying nothing useful.
+                if (store.slugTaken(input.slug))
+                {
+                    throw new ConflictError('That slug is already taken.');
+                }
+
+                const { locale, translation, ...fields } = input;
+
+                return toEditor(store.create(fields, locale, translation));
+            }),
+
+            update: routes.patch('/posts/:id', { input: postInput, output: postEditor }, ({ params, input }) =>
+            {
+                const id = Number(params.id);
+
+                if (store.slugTaken(input.slug, id))
+                {
+                    throw new ConflictError('That slug is already taken.');
+                }
+
+                return toEditor(found(store.update(id, input)));
+            }),
+
+            remove: routes.del('/posts/:id', { output: removed }, ({ params }) =>
+            {
+                if (!store.remove(Number(params.id)))
+                {
+                    throw new NotFoundError('No such post.');
+                }
+
+                return { removed: true };
+            }),
+
+            /** Writes one language of a post. The same call creates it and corrects it. */
+            translate: routes.put('/posts/:id/translations/:locale', {
+                input: translationInput,
+                output: postEditor
+            }, ({ params, input }) =>
+                toEditor(found(store.upsertTranslation(Number(params.id), params.locale as PostLocale, input)))),
+
+            /**
+             * Drops one language.
+             *
+             * Refusing to remove the DEFAULT one is the store's rule rather than this route's -
+             * it is what every other reader falls back to. A 409 and not a 400: the request is
+             * well formed, it conflicts with the post's current state, and the dashboard turns
+             * that into "change the default language first".
+             */
+            untranslate: routes.del('/posts/:id/translations/:locale', { output: postEditor }, ({ params }) =>
+            {
+                const id = Number(params.id);
+                const outcome = store.removeTranslation(id, params.locale as PostLocale);
+
+                if (outcome === 'missing')
+                {
+                    throw new NotFoundError('No such post or language.');
+                }
+
+                if (outcome === 'default')
+                {
+                    throw new ConflictError('That is the language this post falls back to. Change the default first.');
+                }
+
+                return toEditor(found(store.byId(id)));
             })
         }))
     };

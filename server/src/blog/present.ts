@@ -1,4 +1,4 @@
-import { POST_LOCALES, type PostCard, type PostDetail, type PostLocale } from '../schemas.ts';
+import { POST_LOCALES, type PostCard, type PostDetail, type PostEditor, type PostLocale, type PostRecord } from '../schemas.ts';
 import type { PostRow, StoredPost, TranslationRow } from './store.ts';
 
 /**
@@ -103,6 +103,70 @@ export function toDetail(stored: StoredPost, wanted: PostLocale): PostDetail | n
 export function toCards(rows: StoredPost[], wanted: PostLocale): PostCard[]
 {
     return rows.map((row) => toCard(row, wanted)).filter((card): card is PostCard => card !== null);
+}
+
+/** Unix seconds to ISO, for a column that is never null. */
+const stamp = (seconds: number): string => new Date(seconds * 1000).toISOString();
+
+/**
+ * One row of the dashboard's list.
+ *
+ * `title` comes from the DEFAULT language rather than from English, and falls back to any
+ * language the post holds. A draft written in Persian and not yet translated still has a name
+ * in the list it is being managed from - an empty string only survives a post with no languages
+ * at all, which the list renders as untitled rather than as a blank row.
+ */
+export function toRecord(stored: StoredPost): PostRecord
+{
+    const { post, translations } = stored;
+    const available = inSiteOrder(translations.map((row) => row.locale));
+    const primary = translations.find((row) => row.locale === post.default_locale)
+        ?? translations.find((row) => row.locale === available[0]);
+
+    return {
+        id: post.id,
+        slug: post.slug,
+        status: post.status,
+        coverImage: post.cover_image,
+        tags: JSON.parse(post.tags) as string[],
+        defaultLocale: post.default_locale,
+        publishedAt: iso(post.published_at),
+        createdAt: stamp(post.created_at),
+        updatedAt: stamp(post.updated_at),
+        available,
+        title: primary?.title ?? ''
+    };
+}
+
+/** One post open in the editor: every language at once, in the site's own order. */
+export function toEditor(stored: StoredPost): PostEditor
+{
+    const { post, translations } = stored;
+    const order = inSiteOrder(translations.map((row) => row.locale));
+
+    return {
+        id: post.id,
+        slug: post.slug,
+        status: post.status,
+        coverImage: post.cover_image,
+        tags: JSON.parse(post.tags) as string[],
+        defaultLocale: post.default_locale,
+        publishedAt: iso(post.published_at),
+        createdAt: stamp(post.created_at),
+        updatedAt: stamp(post.updated_at),
+        translations: order.map((locale) =>
+        {
+            const row = translations.find((held) => held.locale === locale)!;
+
+            return {
+                locale: row.locale,
+                title: row.title,
+                summary: row.summary,
+                body: row.body,
+                updatedAt: stamp(row.updated_at)
+            };
+        })
+    };
 }
 
 export function pageCount(total: number, limit: number): number

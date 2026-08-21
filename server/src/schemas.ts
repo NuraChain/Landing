@@ -153,6 +153,36 @@ export const sessionState = object({
 });
 export type SessionState = Infer<typeof sessionState>;
 
+/**
+ * One post open in the editor: its own fields plus every language it holds, in full.
+ *
+ * The reader's shape resolves ONE language and hides the rest; an editor needs all of them at
+ * once, because the thing it is for is seeing what is still missing.
+ */
+export const postEditor = object({
+    id: number({ int: true, min: 1 }),
+    ...postFields,
+    publishedAt: string().nullable(),
+    createdAt: string(),
+    updatedAt: string(),
+    translations: array(translation)
+});
+export type PostEditor = Infer<typeof postEditor>;
+
+/** Creating a post: its fields, plus the first language it is written in. */
+export const createPostInput = object({
+    ...postFields,
+    locale: enumOf(POST_LOCALES),
+    translation: translationInput
+});
+export type CreatePostInput = Infer<typeof createPostInput>;
+
+/** A delete's answer: nothing to return but the fact that it happened. */
+export const removed = object({ removed: boolean() });
+
+/** What the dashboard lists. */
+export const postRecordList = array(postRecord);
+
 /** One tag and how many published posts carry it - the blog's own filter list. */
 export const tagCount = object({
     tag: string(),
