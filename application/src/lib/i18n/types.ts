@@ -165,6 +165,33 @@ export interface Strings
         };
     };
 
+    blog:
+    {
+        title: string;
+        subtitle: string;
+        /** The nav entry and the "back to the list" link. */
+        all: string;
+        empty: string;
+        emptyHint: string;
+        readMore: string;
+        published: string;
+        updated: string;
+        /** Tag filter: the chip that clears it. */
+        everyTag: string;
+        notFound: string;
+        notFoundHint: string;
+        loading: string;
+        /**
+         * Shown on a post the reader's own language does not have yet.
+         *
+         * Deliberately says nothing about WHICH language they are reading: the languages the
+         * post does hold are listed beside it as links, each named in its own language, which
+         * a sentence cannot do for ten of them.
+         */
+        notTranslated: string;
+        availableIn: string;
+    };
+
     explorer:
     {
         title: string;

@@ -122,6 +122,24 @@ export const ru: Strings =
         }
     },
 
+    blog:
+    {
+        title: 'Блог',
+        subtitle: 'Заметки о выпусках, новости сети и то, что мы строим.',
+        all: 'Блог',
+        empty: 'Пока нет записей',
+        emptyHint: 'Здесь появятся объявления и заметки о выпусках.',
+        readMore: 'Читать',
+        published: 'Опубликовано',
+        updated: 'Обновлено',
+        everyTag: 'Все',
+        notFound: 'Такой записи нет',
+        notFoundHint: 'Возможно, её переименовали. Всё опубликованное есть в блоге.',
+        loading: 'Загрузка',
+        notTranslated: 'Пока недоступно на вашем языке.',
+        availableIn: 'Доступно на'
+    },
+
     explorer:
     {
         title: 'Nura Explorer',

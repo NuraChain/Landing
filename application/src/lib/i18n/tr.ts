@@ -122,6 +122,24 @@ export const tr: Strings =
         }
     },
 
+    blog:
+    {
+        title: 'Blog',
+        subtitle: 'Sürüm notları, ağ güncellemeleri ve inşa ettiklerimiz.',
+        all: 'Blog',
+        empty: 'Henüz yazı yok',
+        emptyHint: 'Duyurular ve sürüm notları burada görünecek.',
+        readMore: 'Oku',
+        published: 'Yayımlandı',
+        updated: 'Güncellendi',
+        everyTag: 'Tümü',
+        notFound: 'Böyle bir yazı yok',
+        notFoundHint: 'Adı değişmiş olabilir. Yayımladığımız her şey blogda.',
+        loading: 'Yükleniyor',
+        notTranslated: 'Henüz sizin dilinizde mevcut değil.',
+        availableIn: 'Şu dillerde var'
+    },
+
     explorer:
     {
         title: 'Nura Explorer',

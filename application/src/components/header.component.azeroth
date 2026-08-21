@@ -1,8 +1,9 @@
-import { For, Show } from 'azerothjs';
+import { For, Link, Show } from 'azerothjs';
 
 import { Check, Contrast, Languages, Menu, Moon, Sun, X } from 'lucide';
 
 import { LOCALES, nativeName, useLocale } from '../stores/locale';
+import { useSectionHref } from '../lib/section-href';
 import { useTheme } from '../stores/theme';
 import type { Theme } from '../stores/theme';
 
@@ -105,6 +106,8 @@ export default component Header()
         }
     }
 
+    const sectionHref = useSectionHref();
+
     const label = (id: SectionId): string => t().nav[id];
 
     { /* The bar is a floating card, so the surface - border, background, blur - moves to
@@ -124,7 +127,7 @@ export default component Header()
             class={ () => 'mx-auto flex h-16 max-w-6xl items-center gap-3 rounded-2xl border px-5 transition-colors duration-300 '
                 + (scrolled ? 'border-line bg-bg/85 backdrop-blur-lg' : 'border-line/60 bg-surface/60 backdrop-blur-md') }
         >
-            <a href="#top" class="me-auto flex items-center gap-2 text-base font-semibold tracking-tight text-ink">
+            <a href={ () => sectionHref('top') } class="me-auto flex items-center gap-2 text-base font-semibold tracking-tight text-ink">
                 { /* Decorative: `alt=""` on purpose, because the brand name sits right
                      beside it inside the same link. A real alt here would make a screen
                      reader announce the name twice. */ }
@@ -135,12 +138,31 @@ export default component Header()
             <nav class="hidden items-center gap-1 md:flex" aria-label={ t().nav.wallet }>
                 <For each={ SECTIONS } key={ (id) => id } let={ id }>
                     <a
-                        href={ `#${ id }` }
+                        href={ () => sectionHref(id) }
                         class="rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-elevated hover:text-ink"
                     >
                         { label(id) }
                     </a>
                 </For>
+
+                { /* The one nav entry that is a ROUTE rather than an anchor, so it is a <Link>.
+                     `end` is off on purpose: /blog should read as current while a post is open
+                     under it.
+
+                     The colour rides on `aria-[current=page]`, not on `activeClass`, because
+                     `activeClass` APPENDS - `text-muted text-ink` is two utilities of equal
+                     specificity and the later one in the sheet wins regardless of which the
+                     markup lists last. That race silently painted the current page muted. The
+                     attribute selector outranks both, and it is the same signal a screen reader
+                     is already given, so the two cannot drift apart. `activeClass` stays because
+                     setting it is what makes <Link> emit `aria-current` at all. */ }
+                <Link
+                    to="/blog"
+                    class="rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-elevated hover:text-ink aria-[current=page]:text-ink"
+                    activeClass="is-current"
+                >
+                    { t().blog.all }
+                </Link>
             </nav>
 
             <button
@@ -164,7 +186,7 @@ export default component Header()
             </button>
 
             <a
-                href="#wallet"
+                href={ () => sectionHref('wallet') }
                 class="hidden h-9 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-hover sm:flex"
             >
                 { t().nav.download }
@@ -214,7 +236,7 @@ export default component Header()
 
                         <For each={ SECTIONS } key={ (id) => id } let={ id }>
                             <a
-                                href={ `#${ id }` }
+                                href={ () => sectionHref(id) }
                                 class="rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink"
                                 onClick={ () => jump() }
                             >
@@ -222,8 +244,17 @@ export default component Header()
                             </a>
                         </For>
 
+                        <Link
+                            to="/blog"
+                            class="rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink aria-[current=page]:text-ink"
+                            activeClass="is-current"
+                            onClick={ () => jump() }
+                        >
+                            { t().blog.all }
+                        </Link>
+
                         <a
-                            href="#wallet"
+                            href={ () => sectionHref('wallet') }
                             class="mt-3 flex h-12 items-center justify-center rounded-xl bg-accent font-semibold text-accent-ink"
                             onClick={ () => jump() }
                         >

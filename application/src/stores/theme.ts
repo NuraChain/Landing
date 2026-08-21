@@ -13,13 +13,32 @@ export const THEME_KEY = 'nura.theme';
 
 const isTheme = (value: unknown): value is Theme => THEMES.includes(value as Theme);
 
+/**
+ * Whether there is a browser to ask.
+ *
+ * The blog routes server-render, and the header renders with them, so this store is
+ * constructed on the server too - where there is no matchMedia, no localStorage and no
+ * visitor whose preference could be read. Checked explicitly rather than left to a
+ * try/catch: `matchMedia` throwing a ReferenceError is a known condition, not an
+ * exceptional one, and catching it would hide the day it becomes something else.
+ */
+const inBrowser = typeof window !== 'undefined';
+
+// Dark on the server, which is the site's own documented default. The markup it produces is
+// theme-independent anyway - the palette hangs off `data-theme` on <html>, which the
+// pre-paint script sets from the real preference before anything is painted.
 const systemPreference = (): Theme =>
-    matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    inBrowser && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 
 export const useTheme = createStore(() =>
 {
     const saved = ((): Theme | null =>
     {
+        if (!inBrowser)
+        {
+            return null;
+        }
+
         try
         {
             const value = localStorage.getItem(THEME_KEY);
@@ -40,12 +59,15 @@ export const useTheme = createStore(() =>
 
     createEffect(() =>
     {
-        document.documentElement.dataset.theme = theme();
+        if (inBrowser)
+        {
+            document.documentElement.dataset.theme = theme();
+        }
     }, { name: 'theme-attribute' });
 
     createEffect(() =>
     {
-        if (!followsSystem())
+        if (!inBrowser || !followsSystem())
         {
             return;
         }

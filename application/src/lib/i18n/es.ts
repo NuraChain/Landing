@@ -122,6 +122,24 @@ export const es: Strings =
         }
     },
 
+    blog:
+    {
+        title: 'Blog',
+        subtitle: 'Notas de versión, novedades de la red y lo que estamos construyendo.',
+        all: 'Blog',
+        empty: 'Aún no hay entradas',
+        emptyHint: 'Los anuncios y las notas de versión aparecerán aquí.',
+        readMore: 'Leer',
+        published: 'Publicado',
+        updated: 'Actualizado',
+        everyTag: 'Todo',
+        notFound: 'Esa entrada no existe',
+        notFoundHint: 'Puede que la hayamos renombrado. Todo lo publicado está en el blog.',
+        loading: 'Cargando',
+        notTranslated: 'Todavía no está disponible en tu idioma.',
+        availableIn: 'Disponible en'
+    },
+
     explorer:
     {
         title: 'Nura Explorer',

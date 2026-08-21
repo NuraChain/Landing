@@ -122,6 +122,24 @@ export const en: Strings =
         }
     },
 
+    blog:
+    {
+        title: 'Blog',
+        subtitle: 'Release notes, network updates, and what we are building.',
+        all: 'Blog',
+        empty: 'No posts yet',
+        emptyHint: 'Announcements and release notes will appear here.',
+        readMore: 'Read',
+        published: 'Published',
+        updated: 'Updated',
+        everyTag: 'All',
+        notFound: 'That post does not exist',
+        notFoundHint: 'It may have been renamed. Everything we have published is on the blog.',
+        loading: 'Loading',
+        notTranslated: 'Not available in your language yet.',
+        availableIn: 'Available in'
+    },
+
     explorer:
     {
         title: 'Nura Explorer',

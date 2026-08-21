@@ -122,6 +122,24 @@ export const zh: Strings =
         }
     },
 
+    blog:
+    {
+        title: '博客',
+        subtitle: '版本说明、网络动态，以及我们正在构建的东西。',
+        all: '博客',
+        empty: '暂无文章',
+        emptyHint: '公告和版本说明将显示在这里。',
+        readMore: '阅读',
+        published: '发布于',
+        updated: '更新于',
+        everyTag: '全部',
+        notFound: '该文章不存在',
+        notFoundHint: '它可能已被重命名。我们发布的一切都在博客里。',
+        loading: '加载中',
+        notTranslated: '尚无你所用语言的版本。',
+        availableIn: '可用语言'
+    },
+
     explorer:
     {
         title: 'Nura 浏览器',

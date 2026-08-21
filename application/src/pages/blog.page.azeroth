@@ -1,0 +1,158 @@
+import { Link } from 'azerothjs';
+
+import { client, type PostCard, type TagCount } from '../api';
+import { directionOf, useLocale } from '../stores/locale';
+
+/**
+ * The blog index.
+ *
+ * Fetched in `effect` rather than at module scope, which is what keeps it browser-only: this
+ * route server-renders, and the server has no reader whose language it could resolve against.
+ * The markup below is what SSR emits; the list arrives on hydration.
+ */
+export default component Blog()
+{
+    const { t, locale } = useLocale();
+
+    state posts = null as PostCard[] | null;
+    state tags = [] as TagCount[];
+    state failed = false;
+    state tag = null as string | null;
+
+    /** Dates go through Intl in the reader's locale - no hand formatting, years included. */
+    const day = (iso: string | null): string =>
+        iso === null ? '' : new Intl.DateTimeFormat(locale(), { dateStyle: 'medium' }).format(new Date(iso));
+
+    // Re-runs when the language changes: which translation a card carries is decided by the
+    // server, so a language switch is a new request rather than a re-render of stale copy.
+    effect
+    {
+        let live = true;
+        const wanted = locale();
+        const only = tag;
+
+        client.blog.list({ query: { locale: wanted, limit: 50, ...(only === null ? {} : { tag: only }) } })
+            .then((page) =>
+            {
+                if (live)
+                {
+                    posts = page.rows;
+                    failed = false;
+                }
+            })
+            .catch(() =>
+            {
+                if (live)
+                {
+                    failed = true;
+                    posts = [];
+                }
+            });
+
+        cleanup
+        {
+            live = false;
+        }
+    }
+
+    effect
+    {
+        let live = true;
+
+        client.blog.tags()
+            .then((rows) => { if (live) { tags = rows; } })
+            .catch(() => { /* A missing filter row costs nothing; the list below still reads. */ });
+
+        cleanup
+        {
+            live = false;
+        }
+    }
+
+    <section class="mx-auto flex max-w-3xl flex-col gap-8 px-5 py-16">
+        <header class="flex flex-col gap-2">
+            <h1 class="text-[clamp(1.8rem,5vw,2.4rem)] font-semibold tracking-tight text-ink">{ t().blog.title }</h1>
+            <p class="text-muted">{ t().blog.subtitle }</p>
+        </header>
+
+        <Show when={ tags.length > 0 }>
+            { /* `gap` rather than margins on the children: gap is direction-neutral, so the row
+                 survives Persian and Arabic without a second rule. */ }
+            <nav class="flex flex-wrap gap-2" aria-label={ t().blog.everyTag }>
+                <button
+                    type="button"
+                    class={ () => 'rounded-full border px-3 py-1 text-sm transition-colors '
+                        + (tag === null ? 'border-accent bg-accent text-accent-ink' : 'border-line text-muted hover:text-ink') }
+                    onClick={ () => tag = null }
+                >{ t().blog.everyTag }</button>
+                <For each={ tags } key={ (row) => row.tag } let={ row }>
+                    <button
+                        type="button"
+                        class={ () => 'rounded-full border px-3 py-1 text-sm transition-colors '
+                            + (tag === row.tag ? 'border-accent bg-accent text-accent-ink' : 'border-line text-muted hover:text-ink') }
+                        onClick={ () => tag = row.tag }
+                    >{ row.tag }</button>
+                </For>
+            </nav>
+        </Show>
+
+        <Show when={ posts === null }>
+            <p class="text-faint">{ t().blog.loading }…</p>
+        </Show>
+
+        <Show when={ posts !== null && posts.length === 0 }>
+            <div class="rounded-xl border border-line bg-surface px-5 py-10 text-center">
+                <p class="font-semibold text-ink">{ t().blog.empty }</p>
+                <p class="mt-1 text-sm text-muted">{ failed ? t().blog.notFoundHint : t().blog.emptyHint }</p>
+            </div>
+        </Show>
+
+        <Show when={ posts !== null && posts.length > 0 }>
+            <ul class="flex flex-col gap-4">
+                <For each={ posts ?? [] } key={ (post) => post.slug } let={ post }>
+                    <li>
+                        <Link
+                            to={ `/blog/${ post.slug }` }
+                            class="flex flex-col gap-2 rounded-xl border border-line bg-surface p-5 transition-colors hover:border-line-strong"
+                        >
+                            <span class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                                { /* Card text may be in a language the reader is not using, so it
+                                     needs `dir` to ORDER correctly - an English title ending in
+                                     `?` inside a Persian line puts that mark at the wrong end
+                                     without one.
+                                     
+                                     The isolate goes on an INNER `bdi`, not on the flex child
+                                     itself: a flex child is blockified, and `dir` on a block sets
+                                     `text-align` as well as the ordering - which would left-align
+                                     this one English card inside a right-aligned Persian list.
+                                     The outer span keeps the page's alignment; the bdi carries the
+                                     language. The post page does the opposite on purpose: there
+                                     the body IS the page, so the article takes its own direction
+                                     outright. */ }
+                                <span class="text-lg font-semibold text-ink">
+                                    <bdi lang={ post.locale } dir={ directionOf(post.locale) }>{ post.title }</bdi>
+                                </span>
+                                { /* The date is a Latin numeric run inside a possibly mirrored
+                                     line, so it carries its own isolate - `bdi` on the inner
+                                     element, never on the block that holds the alignment. */ }
+                                <bdi dir="ltr" class="text-sm text-faint">{ day(post.publishedAt) }</bdi>
+                            </span>
+
+                            <Show when={ post.summary !== '' }>
+                                <span class="text-muted">
+                                    <bdi lang={ post.locale } dir={ directionOf(post.locale) }>{ post.summary }</bdi>
+                                </span>
+                            </Show>
+
+                            { /* Said on the card as well as on the post: a reader scanning a list
+                                 of English titles in a Persian interface should know why. */ }
+                            <Show when={ !post.translated }>
+                                <span class="text-sm text-faint">{ t().blog.notTranslated }</span>
+                            </Show>
+                        </Link>
+                    </li>
+                </For>
+            </ul>
+        </Show>
+    </section>
+}

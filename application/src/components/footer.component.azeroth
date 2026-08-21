@@ -1,7 +1,8 @@
-import { For } from 'azerothjs';
+import { For, Link } from 'azerothjs';
 
 import { EXPLORER_URL, SOCIALS, SWAP_URL } from '../lib/content/site';
 
+import { useSectionHref } from '../lib/section-href';
 import { useLocale } from '../stores/locale';
 
 import AddChainButton from './add-chain-button.component.azeroth';
@@ -9,6 +10,8 @@ import { brandIcon } from './brand-icon';
 
 export default component Footer()
 {
+    const sectionHref = useSectionHref();
+
     const { locale, t } = useLocale();
 
     // Every other figure on the site goes through `Intl.NumberFormat`, so a raw template
@@ -23,7 +26,7 @@ export default component Footer()
         <div class="px-5 pt-14 pb-10">
             <div class="mx-auto flex max-w-5xl flex-col gap-10 sm:flex-row sm:justify-between">
                 <div class="max-w-xs">
-                    <a href="#top" class="flex items-center gap-2 text-base font-semibold text-ink">
+                    <a href={ () => sectionHref('top') } class="flex items-center gap-2 text-base font-semibold text-ink">
                         <img src="/icon.png" alt="" width="28" height="28" class="size-7 rounded-lg" />
                         { t().brand }
                     </a>
@@ -53,19 +56,20 @@ export default component Footer()
                 <nav class="flex flex-1 justify-evenly gap-x-16 text-center text-sm">
                     <div>
                         <h2 class="font-semibold text-ink">{ t().footer.product }</h2>
-                        <a href="#wallet" class="mt-3 block text-muted hover:text-ink">{ t().nav.wallet }</a>
+                        <a href={ () => sectionHref('wallet') } class="mt-3 block text-muted hover:text-ink">{ t().nav.wallet }</a>
                         <a href={ SWAP_URL } target="_blank" rel="noreferrer noopener" class="mt-2 block text-muted hover:text-ink">
                             { t().nav.swap }
                         </a>
-                        <a href="#tokenomics" class="mt-2 block text-muted hover:text-ink">{ t().nav.tokenomics }</a>
+                        <a href={ () => sectionHref('tokenomics') } class="mt-2 block text-muted hover:text-ink">{ t().nav.tokenomics }</a>
                     </div>
 
                     <div>
                         <h2 class="font-semibold text-ink">{ t().footer.resources }</h2>
-                        <a href="#chain" class="mt-3 block text-muted hover:text-ink">{ t().nav.chain }</a>
+                        <a href={ () => sectionHref('chain') } class="mt-3 block text-muted hover:text-ink">{ t().nav.chain }</a>
                         <a href={ EXPLORER_URL } target="_blank" rel="noreferrer noopener" class="mt-2 block text-muted hover:text-ink">
                             { t().nav.explorer }
                         </a>
+                        <Link to="/blog" class="mt-2 block text-muted hover:text-ink">{ t().blog.all }</Link>
                     </div>
                 </nav>
             </div>

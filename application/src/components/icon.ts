@@ -9,8 +9,15 @@ import type { IconNode } from 'lucide';
  * twice. An icon that is the ONLY content of a control needs an `aria-label` on the
  * control itself, not here.
  */
-export const icon = (node: IconNode, className = 'size-5'): SVGElement =>
+export const icon = (node: IconNode, className = 'size-5'): SVGElement | null =>
 {
+    // Null on a server, where lucide has no `document` to build into. Same call as
+    // `svgMark`, and for the reasons written there.
+    if (typeof document === 'undefined')
+    {
+        return null;
+    }
+
     const svg = createElement(node);
 
     svg.setAttribute('class', className);

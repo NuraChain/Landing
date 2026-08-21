@@ -1,0 +1,143 @@
+import { Link, useParams } from 'azerothjs';
+
+import { client, type PostDetail } from '../api';
+import { directionOf, nativeName, useLocale, type Locale } from '../stores/locale';
+
+import Markdown from '../components/markdown.component.azeroth';
+
+/**
+ * One post.
+ *
+ * The language a reader gets is the SERVER's decision - their own if the post has it, the post's
+ * default if not, anything it holds otherwise. This page's job is to render that and to be
+ * honest about which of the three happened.
+ */
+export default component Post()
+{
+    const params = useParams();
+    const { t, locale, choose } = useLocale();
+
+    state post = null as PostDetail | null;
+    state missing = false;
+
+    const day = (iso: string | null): string =>
+        iso === null ? '' : new Intl.DateTimeFormat(locale(), { dateStyle: 'long' }).format(new Date(iso));
+
+    // Keyed on the slug AND the language: switching language re-asks, because which translation
+    // this post resolves to is decided server-side and cannot be recomputed in the browser.
+    effect
+    {
+        let live = true;
+        const slug = params().slug ?? '';
+        const wanted = locale();
+
+        if (slug === '')
+        {
+            return;
+        }
+
+        client.blog.one({ params: { slug }, query: { locale: wanted } })
+            .then((found) =>
+            {
+                if (live)
+                {
+                    post = found;
+                    missing = false;
+                }
+            })
+            .catch(() =>
+            {
+                if (live)
+                {
+                    missing = true;
+                    post = null;
+                }
+            });
+
+        cleanup
+        {
+            live = false;
+        }
+    }
+
+    <article class="mx-auto flex max-w-3xl flex-col gap-6 px-5 py-16">
+        <Link to="/blog" class="text-sm text-muted transition-colors hover:text-ink">{ t().blog.all }</Link>
+
+        <Show when={ post === null && !missing }>
+            <p class="text-faint">{ t().blog.loading }…</p>
+        </Show>
+
+        <Show when={ missing }>
+            <div class="rounded-xl border border-line bg-surface px-5 py-10 text-center">
+                <h1 class="font-semibold text-ink">{ t().blog.notFound }</h1>
+                <p class="mt-1 text-sm text-muted">{ t().blog.notFoundHint }</p>
+            </div>
+        </Show>
+
+        <Show when={ post !== null }>
+        { () =>
+            <div class="flex flex-col gap-6">
+                <header class="flex flex-col gap-3">
+                    { /* The title is in the POST's language, so it carries the post's direction -
+                         the same one the body below gets. Without it an English title inside a
+                         Persian page is right-aligned while its own first paragraph is
+                         left-aligned, which reads as two different articles; and a title ending
+                         in `?` or `:` would put that mark at the wrong end of the line. */ }
+                    <h1
+                        class="text-[clamp(1.8rem,5vw,2.6rem)] font-semibold leading-tight tracking-tight text-ink"
+                        lang={ post!.locale }
+                        dir={ directionOf(post!.locale) }
+                    >
+                        { post!.title }
+                    </h1>
+
+                    <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-faint">
+                        <span>{ t().blog.published } <bdi dir="ltr">{ day(post!.publishedAt) }</bdi></span>
+                        <For each={ post!.tags } key={ (name) => name } let={ name }>
+                            <span class="rounded-full border border-line px-2 py-0.5">{ name }</span>
+                        </For>
+                    </p>
+                </header>
+
+                { /*
+                     The whole reason the fallback model exists, said out loud.
+
+                     The notice names no language itself: the ones this post DOES hold are listed
+                     beside it, each in its own script, which one translated sentence cannot do
+                     for ten. `lang` on each so a screen reader switches voice rather than reading
+                     Persian with an English one.
+                  */ }
+                <Show when={ !post!.translated }>
+                    <aside class="flex flex-col gap-2 rounded-xl border border-line bg-surface px-4 py-3 text-sm">
+                        <p class="text-muted">{ t().blog.notTranslated }</p>
+                        <p class="flex flex-wrap items-center gap-2">
+                            <span class="text-faint">{ t().blog.availableIn }</span>
+                            <For each={ post!.available } key={ (code) => code } let={ code }>
+                                { /* Switches the SITE's language, not just this post's: a reader
+                                     who can read Persian wants the interface in it too, and the
+                                     effect above re-asks the server the moment the store moves.
+                                     Each is named in its own language - somebody looking for
+                                     Persian should not have to read English to find it. */ }
+                                <button
+                                    type="button"
+                                    class="rounded-full border border-line px-2 py-0.5 text-ink transition-colors hover:border-accent"
+                                    lang={ code }
+                                    onClick={ () => choose(code as Locale) }
+                                >{ nativeName(code as Locale) }</button>
+                            </For>
+                        </p>
+                    </aside>
+                </Show>
+
+                { /* The body is set in the language it was WRITTEN in, which is not always the
+                     document's: an English fallback inside a Persian page is a left-to-right run
+                     in a mirrored document, and without its own `dir` every trailing comma and
+                     full stop jumps to the wrong end of the line. */ }
+                <div lang={ post!.locale } dir={ directionOf(post!.locale) }>
+                    <Markdown source={ post!.body } />
+                </div>
+            </div>
+        }
+        </Show>
+    </article>
+}

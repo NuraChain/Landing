@@ -133,6 +133,32 @@ describe('blocks', () =>
         expect(blocks.map((block) => block.kind === 'heading' ? block.level : 0)).toEqual([2, 3, 4, 4]);
     });
 
+    it('starts a body written in ## at h2 as well, rather than skipping to h3', () =>
+    {
+        // The convention this has to survive: an author who reserves `#` for the title they are
+        // not writing here, and opens every section with `##`. Reading `##` as h3 unconditionally
+        // would send the document h1 -> h3 and skip a level, which nothing on the page reveals.
+        const blocks = parseMarkdown('## Two\n\n### Three');
+
+        expect(blocks.map((block) => block.kind === 'heading' ? block.level : 0)).toEqual([2, 3]);
+    });
+
+    it('keeps a gap the author left, but never past h4', () =>
+    {
+        const blocks = parseMarkdown('## Two\n\n#### Four\n\n###### Six');
+
+        expect(blocks.map((block) => block.kind === 'heading' ? block.level : 0)).toEqual([2, 4, 4]);
+    });
+
+    it('levels against the shallowest heading, wherever it appears', () =>
+    {
+        // The deepest heading comes FIRST here: normalizing on the running minimum rather than the
+        // whole document would level this one against `###` and demote the section below it.
+        const blocks = parseMarkdown('### Deep first\n\n# Shallow later');
+
+        expect(blocks.map((block) => block.kind === 'heading' ? block.level : 0)).toEqual([4, 2]);
+    });
+
     it('reads both kinds of list, and ends one at a blank line', () =>
     {
         const blocks = parseMarkdown('- a\n- b\n\n1. one\n2. two\n\nafter');

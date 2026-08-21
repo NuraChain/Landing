@@ -25,10 +25,25 @@ const TABLE: Record<Locale, Strings> = { en, fa, ar, es, pt, hi, zh, ru, fr, tr 
 const RTL: ReadonlySet<Locale> = new Set<Locale>(['fa', 'ar']);
 const KEY = 'nura.locale';
 
+/** See the note in stores/theme.ts: this store is constructed during SSR as well. */
+const inBrowser = typeof window !== 'undefined';
+
 const isLocale = (value: unknown): value is Locale =>
     typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
 
 /** The switcher's row labels: every language names itself, whichever one is active. */
+/**
+ * The direction a given language reads in - NOT the page's.
+ *
+ * The blog needs this because a post can be written in a language the reader is not using:
+ * an English post shown to a Persian reader is a left-to-right island in a mirrored page,
+ * and it has to be marked as one or its trailing punctuation jumps to the wrong end.
+ *
+ * Exported so the RTL set stays the ONE list. A page testing `locale === 'fa' || 'ar'` for
+ * itself is a copy that will not be updated on the day an eleventh language arrives.
+ */
+export const directionOf = (locale: Locale): 'rtl' | 'ltr' => (RTL.has(locale) ? 'rtl' : 'ltr');
+
 export const nativeName = (locale: Locale): string => TABLE[locale].languageName;
 
 /**
@@ -38,6 +53,13 @@ export const nativeName = (locale: Locale): string => TABLE[locale].languageName
  */
 const initial = (): Locale =>
 {
+    // English on the server. A crawler reads that; a visitor's own language arrives on
+    // hydration, when there is finally a navigator to ask.
+    if (!inBrowser)
+    {
+        return 'en';
+    }
+
     try
     {
         const saved = localStorage.getItem(KEY);
@@ -76,6 +98,11 @@ export const useLocale = createStore(() =>
     // no per-element class can reach.
     createEffect(() =>
     {
+        if (!inBrowser)
+        {
+            return;
+        }
+
         const root = document.documentElement;
 
         root.lang = locale();

@@ -20,7 +20,7 @@ export type Inline =
     | { kind: 'link'; text: string; href: string };
 
 export type Block =
-    | { kind: 'heading'; level: 2 | 3 | 4; inline: Inline[] }
+    | { kind: 'heading'; level: 2 | 3 | 4; depth: number; inline: Inline[] }
     | { kind: 'paragraph'; inline: Inline[] }
     | { kind: 'list'; ordered: boolean; items: Inline[][] }
     | { kind: 'quote'; inline: Inline[] }
@@ -275,13 +275,11 @@ export function parseMarkdown(source: string): Block[]
         {
             flush();
 
-            // Capped at h2 and floored at h4. The page's h1 is the post's title, so a `#` in the
-            // body is a section under it - starting the body at h1 would give the document two,
-            // and headings that skip a level are the most common structural failure there is.
+            // The raw depth is kept and the tag is decided later, by `levelHeadings`: which
+            // element a `##` should be cannot be known from the `##` alone.
             const depth = (heading[1] ?? '#').length;
-            const level = depth <= 1 ? 2 : depth === 2 ? 3 : 4;
 
-            blocks.push({ kind: 'heading', level, inline: parseInline(heading[2] ?? '') });
+            blocks.push({ kind: 'heading', level: 2, depth, inline: parseInline(heading[2] ?? '') });
 
             continue;
         }
@@ -332,6 +330,42 @@ export function parseMarkdown(source: string): Block[]
     }
 
     flush();
+    levelHeadings(blocks);
 
     return blocks;
+}
+
+/**
+ * Assigns each heading its element, relative to the SHALLOWEST heading the post actually uses.
+ *
+ * The post's title is the page's h1, so the body starts at h2. Which markdown depth means "h2"
+ * is not knowable from one line, because both conventions are in the wild: some authors open a
+ * section with `#`, others reserve `#` for the title they are not writing here and open with
+ * `##`. Reading `#` as h2 unconditionally sends the second kind of document straight from the
+ * h1 title to an h3 - a skipped level, which is the structural failure screen-reader users hit
+ * most often, and one the author has no way to see.
+ *
+ * Normalizing against the document's own shallowest heading gets both right: `#`/`##` and
+ * `##`/`###` alike come out h2/h3. Depth GAPS the author left are preserved but clamped at h4,
+ * so a jump from `##` to `####` still lands on h3 rather than inventing an h5 the page has no
+ * room for.
+ */
+function levelHeadings(blocks: Block[]): void
+{
+    const depths = blocks.filter((block) => block.kind === 'heading').map((block) => block.depth);
+
+    if (depths.length === 0)
+    {
+        return;
+    }
+
+    const shallowest = Math.min(...depths);
+
+    for (const block of blocks)
+    {
+        if (block.kind === 'heading')
+        {
+            block.level = Math.min(4, block.depth - shallowest + 2) as 2 | 3 | 4;
+        }
+    }
 }

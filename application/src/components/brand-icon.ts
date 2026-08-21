@@ -1,6 +1,7 @@
 import { siDiscord, siGithub, siInstagram, siTelegram, siX, siYoutube } from 'simple-icons';
 import type { SimpleIcon } from 'simple-icons';
 
+import { svgMark } from './svg-mark';
 import type { SocialId } from '../lib/content/site';
 
 /**
@@ -27,19 +28,7 @@ const MARK: Record<SocialId, SimpleIcon> =
  * three themes. The contrast theme in particular needs full-strength ink; GitHub's own
  * near-black would vanish into that background.
  */
-export const brandIcon = (id: SocialId, className = 'size-[18px]'): SVGElement =>
+export const brandIcon = (id: SocialId, className = 'size-[18px]'): SVGElement | null =>
 {
-    const icon = MARK[id];
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-
-    path.setAttribute('d', icon.path);
-    path.setAttribute('fill', 'currentColor');
-
-    svg.setAttribute('viewBox', '0 0 24 24');
-    svg.setAttribute('class', className);
-    svg.setAttribute('aria-hidden', 'true');
-    svg.append(path);
-
-    return svg;
+    return svgMark(MARK[id].path, className);
 };

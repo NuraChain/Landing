@@ -122,6 +122,24 @@ export const ar: Strings =
         }
     },
 
+    blog:
+    {
+        title: 'المدونة',
+        subtitle: 'ملاحظات الإصدار، وأخبار الشبكة، وما نبنيه.',
+        all: 'المدونة',
+        empty: 'لا مقالات بعد',
+        emptyHint: 'ستظهر هنا الإعلانات وملاحظات الإصدار.',
+        readMore: 'اقرأ',
+        published: 'نُشر',
+        updated: 'حُدّث',
+        everyTag: 'الكل',
+        notFound: 'لا وجود لهذه المقالة',
+        notFoundHint: 'ربما تغيّر اسمها. كل ما نشرناه موجود في المدونة.',
+        loading: 'جارٍ التحميل',
+        notTranslated: 'غير متاحة بلغتك بعد.',
+        availableIn: 'متاحة بـ'
+    },
+
     explorer:
     {
         title: 'مستكشف نورا',
