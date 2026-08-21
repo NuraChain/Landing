@@ -134,6 +134,13 @@ export const postRecord = object({
 });
 export type PostRecord = Infer<typeof postRecord>;
 
+/** One tag and how many published posts carry it - the blog's own filter list. */
+export const tagCount = object({
+    tag: string(),
+    count: number({ int: true, min: 0 })
+});
+export type TagCount = Infer<typeof tagCount>;
+
 /**
  * Paging, bounded at BOTH ends.
  *

@@ -1,13 +1,13 @@
 import { pathToFileURL } from 'node:url';
 
 import { pipeline, requestId, securityHeaders, rateLimit, logRequests, loadConfig, num, oneOf, str } from '@azerothjs/http';
-import { manifestOf } from '@azerothjs/http/api';
 import { serve, handleShutdownSignals } from '@azerothjs/http/node';
 import type { PageRenderer, PageRoute } from '@azerothjs/kit';
 import { createLogger, teeSink, terminalSink } from '@azerothjs/logger';
 import { fileSink } from '@azerothjs/logger/node';
 
-import { api, buildApp } from './app.ts';
+import { buildApp } from './app.ts';
+import { BlogStore } from './blog/store.ts';
 
 try
 {
@@ -27,6 +27,9 @@ const config = loadConfig({
      */
     env: oneOf('NODE_ENV', ['development', 'production', 'test'], { default: 'production' }),
     clientDir: str('CLIENT_DIR', { default: '../application/dist' }),
+    // Outside the server workspace so a `npm ci` in either half cannot touch it, and
+    // gitignored: this file IS the blog, and it is restored from a backup, never a clone.
+    dbPath: str('DB_PATH', { default: '../.data/blog.db' }),
     ssrEntry: str('SSR_ENTRY', { default: '../application/dist-server/entry.server.js' })
 });
 const isProduction = config.env === 'production';
@@ -43,7 +46,10 @@ const ssr = isProduction
     ? await import(pathToFileURL(config.ssrEntry).href) as { routes: PageRoute[]; renderPage: PageRenderer }
     : undefined;
 
+const store = new BlogStore(config.dbPath);
+
 const app = buildApp({
+    store,
     dev: !isProduction,
     observe: logRequests(log),
     onError: (error, mapped) =>
@@ -55,7 +61,7 @@ const app = buildApp({
     },
     pages: ssr === undefined
         ? undefined
-        : { routes: ssr.routes, clientDir: config.clientDir, renderer: ssr.renderPage, manifest: manifestOf(api) }
+        : { routes: ssr.routes, clientDir: config.clientDir, renderer: ssr.renderPage }
 });
 
 const handler = pipeline(
@@ -91,4 +97,8 @@ if (process.env.NODE_ENV === 'development')
     }
 }
 
-log.info('Listening', { url: `http://localhost:${ served.port }`, env: config.env });
+// The database holds a file handle and a write-ahead log; a shutdown that leaves them open
+// keeps the process alive and the database locked against the next boot.
+process.on('exit', () => store.close());
+
+log.info('Listening', { url: `http://localhost:${ served.port }`, env: config.env, db: config.dbPath });
