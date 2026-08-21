@@ -218,7 +218,7 @@ export default component NetworkSection()
                              tap, and it says whether it is open. */ }
                         <button
                             type="button"
-                            class="ms-auto grid size-5 shrink-0 place-items-center rounded text-faint transition-colors hover:text-ink"
+                            class="relative ms-auto grid size-6 shrink-0 place-items-center rounded text-faint transition-colors hover:text-ink after:absolute after:-inset-2.5 after:content-['']"
                             aria-label={ t().network.breakdown }
                             aria-expanded={ () => showParts ? 'true' : 'false' }
                             onClick={ () => showParts = !showParts }

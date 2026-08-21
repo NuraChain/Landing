@@ -23,10 +23,18 @@ export default component ChainSection()
 
             <dl class="mt-8 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
                 <For each={ () => [...CHAIN] } key={ (fact) => fact.key } let={ fact }>
+                    { /* The value takes a line of its OWN below `sm:`.
+
+                         Side by side, the label claims 8rem of a 390px screen and the value
+                         is left with about 118px - enough to render `https://rpc.nu...` and
+                         stop. Truncating a decorative string is fine; truncating the RPC
+                         endpoint defeats the one thing this section exists to do, which is
+                         let somebody add the chain by hand. `basis-full` puts it on the next
+                         flex line at full width; from `sm:` there is room to sit inline. */ }
                     <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3.5 sm:px-5">
                         <dt class="min-w-32 text-sm text-muted">{ t().chain[fact.key] }</dt>
 
-                        <dd class="flex min-w-0 flex-1 items-center gap-2">
+                        <dd class="flex min-w-0 basis-full items-center gap-2 sm:flex-1">
                             <CopyField
                                 value={ fact.value }
                                 copyable={ fact.copyable }

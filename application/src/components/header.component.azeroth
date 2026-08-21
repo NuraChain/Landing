@@ -3,6 +3,7 @@ import { For, Link, Show } from 'azerothjs';
 import { Check, Contrast, Languages, Menu, Moon, Sun, X } from 'lucide';
 
 import { LOCALES, nativeName, useLocale } from '../stores/locale';
+import { captureOverlay } from '../lib/overlay';
 import { useSectionHref } from '../lib/section-href';
 import { useTheme } from '../stores/theme';
 import type { Theme } from '../stores/theme';
@@ -47,9 +48,8 @@ export default component Header()
     // broken overlay on a phone.
     const jump = (): void => { menuOpen = false; };
 
-    // Escape closes, and the page behind stops scrolling. Without the lock, a drag on the
-    // drawer scrolls the document underneath it and the whole thing feels like a web page
-    // rather than an app.
+    // Escape, the scroll lock, focus in and focus back - see lib/overlay.ts for why the four
+    // are one thing.
     effect
     {
         if (!menuOpen)
@@ -57,28 +57,15 @@ export default component Header()
             return;
         }
 
-        const onKey = (event: KeyboardEvent): void =>
-        {
-            if (event.key === 'Escape')
-            {
-                menuOpen = false;
-            }
-        };
-
-        const previous = document.body.style.overflow;
-
-        document.body.style.overflow = 'hidden';
-        document.addEventListener('keydown', onKey);
+        const release = captureOverlay(() => menuOpen = false, 'nav.drawer');
 
         cleanup
         {
-            document.body.style.overflow = previous;
-            document.removeEventListener('keydown', onKey);
+            release();
         }
     }
 
-    // Same contract as the drawer above: Escape closes the language modal and the page
-    // behind it stops scrolling while it is up.
+    // Same contract as the drawer above, and now literally the same code.
     effect
     {
         if (!langOpen)
@@ -86,23 +73,11 @@ export default component Header()
             return;
         }
 
-        const onKey = (event: KeyboardEvent): void =>
-        {
-            if (event.key === 'Escape')
-            {
-                langOpen = false;
-            }
-        };
-
-        const previous = document.body.style.overflow;
-
-        document.body.style.overflow = 'hidden';
-        document.addEventListener('keydown', onKey);
+        const release = captureOverlay(() => langOpen = false, '[role="dialog"]');
 
         cleanup
         {
-            document.body.style.overflow = previous;
-            document.removeEventListener('keydown', onKey);
+            release();
         }
     }
 
@@ -167,7 +142,7 @@ export default component Header()
 
             <button
                 type="button"
-                class="grid size-9 place-items-center rounded-lg text-muted transition-colors hover:bg-elevated hover:text-ink"
+                class="grid size-11 place-items-center rounded-lg text-muted transition-colors hover:bg-elevated hover:text-ink sm:size-9"
                 aria-label={ `${ t().theme.label }: ${ t().theme[theme()] }` }
                 onClick={ () => cycle() }
             >
@@ -176,7 +151,7 @@ export default component Header()
 
             <button
                 type="button"
-                class="grid size-9 place-items-center rounded-lg text-muted transition-colors hover:bg-elevated hover:text-ink"
+                class="grid size-11 place-items-center rounded-lg text-muted transition-colors hover:bg-elevated hover:text-ink sm:size-9"
                 aria-label={ t().nav.language }
                 aria-haspopup="dialog"
                 aria-expanded={ () => langOpen ? 'true' : 'false' }
@@ -194,7 +169,7 @@ export default component Header()
 
             <button
                 type="button"
-                class="grid size-9 place-items-center rounded-lg text-muted hover:bg-elevated hover:text-ink md:hidden"
+                class="grid size-11 place-items-center rounded-lg text-muted hover:bg-elevated hover:text-ink sm:size-9 md:hidden"
                 aria-label={ () => menuOpen ? t().nav.closeMenu : t().nav.openMenu }
                 aria-expanded={ () => menuOpen ? 'true' : 'false' }
                 onClick={ () => menuOpen = !menuOpen }
@@ -301,7 +276,7 @@ export default component Header()
 
                             <button
                                 type="button"
-                                class="grid size-9 place-items-center rounded-lg text-muted hover:bg-elevated hover:text-ink"
+                                class="grid size-11 place-items-center rounded-lg text-muted hover:bg-elevated hover:text-ink sm:size-9"
                                 aria-label={ t().nav.closeMenu }
                                 onClick={ () => langOpen = false }
                             >

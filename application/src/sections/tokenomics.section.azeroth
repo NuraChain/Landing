@@ -143,7 +143,7 @@ export default component TokenomicsSection()
                             <Show when={ () => noteFor(slice.key) !== undefined }>
                                 <button
                                     type="button"
-                                    class="grid size-6 shrink-0 place-items-center rounded-md text-faint transition-colors hover:bg-elevated hover:text-ink"
+                                    class="relative grid size-6 shrink-0 place-items-center rounded-md text-faint transition-colors hover:bg-elevated hover:text-ink after:absolute after:-inset-x-2 after:-inset-y-1 after:content-['']"
                                     aria-label={ () => `${ t().tokenomics.moreAbout } ${ t().tokenomics.allocations[slice.key] }` }
                                     aria-expanded={ () => openNote === slice.key ? 'true' : 'false' }
                                     aria-controls={ `allocation-note-${ slice.key }` }
