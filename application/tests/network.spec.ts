@@ -3,7 +3,7 @@
 // would assert whatever the chain happened to be doing that second.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { blockHeight, bridgeTvl, totalTransactions, resetNetworkStats } from '../src/lib/network';
+import { blockHeight, bridgeTvl, nuraPrice, totalTransactions, resetNetworkStats } from '../src/lib/network';
 
 const json = (body: unknown): Response => ({
     ok: true,
@@ -304,5 +304,120 @@ describe('bridgeTvl', () =>
         } as unknown as Response));
 
         await expect(bridgeTvl()).rejects.toThrow('execution reverted');
+    });
+});
+
+describe('nuraPrice', () =>
+{
+    const relay = (body: unknown, ok = true): Response => ({
+        ok,
+        status: ok ? 200 : 503,
+        json: async () => body
+    }) as unknown as Response;
+
+    const AT = '2026-08-22T09:30:00.000Z';
+    const good = { usd: 0.00027838, at: AT };
+
+    beforeEach(() =>
+    {
+        resetNetworkStats();
+        vi.useFakeTimers();
+    });
+
+    afterEach(() =>
+    {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+    });
+
+    it('reads the price from our own server, not from the swap', async () =>
+    {
+        // The distinction is the whole reason this reader exists: swap.nurachain.net sends no
+        // ACAO and an explicit same-origin CORP, so a direct read is refused by the browser
+        // before it leaves. A same-origin path here is the fix, and a regression back to the
+        // swap's own url would look correct in review and fail for every visitor.
+        const fetchMock = vi.fn().mockResolvedValue(relay(good));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        await expect(nuraPrice()).resolves.toMatchObject({ usd: 0.00027838 });
+        expect(String(fetchMock.mock.calls[0]![0])).toBe('/api/market/price');
+    });
+
+    it('carries the swap`s timestamp through rather than stamping now', async () =>
+    {
+        // The server answers with its last good reading for a quarter of an hour after the
+        // swap goes quiet. Replacing `at` with the moment of the reply would erase the only
+        // evidence the page has that the figure is old.
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(relay(good)));
+
+        await expect(nuraPrice()).resolves.toMatchObject({ at: new Date(AT) });
+    });
+
+    it('caches for a minute and goes back out after it', async () =>
+    {
+        const fetchMock = vi.fn().mockResolvedValue(relay(good));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        await nuraPrice();
+        await nuraPrice();
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+
+        vi.advanceTimersByTime(60_001);
+        await nuraPrice();
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('joins concurrent callers onto one request', async () =>
+    {
+        const fetchMock = vi.fn().mockResolvedValue(relay(good));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        await Promise.all([nuraPrice(), nuraPrice(), nuraPrice()]);
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('rejects a 503 rather than resolving to nothing', async () =>
+    {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(relay({}, false)));
+
+        await expect(nuraPrice()).rejects.toThrow('503');
+    });
+
+    it('does not cache a failure', async () =>
+    {
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(relay({}, false))
+            .mockResolvedValue(relay(good));
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        await expect(nuraPrice()).rejects.toThrow();
+        await expect(nuraPrice()).resolves.toMatchObject({ usd: 0.00027838 });
+    });
+
+    it.each([
+        ['no price at all', { at: AT }],
+        ['a price that is not a number', { usd: '0.0002', at: AT }],
+        ['a price of zero', { usd: 0, at: AT }],
+        ['a negative price', { usd: -1, at: AT }],
+        ['an infinite price', { usd: Number.POSITIVE_INFINITY, at: AT }]
+    ])('rejects %s', async (_label, body) =>
+    {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(relay(body)));
+
+        await expect(nuraPrice()).rejects.toThrow();
+    });
+
+    it('rejects an unreadable timestamp instead of quietly reading as fresh', async () =>
+    {
+        // An Invalid Date fails every comparison silently, so a caller asking "is this older
+        // than five minutes" would be told no, forever.
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(relay({ usd: 0.0002, at: 'yesterday' })));
+
+        await expect(nuraPrice()).rejects.toThrow();
     });
 });

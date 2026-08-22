@@ -46,9 +46,20 @@ schemas.ts     every wire shape, declared once; the browser's types are inferred
 app.ts         createApi/buildApp - features, guards, and the kit's page mount
 blog/store.ts  sqlite: posts + post_translations, migrated by PRAGMA user_version
 blog/present.ts the fallback policy - which translation a given reader is served
+market/price.ts the ONE outbound call this half makes - see below
 admin/         key.ts (timing-safe compare), sessions.ts, guard.ts
 main.ts        config, connections, the listening process
 ```
+
+**The price relay is the only thing this server fetches.** Every other live figure is read
+straight from the browser, because the RPC allows it. `swap.nurachain.net` does not: it sends
+no `Access-Control-Allow-Origin` and an explicit `cross-origin-resource-policy: same-origin`,
+so `GET /api/market/price` exists to read the swap's WNURA quote server-side and relay one
+number. It memoises for the same minute the browser does, keeps answering with its last good
+reading for fifteen minutes after the swap goes quiet, and answers 503 when it has nothing -
+never an empty 200, because the tile distinguishes "asked and got nothing" from "still asking".
+The gateway is injectable (`ApiDeps.market`) and the suite's harness defaults it to one that
+always refuses, so no spec can reach the network by forgetting to stub it.
 
 A new chain field starts in `server/src/schemas.ts`. The browser's type is inferred from that
 declaration, so the shape is decided in exactly one place and cannot drift.

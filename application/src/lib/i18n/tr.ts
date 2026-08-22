@@ -73,9 +73,14 @@ export const tr: Strings =
     network:
     {
         title: 'Ağ etkinliği',
-        subtitle: 'Nura RPC\'si ve gezgininden canlı okunur, bir dakika önbelleklenir.',
+        subtitle: 'Nura RPC\'si, gezgini ve takas havuzundan canlı okunur, bir dakika önbelleklenir.',
         blockHeight: 'Blok yüksekliği',
         transactions: 'Toplam işlem',
+        price: 'NURA fiyatı',
+        priceNote: 'Bu fiyat hakkında',
+        priceThin: 'Nura Swap havuzundan alınan kotasyon. Havuz küçük olduğu için tek bir işlem bu rakamı belirgin biçimde oynatabilir; bu bir piyasa fiyatıdır, borsa listelemesi değil.',
+        priceSource: 'Kaynak',
+        priceAsOf: 'Son okuma',
         tvl: 'Kilitli toplam değer',
         holder: 'Tutan adres',
         breakdown: 'Bu rakamı ne oluşturuyor',

@@ -22,6 +22,19 @@ export type {
 } from '../../server/src/schemas.ts';
 
 /**
+ * The price relay's wire shape.
+ *
+ * Aliased on the way through because `lib/network.ts` exports its own `NuraPrice` - the same
+ * figure with `at` already parsed into a Date - and two types of that name in one module
+ * graph is a confusion waiting to be imported from the wrong side. This one is what arrives;
+ * that one is what the page uses.
+ *
+ * Re-exported here rather than imported from the server directly, so this file stays the
+ * single crossing: `grep -rn 'server/src'` in this half is still one file long.
+ */
+export type { NuraPrice as NuraPriceWire } from '../../server/src/schemas.ts';
+
+/**
  * SSR loads with an EMPTY manifest and that is deliberate: pages fetch inside `effect`, which
  * runs only in the browser, so no call is ever made server-side. An unreachable manifest degrades
  * to `{}` rather than throwing, so a failed boot request costs one page its data instead of

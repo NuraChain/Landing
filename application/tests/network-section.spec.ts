@@ -1,7 +1,7 @@
 // The live-figures section: component -> network module -> fetch.
 //
-// Three tiles fed by three sources that fail independently, which is the whole reason the
-// section holds three separate flags instead of one. These tests drive the real network
+// Four tiles fed by four sources that fail independently, which is the whole reason the
+// section holds four separate flags instead of one. These tests drive the real network
 // module (only `fetch` is stubbed) so the caching and the tile states are exercised
 // together rather than in isolation.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -21,14 +21,24 @@ interface Sources
     explorer?: () => Promise<Response>;
     supplies?: () => Promise<Response>;
     prices?: () => Promise<Response>;
+    /** Our own server's price relay - see `nuraPrice` for why it is not the swap itself. */
+    price?: () => Promise<Response>;
 }
 
-/** Routes a stubbed fetch by destination, since three sources share one function. */
+/** A fixed moment, so the "last read" line is assertable without a clock in the way. */
+const READ_AT = '2026-08-22T09:30:00.000Z';
+
+/** Routes a stubbed fetch by destination, since four sources share one function. */
 const routeFetch = (sources: Sources): ReturnType<typeof vi.fn> =>
 {
     const fetchMock = vi.fn().mockImplementation((url: string, init?: { body?: string }) =>
     {
         const target = String(url);
+
+        if (target.includes('/api/market/price'))
+        {
+            return (sources.price ?? (() => Promise.resolve(ok({ usd: 0.00027838, at: READ_AT }))))();
+        }
 
         if (target.includes('coingecko'))
         {
@@ -57,8 +67,28 @@ const routeFetch = (sources: Sources): ReturnType<typeof vi.fn> =>
     return fetchMock;
 };
 
-const tiles = (container: Element): string[] =>
-    [...container.querySelectorAll('.font-mono')].map((el) => el.textContent!.trim());
+/**
+ * The four headline figures, in the order the grid lays them out.
+ *
+ * `.text-2xl` narrows this to the tile figures. A bare `.font-mono` also collects the TVL
+ * breakdown amounts, the holder addresses and the price note's timestamp - so every index
+ * here shifted the day a tile gained a panel, and the assertions that broke were the ones
+ * about entirely unrelated tiles.
+ */
+const figures = (container: Element): string[] =>
+    [...container.querySelectorAll('.font-mono.text-2xl')].map((el) => el.textContent!.trim());
+
+const ORDER = ['price', 'height', 'transactions', 'tvl'] as const;
+
+/**
+ * One figure, by name.
+ *
+ * Named rather than indexed for the reason above: inserting a tile should be one edit to
+ * `ORDER`, not a renumbering of every assertion in the file - and a renumbering that a test
+ * run reports as "expected $1,700, received 42" rather than as "the tiles moved".
+ */
+const tile = (container: Element, which: (typeof ORDER)[number]): string =>
+    figures(container)[ORDER.indexOf(which)]!;
 
 beforeEach(() =>
 {
@@ -86,7 +116,7 @@ describe('NetworkSection tile states', () =>
 
         const { container } = renderTest(() => NetworkSection({}));
 
-        expect(tiles(container).slice(0, 3)).toEqual(['…', '…', '…']);
+        expect(figures(container)).toEqual(['…', '…', '…', '…']);
     });
 
     it('renders each figure once its source answers', async () =>
@@ -95,9 +125,10 @@ describe('NetworkSection tile states', () =>
 
         const { container } = renderTest(() => NetworkSection({}));
 
-        await vi.waitFor(() => expect(tiles(container)[0]).toBe('4,424'));
-        await vi.waitFor(() => expect(tiles(container)[1]).toBe('42'));
-        await vi.waitFor(() => expect(tiles(container)[2]).toBe('$0.00'));
+        await vi.waitFor(() => expect(tile(container, 'height')).toBe('4,424'));
+        await vi.waitFor(() => expect(tile(container, 'transactions')).toBe('42'));
+        await vi.waitFor(() => expect(tile(container, 'tvl')).toBe('$0.00'));
+        await vi.waitFor(() => expect(tile(container, 'price')).toBe('$0.0002784'));
     });
 
     it('shows an em-dash for a source that failed before it ever answered', async () =>
@@ -106,7 +137,7 @@ describe('NetworkSection tile states', () =>
 
         const { container } = renderTest(() => NetworkSection({}));
 
-        await vi.waitFor(() => expect(tiles(container)[1]).toBe('—'));
+        await vi.waitFor(() => expect(tile(container, 'transactions')).toBe('—'));
     });
 
     // The documented reason the tiles hold separate flags: the explorer is blocked
@@ -117,10 +148,25 @@ describe('NetworkSection tile states', () =>
 
         const { container } = renderTest(() => NetworkSection({}));
 
-        await vi.waitFor(() => expect(tiles(container)[1]).toBe('—'));
+        await vi.waitFor(() => expect(tile(container, 'transactions')).toBe('—'));
 
-        expect(tiles(container)[0]).toBe('4,424');
-        expect(tiles(container)[2]).toBe('$0.00');
+        expect(tile(container, 'height')).toBe('4,424');
+        expect(tile(container, 'tvl')).toBe('$0.00');
+        expect(tile(container, 'price')).toBe('$0.0002784');
+    });
+
+    // The price relay is a FOURTH independent source, and the one most likely to be down on
+    // its own: it depends on the swap, which the other three do not.
+    it('blanks only the price when the relay is the thing that failed', async () =>
+    {
+        routeFetch({ price: () => Promise.reject(new Error('503')) });
+
+        const { container } = renderTest(() => NetworkSection({}));
+
+        await vi.waitFor(() => expect(tile(container, 'price')).toBe('—'));
+
+        expect(tile(container, 'height')).toBe('4,424');
+        expect(tile(container, 'transactions')).toBe('42');
     });
 
     it('names the section headings and labels from the string table', () =>
@@ -133,6 +179,7 @@ describe('NetworkSection tile states', () =>
         expect(container.textContent).toContain(en.network.blockHeight);
         expect(container.textContent).toContain(en.network.transactions);
         expect(container.textContent).toContain(en.network.tvl);
+        expect(container.textContent).toContain(en.network.price);
     });
 });
 
@@ -153,7 +200,7 @@ describe('NetworkSection failure messaging', () =>
 
         const { container } = renderTest(() => NetworkSection({}));
 
-        await vi.waitFor(() => expect(tiles(container)[1]).toBe('42'));
+        await vi.waitFor(() => expect(tile(container, 'transactions')).toBe('42'));
 
         expect(container.textContent).not.toContain(en.network.unavailable);
     });
@@ -176,14 +223,14 @@ describe('NetworkSection failure messaging', () =>
 
         const { container } = renderTest(() => NetworkSection({}));
 
-        await vi.waitFor(() => expect(tiles(container)[0]).toBe('4,424'));
+        await vi.waitFor(() => expect(tile(container, 'height')).toBe('4,424'));
 
         // Past both the section's refresh interval and the module's one-minute memo.
         resetNetworkStats();
         await vi.advanceTimersByTimeAsync(60_001);
         await vi.waitFor(() => expect(calls).toBeGreaterThan(1));
 
-        expect(tiles(container)[0]).toBe('4,424');
+        expect(tile(container, 'height')).toBe('4,424');
         expect(container.textContent).not.toContain(en.network.unavailable);
     });
 });
@@ -206,7 +253,7 @@ describe('NetworkSection TVL breakdown', () =>
 
         const { container } = renderTest(() => NetworkSection({}));
 
-        await vi.waitFor(() => expect(tiles(container)[2]).toBe('$1,700'));
+        await vi.waitFor(() => expect(tile(container, 'tvl')).toBe('$1,700'));
 
         const button = toggle(container);
 
@@ -284,6 +331,120 @@ describe('NetworkSection TVL breakdown', () =>
     });
 });
 
+describe('NetworkSection price note', () =>
+{
+    const toggle = (container: Element): HTMLElement =>
+        container.querySelector<HTMLElement>(`button[aria-label="${ en.network.priceNote }"]`)!;
+
+    /**
+     * The reason this tile is defensible at all.
+     *
+     * The section's own history is the argument: it carried no price for a long time on the
+     * grounds that a made-up figure on a project's own site is worse than none. A real quote
+     * from a pool holding a few hundred dollars is not made up, but it is not a valuation
+     * either, and the note is the thing that keeps those apart. A commit that drops it has
+     * turned an honest tile back into the one this section refused to build.
+     */
+    it('states the thin-liquidity caveat', async () =>
+    {
+        routeFetch({});
+
+        const { container } = renderTest(() => NetworkSection({}));
+
+        await vi.waitFor(() => expect(container.textContent).toContain(en.network.priceThin));
+    });
+
+    it('links the swap the figure was read from', async () =>
+    {
+        routeFetch({});
+
+        const { container } = renderTest(() => NetworkSection({}));
+
+        await vi.waitFor(() =>
+        {
+            const link = container.querySelector<HTMLAnchorElement>('a[href^="https://swap.nurachain.net"]');
+
+            expect(link).not.toBeNull();
+            // An outbound link opening a new tab, so both halves of the pair are required:
+            // `noopener` is what stops the opened page reaching back through `window.opener`.
+            expect(link!.getAttribute('rel')).toContain('noopener');
+        });
+    });
+
+    // The server answers with its last good reading for a quarter of an hour after the swap
+    // goes quiet. Without this line a reader has no way to tell a fresh price from that one.
+    it('shows when the figure was last read', async () =>
+    {
+        routeFetch({});
+
+        const { container } = renderTest(() => NetworkSection({}));
+
+        await vi.waitFor(() => expect(container.textContent).toContain(en.network.priceAsOf));
+    });
+
+    it('starts collapsed and opens on click', async () =>
+    {
+        routeFetch({});
+
+        const { container } = renderTest(() => NetworkSection({}));
+
+        await vi.waitFor(() => expect(tile(container, 'price')).toBe('$0.0002784'));
+
+        const button = toggle(container);
+
+        expect(button.getAttribute('aria-expanded')).toBe('false');
+
+        fire(button, 'click');
+
+        expect(button.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('closes on Escape', async () =>
+    {
+        routeFetch({});
+
+        const { container } = renderTest(() => NetworkSection({}));
+        const button = toggle(container);
+
+        fire(button, 'click');
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+        expect(button.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    // One listener serves both panels, so the case worth pinning is the one where both are
+    // open: a reader pressing Escape means "close this", not "close one of these".
+    it('closes the TVL breakdown and the price note together', async () =>
+    {
+        routeFetch({});
+
+        const { container } = renderTest(() => NetworkSection({}));
+        const price = toggle(container);
+        const parts = container.querySelector<HTMLElement>(`button[aria-label="${ en.network.breakdown }"]`)!;
+
+        fire(price, 'click');
+        fire(parts, 'click');
+
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+        expect(price.getAttribute('aria-expanded')).toBe('false');
+        expect(parts.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    // The panel hides with opacity rather than by unmounting, so the caveat is reachable by a
+    // screen reader whichever way the panel sits. It must not be behind `Show` on open state.
+    it('keeps the caveat in the DOM while collapsed', async () =>
+    {
+        routeFetch({});
+
+        const { container } = renderTest(() => NetworkSection({}));
+
+        await vi.waitFor(() => expect(container.textContent).toContain(en.network.priceThin));
+
+        expect(toggle(container).getAttribute('aria-expanded')).toBe('false');
+    });
+});
+
 describe('NetworkSection localisation', () =>
 {
     it('formats figures with the active locale, not a fixed one', async () =>
@@ -292,7 +453,7 @@ describe('NetworkSection localisation', () =>
 
         const first = renderTest(() => NetworkSection({}));
 
-        await vi.waitFor(() => expect(tiles(first.container)[0]).toBe('4,424'));
+        await vi.waitFor(() => expect(tile(first.container, 'height')).toBe('4,424'));
         cleanup();
 
         useLocale().choose('fa');
@@ -300,6 +461,21 @@ describe('NetworkSection localisation', () =>
 
         const second = renderTest(() => NetworkSection({}));
 
-        await vi.waitFor(() => expect(tiles(second.container)[0]).toBe('۴٬۴۲۴'));
+        await vi.waitFor(() => expect(tile(second.container, 'height')).toBe('۴٬۴۲۴'));
+    });
+
+    // The price needs its own case because it does not go through the same formatter as the
+    // others: significant digits rather than fraction digits, since a sub-cent figure renders
+    // as "$0.00" under `money`. Persian digits still have to come out of it.
+    it('formats the price in the active locale too', async () =>
+    {
+        routeFetch({});
+        useLocale().choose('fa');
+
+        const { container } = renderTest(() => NetworkSection({}));
+
+        // `toContain`, not equality: the currency form also carries a direction mark and a
+        // symbol whose placement is the formatter's business, not this test's.
+        await vi.waitFor(() => expect(tile(container, 'price')).toContain('۰٫۰۰۰۲۷۸۴'));
     });
 });
