@@ -1,6 +1,7 @@
 import { For } from 'azerothjs';
 
 import { ROADMAP, type MilestoneStatus } from '../lib/content/site';
+import { onReady, reveal, revealItems } from '../lib/motion';
 
 import Badge from '../components/ui/badge.component.azeroth';
 import SectionHeading from '../components/layout/section-heading.component.azeroth';
@@ -28,15 +29,29 @@ export default component RoadmapSection()
 {
     const { t } = useLocale();
 
+    // The section entrance, once, on first scroll into view. Fallbacks live in lib/motion;
+    // onReady waits for the section to exist because effects run before DOM attachment.
+    effect
+    {
+        const releaseA = onReady('roadmap', (section) => reveal(section, { heading: true }));
+        const releaseB = onReady('roadmap', (section) => revealItems(section, '#roadmap ol'));
+
+        cleanup
+        {
+            releaseA();
+            releaseB();
+        }
+    }
+
     <section id="roadmap" class="border-t border-line px-5 py-16 sm:py-20">
         <div class="mx-auto max-w-4xl">
-            <SectionHeading title={ t().roadmap.title } subtitle={ t().roadmap.subtitle } />
+            <SectionHeading index="05" title={ t().roadmap.title } subtitle={ t().roadmap.subtitle } />
 
             { /* An ordered list, because a roadmap IS one: a screen reader announces "3 of 7"
                  and the order carries meaning that a stack of divs would throw away. */ }
             <ol class="mt-8 flex flex-col gap-3">
                 <For each={ () => [...ROADMAP] } key={ (milestone) => milestone.id } let={ milestone }>
-                    <li class="flex flex-wrap items-baseline gap-x-4 gap-y-2 rounded-2xl border border-line bg-surface p-5">
+                    <li class="flex flex-wrap items-baseline gap-x-4 gap-y-2 border border-line bg-surface p-5">
                         <span class="min-w-0 flex-1 text-ink">
                             { () => t().roadmap.milestones[milestone.id] }
                         </span>

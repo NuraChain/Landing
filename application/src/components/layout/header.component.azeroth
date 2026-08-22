@@ -5,6 +5,7 @@ import { Check, Contrast, Languages, Menu, Moon, Sun, X } from 'lucide';
 import { LOCALES, nativeName, useLocale } from '../../stores/locale';
 import { captureOverlay } from '../../lib/overlay';
 import { useSectionHref } from '../../lib/section-href';
+import { withThemeTransition } from '../../lib/theme-transition';
 
 import IconButton from '../ui/icon-button.component.azeroth';
 import Tooltip from '../ui/tooltip.component.azeroth';
@@ -147,7 +148,14 @@ export default component Header()
                  as its accessible name, for the sighted mouse user who cannot see it. It is
                  marked `aria-hidden`, since announcing it would read the words twice. */ }
             <Tooltip label={ `${ t().theme.label }: ${ t().theme[theme()] }` } describe={ false }>
-                <IconButton label={ `${ t().theme.label }: ${ t().theme[theme()] }` } onClick={ () => cycle() }>
+                { /* `theme-trigger` locates the reveal circle's origin - the theme spreads
+                     from THIS button. The swap itself goes through withThemeTransition so
+                     the circular wipe is the one place theme changes are animated. */ }
+                <IconButton
+                    label={ `${ t().theme.label }: ${ t().theme[theme()] }` }
+                    class="theme-trigger"
+                    onClick={ () => withThemeTransition(() => cycle()) }
+                >
                     { () => icon(GLYPH[theme()], 'size-[18px]') }
                 </IconButton>
             </Tooltip>

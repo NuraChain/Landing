@@ -4,11 +4,29 @@
  * Always an `h2`: the page has one `h1` in the hero, and a section that picked its own
  * level would break the outline a screen-reader user navigates by. The size is a class,
  * the level is not negotiable.
+ *
+ * `index` is the brutalist section number ("01"…"07") the landing page passes; pages
+ * outside the landing flow (about, blog) leave it off and get the bare heading.
+ *
+ * `data-sh` and the `.sh-rule` / `.sh-title` classes are the reveal hooks: the section
+ * effects call `reveal(section, { heading: true })`, which draws the rule in from the
+ * reading side and raises the title on the same scroll trigger. Nothing here moves by
+ * itself - the hooks are inert without motion.
  */
-export default component SectionHeading(props: { title: string; subtitle?: string })
+export default component SectionHeading(props: { title: string; subtitle?: string; index?: string })
 {
-    <div>
-        <h2 class="text-3xl font-bold tracking-tight text-ink sm:text-4xl">{ props.title }</h2>
+    <div data-sh>
+        <Show when={ () => props.index } let={ index }>
+            <div class="mb-4 flex items-center gap-3 font-label text-xs uppercase tracking-[0.2em] text-faint">
+                <span class="text-accent">{ index }</span>
+                { /* The hairline stretches to the section measure - one long rule per
+                     heading is the brutalist signature, and it draws the eye across the
+                     full width the content below will use. */ }
+                <span class="sh-rule h-px flex-1 bg-line" aria-hidden="true"></span>
+            </div>
+        </Show>
+
+        <h2 class="sh-title font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">{ props.title }</h2>
 
         <Show when={ () => props.subtitle } let={ subtitle }>
             <p class="mt-3 text-muted">{ subtitle }</p>

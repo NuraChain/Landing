@@ -7,7 +7,7 @@ import { addChainToWallet } from '../../lib/wallet';
 import { useLocale } from '../../stores/locale';
 
 import Button from '../ui/button.component.azeroth';
-import type { ButtonSize, ButtonVariant } from '../ui/button.component.azeroth';
+import type { ButtonShape, ButtonSize, ButtonVariant } from '../ui/button.component.azeroth';
 import { icon } from '../icons/icon';
 
 type Status = 'idle' | 'pending' | 'added' | 'failed';
@@ -20,7 +20,7 @@ type Status = 'idle' | 'pending' | 'added' | 'failed';
  * because the manual values ARE the fallback and a button that silently does nothing reads
  * as broken.
  */
-export default component AddChainButton(props: { size?: ButtonSize; variant?: ButtonVariant })
+export default component AddChainButton(props: { size?: ButtonSize; variant?: ButtonVariant; shape?: ButtonShape })
 {
     const { t } = useLocale();
 
@@ -57,6 +57,7 @@ export default component AddChainButton(props: { size?: ButtonSize; variant?: Bu
     <Button
         variant={ props.variant ?? 'secondary' }
         size={ props.size ?? 'md' }
+        shape={ props.shape ?? 'rounded' }
         onClick={ () => void run() }
     >
         { () => icon(status() === 'added' ? Check : status() === 'failed' ? TriangleAlert : Wallet, 'size-[18px]') }

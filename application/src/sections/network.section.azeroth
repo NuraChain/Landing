@@ -4,6 +4,7 @@ import { ArrowLeftRight, Blocks, CircleAlert, ExternalLink, Lock } from 'lucide'
 
 import { BRIDGE_HOLDER, BRIDGE_HOLDER_BSC_URL, EXPLORER_URL } from '../lib/content/site';
 import { blockHeight, bridgeTvl, totalTransactions } from '../lib/network';
+import { onReady, reveal, revealItems } from '../lib/motion';
 import type { Tvl } from '../lib/network';
 
 import Card from '../components/ui/card.component.azeroth';
@@ -178,13 +179,28 @@ export default component NetworkSection()
         }
     }
 
+    // The section entrance, once, on first scroll into view. Fallbacks live in lib/motion;
+    // onReady waits for the section to exist because effects run before DOM attachment.
+    // The heading draws its rule; the three tiles stagger in with a spring each.
+    effect
+    {
+        const releaseA = onReady('network', (section) => reveal(section, { heading: true }));
+        const releaseB = onReady('network', (section) => revealItems(section, '#network .grid'));
+
+        cleanup
+        {
+            releaseA();
+            releaseB();
+        }
+    }
+
     <section id="network" class="border-t border-line px-5 py-16 sm:py-20">
         <div class="mx-auto max-w-4xl">
-            <SectionHeading title={ t().network.title } subtitle={ t().network.subtitle } />
+            <SectionHeading index="01" title={ t().network.title } subtitle={ t().network.subtitle } />
 
             <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <Card>
-                    <p class="flex items-center gap-2 text-sm text-muted">
+                <Card shape="square">
+                    <p class="flex items-center gap-2 font-label text-[11px] uppercase tracking-[0.14em] text-faint">
                         { icon(Blocks, 'size-4 shrink-0') }
                         { t().network.blockHeight }
                     </p>
@@ -193,8 +209,8 @@ export default component NetworkSection()
                     </p>
                 </Card>
 
-                <Card>
-                    <p class="flex items-center gap-2 text-sm text-muted">
+                <Card shape="square">
+                    <p class="flex items-center gap-2 font-label text-[11px] uppercase tracking-[0.14em] text-faint">
                         { icon(ArrowLeftRight, 'size-4 shrink-0') }
                         { t().network.transactions }
                     </p>
@@ -207,8 +223,8 @@ export default component NetworkSection()
                      breakdown: "$0.00" is a fact about two balances, and a reader who
                      wants to know which asset is empty should not have to open a block
                      explorer to find out. */ }
-                <Card class="relative">
-                    <p class="flex items-center gap-2 text-sm text-muted">
+                <Card shape="square" class="relative">
+                    <p class="flex items-center gap-2 font-label text-[11px] uppercase tracking-[0.14em] text-faint">
                         { icon(Lock, 'size-4 shrink-0') }
                         { t().network.tvl }
 
@@ -251,7 +267,7 @@ export default component NetworkSection()
                                 + (showParts ? '' : 'pointer-events-none') }
                         >
                             <div
-                                class={ () => 'rounded-xl border border-line bg-elevated p-3 shadow-2xl'
+                                class={ () => 'border border-line bg-elevated p-3 shadow-2xl'
                                     + ' transition-opacity duration-150 '
                                     + (showParts ? 'opacity-100' : 'opacity-0') }
                             >

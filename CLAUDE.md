@@ -17,6 +17,8 @@ disagrees with the code, the code is the source of truth — fix the note.
 | Framework | **AzerothJS 2.0.0-beta.2** — not React, Vue or Svelte |
 | Components | `.azeroth` files, compiler syntax, no JSX and no hooks |
 | Reactivity | `state` / `derived` / `effect` / `cleanup` blocks; `createSignal` / `createStore` from `azerothjs` |
+| Motion | **anime.js v4**, but only through `src/lib/motion.ts` — the one authority that gates on `prefers-reduced-motion` and IntersectionObserver absence, so no section ever writes that guard itself |
+| Scrolling | **Lenis v1** (`src/lib/smooth-scroll.ts`), wheel smoothing + hash-link glide, instantiated once in `main.azeroth`. Reduced-motion or no-ResizeObserver environments keep native scrolling; `scroll-behavior: smooth` is the no-JS fallback |
 | Language | TypeScript, strict |
 | Styling | **Tailwind CSS v4**, CSS-first config in `src/styles.css` (`@theme inline`). There is no `tailwind.config.js` |
 | Build | Vite 8 |
@@ -62,6 +64,13 @@ manager. Do not add one to solve a problem the existing pieces already solve.
   inside an attribute list fails to compile with `Expression expected`.
 - A route or component returns exactly **one** root node; `Portal` takes exactly
   one child.
+- **Component effects run before their nodes are in the document.** A bare
+  `document.getElementById(...)` inside an `effect` body returns null and the
+  effect silently does nothing — do not query the DOM directly there. Use
+  `onReady(id, cb)` from `src/lib/motion.ts`, which retries per frame until the
+  node exists and hands the cleanup block one release function. (DOM queries
+  inside event callbacks — overlay.ts, tooltip — are fine; it is only the
+  effect body itself that runs too early.)
 - `<For each>` needs a mutable array — a readonly tuple collapses the row type. Spread it:
   `each={ [...LOCALES] }`.
 - **Component props are compiled to getters; DOM attributes are not.** Pass a plain
@@ -113,6 +122,21 @@ All tokens live at the top of `src/styles.css`, declared per `[data-theme]` for
   `--line`, `--line-strong`, `--accent`, `--accent-ink`, `--warm`, `--danger`.
 - Type: `--font-sans`, `--font-mono` → `var(--mono)`, which is redefined for
   `:lang(fa)` and `:lang(ar)` so Persian digits have a face that carries them.
+  `--font-display` → `var(--display)` (Space Grotesk Variable) is the brutalist
+  display face used by the hero and section headings; Latin-only, with
+  Vazirmatn in the stack so fa/ar headings keep their face.
+- `.font-label`, not `font-mono`, on section micro-labels: the test suite
+  selects `.font-mono` to find live FIGURES, so labels must not wear it.
+- Motion discipline (lib/motion.ts is the only motion code path): animate
+  `transform`/`opacity` only; no `utils.set` from anime.js (namespace
+  re-export can be `undefined` under Vite pre-bundling — plain style writes);
+  `will-change` only for the continuously-animated ticker track and only
+  during one-shot reveals; DOM lookups inside effects go through `onReady`.
+  The ticker is rAF-driven with a scroll-velocity boost; section reveals are
+  one-shot (spring staggers via `revealItems` + heading rule draws).
+  Theme changes wipe circularly from the toggle (View Transitions API,
+  `lib/theme-transition.ts`); it falls back to an instant swap when
+  unsupported or under reduced motion.
 - Also tokenised: radius, shadow, glow, scrollbar, and the `--brand-*` platform
   marks.
 

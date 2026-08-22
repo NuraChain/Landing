@@ -3,6 +3,7 @@ import { For } from 'azerothjs';
 import { ArrowUpRight } from 'lucide';
 
 import { SOCIALS } from '../lib/content/site';
+import { onReady, reveal, revealItems } from '../lib/motion';
 
 import { brandIcon } from '../components/icons/brand-icon';
 import Card from '../components/ui/card.component.azeroth';
@@ -15,15 +16,31 @@ export default component SocialSection()
 {
     const { t } = useLocale();
 
+    // The section entrance, once, on first scroll into view. Fallbacks live in lib/motion;
+    // onReady waits for the section to exist because effects run before DOM attachment.
+    // The grid's direct children are display:contents wrappers, so the items are the
+    // Card anchors inside them.
+    effect
+    {
+        const releaseA = onReady('social', (section) => reveal(section, { heading: true }));
+        const releaseB = onReady('social', (section) => revealItems(section, '#social .grid', 'a'));
+
+        cleanup
+        {
+            releaseA();
+            releaseB();
+        }
+    }
+
     <section id="social" class="border-t border-line px-5 py-16 sm:py-20">
         <div class="mx-auto max-w-4xl">
-            <SectionHeading title={ t().social.title } subtitle={ t().social.subtitle } />
+            <SectionHeading index="07" title={ t().social.title } subtitle={ t().social.subtitle } />
 
             <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <For each={ () => [...SOCIALS] } key={ (social) => social.id } let={ social }>
                     <div class="contents">
-                        <Card href={ social.url } external padding="sm" class="group flex items-center gap-3">
-                            <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
+                        <Card href={ social.url } external shape="square" padding="sm" class="group flex items-center gap-3">
+                            <span class="grid size-10 shrink-0 place-items-center border border-line-strong bg-accent-soft text-accent">
                                 { brandIcon(social.id) }
                             </span>
 

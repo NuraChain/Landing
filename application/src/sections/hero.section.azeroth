@@ -1,0 +1,503 @@
+import { For } from 'azerothjs';
+
+import { ArrowRight } from 'lucide';
+
+import { CHAIN, CHAIN_ID, NATIVE_TOKEN_SYMBOL, SUPPLY } from '../lib/content/site';
+import { animate, countUp, createTimeline, motionOk, onReady, scrub, splitWords, spring, stagger } from '../lib/motion';
+import { blockHeight } from '../lib/network';
+
+import AddChainButton from '../components/chain/add-chain-button.component.azeroth';
+import Button from '../components/ui/button.component.azeroth';
+import { icon } from '../components/icons/icon';
+
+import { useLocale } from '../stores/locale';
+
+/**
+ * The brutalist hero: blueprint grid, a status bar reading the live block height, the
+ * headline rising out of per-word masks, a scanline sweep, and the ticker tape of chain
+ * facts along the bottom edge.
+ *
+ * The live figure joins the network section's memoised reader rather than opening its own
+ * request - one minute, one fetch, however many consumers. The constants (chain id, block
+ * time, supply) come from site.ts, the same source the chain card copies from, so the two
+ * can never disagree.
+ *
+ * All motion runs through lib/motion.ts: reduced motion skips the choreography entirely
+ * and the plain text, CTAs and figures render complete without it.
+ */
+
+/** The 3s block time, read off the same fact table the chain card renders. */
+const BLOCK_TIME = CHAIN.find((fact) => fact.key === 'blockTime')?.value ?? '3s';
+
+export default component HeroSection()
+{
+    const { locale, t } = useLocale();
+
+    state block = null as number | null;
+    state blockFailed = false;
+
+    const number = (value: number): string => new Intl.NumberFormat(locale()).format(value);
+
+    /** Same grammar as the network tiles: an ellipsis while asking, an em-dash once failed. */
+    const blockFigure = (): string => block === null ? (blockFailed ? '—' : '…') : number(block);
+
+    const tickerItems = (): { label: string; value: string }[] =>
+    [
+        { label: t().network.blockHeight, value: blockFigure() },
+        { label: t().chain.chainId, value: String(CHAIN_ID) },
+        { label: t().chain.blockTime, value: BLOCK_TIME },
+        { label: t().tokenomics.totalSupply, value: `${ number(SUPPLY.total) } ${ NATIVE_TOKEN_SYMBOL }` }
+    ];
+
+    /**
+     * The tape content, repeated so ONE half is wider than any viewport: the loop wraps at
+     * half the track, and a half narrower than the screen would run off its own content
+     * and show empty track. Three copies of the four items land around 4 300px, which
+     * covers even an ultrawide display; both halves are identical, so the wrap stays
+     * seamless. Keys carry the copy index because the label alone would collide.
+     */
+    const tickerLoop = (): { key: string; label: string; value: string }[] =>
+    {
+        const base = tickerItems();
+
+        return Array.from({ length: 3 }, (_, copy) =>
+            base.map((item) => ({ ...item, key: `c${ copy }-${ item.label }` }))
+        ).flat();
+    };
+
+    effect
+    {
+        // A reactive read stays INSIDE the effect body so this effect re-runs on a language
+        // switch (the same way the Escape-listener effects re-run on their flag); the DOM
+        // work itself is deferred to onReady, which retries until the hero is attached -
+        // component effects run before their nodes exist, so a bare getElementById here
+        // returns null and the whole choreography silently never happens.
+        const headline = t().hero.headline;
+
+        const release = onReady('hero', (section) =>
+        {
+            const title = document.getElementById('hero-title');
+
+            if (title === null)
+            {
+                return;
+            }
+
+            // The live block height. Once on mount, then once a minute - the same cadence
+            // as the network section, on the same memo, so both read one shared request.
+            let live = true;
+
+            const load = (): void =>
+            {
+                blockHeight()
+                    .then((value) =>
+                    {
+                        if (live)
+                        {
+                            block = value;
+                            blockFailed = false;
+                        }
+                    })
+                    .catch(() =>
+                    {
+                        if (live)
+                        {
+                            blockFailed = true;
+                        }
+                    });
+            };
+
+            load();
+
+            const timer = window.setInterval(load, 60_000);
+
+            const playing: { pause: () => void }[] = [];
+            const detach: (() => void)[] = [];
+
+            if (motionOk())
+            {
+                // Re-sync the text first: on a language switch this effect re-runs, and the
+                // headline is rebuilt from the CURRENT table before the masks are re-split.
+                // splitWords preserves textContent byte-for-byte, so the outline stays exact.
+                // No anime.js set here - plain style writes only (see lib/motion.ts).
+                title.textContent = headline;
+                const words = splitWords(title);
+
+                words.forEach((word) =>
+                {
+                    word.style.transform = 'translateY(105%)';
+                    // Temporary hint: released when the reveal finishes (standing hints are
+                    // standing GPU allocations; six text nodes do not need to stay layers).
+                    word.style.willChange = 'transform';
+                });
+
+                playing.push(createTimeline({ defaults: { ease: 'outQuart' } })
+                    .add('#hero-status', { opacity: [0, 1], duration: 320 })
+                    .add(words, { translateY: ['105%', '0%'], duration: 760 }, stagger(70))
+                    .add('#hero-sub', { opacity: [0, 1], translateY: [14, 0], duration: 520 }, '-=380')
+                    .add('#hero-ctas', { opacity: [0, 1], translateY: [14, 0], duration: 520 }, '-=420')
+                    .add('#hero-spec', { opacity: [0, 1], translateY: [14, 0], duration: 520 }, '-=420')
+                    .call(() =>
+                    {
+                        // The scanline sweep. Transform-only: patching left/inset would
+                        // reflow the page every frame it ran, and the repo animates
+                        // transform and opacity only. In RTL it enters from the reading
+                        // side, same as the reveal.
+                        const width = section.getBoundingClientRect().width;
+                        const rtl = document.documentElement.getAttribute('dir') === 'rtl';
+                        const from = rtl ? width + 8 : -8;
+                        const to = rtl ? -8 : width + 8;
+
+                        section.style.setProperty('--sweep-on', '1');
+
+                        const sweep = { x: from };
+                        playing.push(animate(sweep, {
+                            x: to,
+                            duration: 1600,
+                            ease: 'inOutCubic',
+                            onUpdate: () =>
+                            {
+                                section.style.setProperty('--sx', `${ sweep.x }px`);
+                            },
+                            onComplete: () =>
+                            {
+                                section.style.setProperty('--sweep-on', '0');
+                            }
+                        }));
+                    }, '-=300')
+                    // The stat figures roll up as the grid lands - the one number with
+                    // visual mass is the supply; the id and the 3s are quick ticks.
+                    .call(() =>
+                    {
+                        const supply = document.getElementById('hero-spec-supply');
+                        const chainId = document.getElementById('hero-spec-id');
+                        const blockTime = document.getElementById('hero-spec-time');
+
+                        // countUp hands back a release closure, not an animation object;
+                        // `playing` speaks `pause`, so the release rides inside one.
+                        const roll = (el: HTMLElement | null, to: number, format: (value: number) => string): void =>
+                        {
+                            if (el !== null)
+                            {
+                                playing.push({ pause: countUp(el, to, format) });
+                            }
+                        };
+
+                        roll(chainId, CHAIN_ID, (v) => String(v));
+                        roll(blockTime, 3, (v) => `${ v }s`);
+                        roll(supply, SUPPLY.total, (v) => `${ number(v) } ${ NATIVE_TOKEN_SYMBOL }`);
+                    }, '-=360')
+                    .call(() =>
+                    {
+                        // Reveal done: words no longer need their layers.
+                        words.forEach((word) => { word.style.willChange = 'auto'; });
+                    }));
+
+                // Crosshair + coordinate readout: decorative, and only meaningful where
+                // a cursor exists, so the listeners are fine-pointer only.
+                if (matchMedia('(pointer: fine)').matches)
+                {
+                    const crossX = document.getElementById('hero-cross-x');
+                    const crossY = document.getElementById('hero-cross-y');
+                    const coords = document.getElementById('hero-coords');
+
+                    if (crossX !== null && crossY !== null && coords !== null)
+                    {
+                        const onMove = (event: MouseEvent): void =>
+                        {
+                            const rect = section.getBoundingClientRect();
+                            const x = Math.round(event.clientX - rect.left);
+                            const y = Math.round(event.clientY - rect.top);
+
+                            crossY.style.transform = `translateX(${ x }px)`;
+                            crossX.style.transform = `translateY(${ y }px)`;
+                            coords.textContent = `X ${ String(x).padStart(4, '0') } · Y ${ String(y).padStart(4, '0') }`;
+                        };
+
+                        const onEnter = (): void => { section.style.setProperty('--ch', '1'); };
+                        const onLeave = (): void => { section.style.setProperty('--ch', '0'); };
+
+                        section.addEventListener('mousemove', onMove, { passive: true });
+                        section.addEventListener('mouseenter', onEnter);
+                        section.addEventListener('mouseleave', onLeave);
+
+                        detach.push(() =>
+                        {
+                            section.removeEventListener('mousemove', onMove);
+                            section.removeEventListener('mouseenter', onEnter);
+                            section.removeEventListener('mouseleave', onLeave);
+                        });
+                    }
+
+                    // The primary CTA is magnetic: it leans toward the cursor a few
+                    // pixels and springs back on leave. 18% of the offset keeps it a
+                    // suggestion, not a chase - and the spring snap is what sells it.
+                    const magnet = document.getElementById('hero-magnet');
+
+                    if (magnet !== null)
+                    {
+                        const onMagnetMove = (event: MouseEvent): void =>
+                        {
+                            const rect = magnet.getBoundingClientRect();
+                            const dx = (event.clientX - (rect.left + rect.width / 2)) * 0.18;
+                            const dy = (event.clientY - (rect.top + rect.height / 2)) * 0.3;
+
+                            animate(magnet, { translateX: dx, translateY: dy, duration: 300, ease: 'outQuad' });
+                        };
+
+                        const onMagnetLeave = (): void =>
+                        {
+                            animate(magnet, {
+                                translateX: 0,
+                                translateY: 0,
+                                duration: 620,
+                                ease: spring({ stiffness: 130, damping: 16, mass: 0.9 })
+                            });
+                        };
+
+                        magnet.addEventListener('mousemove', onMagnetMove, { passive: true });
+                        magnet.addEventListener('mouseleave', onMagnetLeave);
+
+                        detach.push(() =>
+                        {
+                            magnet.removeEventListener('mousemove', onMagnetMove);
+                            magnet.removeEventListener('mouseleave', onMagnetLeave);
+                        });
+                    }
+                }
+
+                // The hero exits cinematically: as it scrolls past, the content drifts up
+                // and dims. Scrubbed, so it is 1:1 with the wheel and stops at rest.
+                const inner = document.getElementById('hero-inner');
+
+                if (inner !== null)
+                {
+                    detach.push(scrub(section, (progress) =>
+                    {
+                        // Gentle ease-in: most of the drift happens late.
+                        const k = progress * progress * 0.45 + progress * 0.55;
+
+                        inner.style.translate = `0px ${ Math.round(-34 * k) }px`;
+                        inner.style.opacity = String(1 - 0.42 * k);
+                    }));
+                }
+
+                // The ticker band. Fully JS-driven: it rolls at a base speed and BORROWS
+                // scroll velocity while the user scrolls, then decays - the classic
+                // velocity-reactive tape. Never stops while in view; gated by its own
+                // observer so it never runs a frame off-screen, and skipped entirely under
+                // reduced motion (the band just sits there, readable).
+                const band = document.getElementById('ticker-band');
+                const track = document.getElementById('ticker-track');
+
+                if (band !== null && track !== null)
+                {
+                    let raf = 0;
+                    let running = false;
+                    let half = track.scrollWidth / 2 || 1;
+                    let x = 0;
+                    let last = performance.now();
+                    let velocity = 0;
+                    let inView = false;
+
+                    const measure = (): void => { half = track.scrollWidth / 2 || 1; };
+
+                    // The first measure happens before webfonts settle; re-measure once they
+                    // load so the wrap point matches the final layout.
+                    if (document.fonts !== undefined)
+                    {
+                        void document.fonts.ready.then(measure).catch(() => {});
+                    }
+
+                    const step = (now: number): void =>
+                    {
+                        const dt = Math.min(64, now - last);
+
+                        last = now;
+                        velocity += (0 - velocity) * 0.08;
+
+                        const boost = Math.min(1400, Math.abs(velocity) * 40);
+
+                        x += (64 + boost) * (dt / 1000);
+                        x %= half; // both halves are identical, so the wrap is seamless
+
+                        track.style.transform = `translateX(${ -x }px)`;
+
+                        if (inView && document.visibilityState === 'visible')
+                        {
+                            raf = requestAnimationFrame(step);
+                        }
+                        else
+                        {
+                            running = false;
+                        }
+                    };
+
+                    const kick = (): void =>
+                    {
+                        if (running || !inView || document.visibilityState === 'hidden')
+                        {
+                            return;
+                        }
+
+                        running = true;
+
+                        // Restart the dt clock so the first frame does not jump.
+                        last = performance.now();
+                        raf = requestAnimationFrame(step);
+                    };
+
+                    const tickerIo = new IntersectionObserver((entries) =>
+                    {
+                        // Set the flag BEFORE kick: kick's own guard reads inView, and a
+                        // kick called while it is still false returns without starting.
+                        inView = entries.some((entry) => entry.isIntersecting);
+
+                        if (inView)
+                        {
+                            kick();
+                        }
+                    }, { threshold: 0 });
+
+                    tickerIo.observe(band);
+
+                    const onResize = (): void => { measure(); };
+                    const onVisibility = (): void =>
+                    {
+                        if (document.visibilityState === 'visible')
+                        {
+                            kick();
+                        }
+                    };
+
+                    window.addEventListener('resize', onResize);
+                    window.addEventListener('scroll', kick, { passive: true });
+                    document.addEventListener('visibilitychange', onVisibility);
+
+                    // The scroll scrub above feeds the ticker its velocity:
+                    detach.push(scrub(section, (_progress, v) => { velocity = v; }));
+
+                    detach.push(() =>
+                    {
+                        cancelAnimationFrame(raf);
+                        running = false;
+                        tickerIo.disconnect();
+                        window.removeEventListener('resize', onResize);
+                        window.removeEventListener('scroll', kick);
+                        document.removeEventListener('visibilitychange', onVisibility);
+                    });
+                }
+            }
+
+            return () =>
+            {
+                live = false;
+                window.clearInterval(timer);
+                playing.forEach((entry) => entry.pause());
+                detach.forEach((detachFn) => detachFn());
+                section.style.removeProperty('--sx');
+                section.style.removeProperty('--sweep-on');
+            };
+        });
+
+        cleanup { release(); }
+    }
+
+    <section id="hero" class="hero-scanline blueprint relative overflow-hidden">
+        { /* Crosshair lines: decorative, written from JS, hidden until --ch is set. */ }
+        <div id="hero-cross-x" class="hero-cross-x" aria-hidden="true"></div>
+        <div id="hero-cross-y" class="hero-cross-y" aria-hidden="true"></div>
+
+        <div id="hero-inner" class="relative mx-auto max-w-4xl px-5 pb-16 pt-16 sm:pb-20 sm:pt-24">
+            <div id="hero-status" class="flex flex-wrap items-center gap-x-6 gap-y-1 border border-line-strong px-3 py-2 font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
+                <span>
+                    NURA://MAINNET
+                    <span class="caret-blink text-accent" aria-hidden="true">▮</span>
+                </span>
+                <span class="ms-auto flex items-center gap-5">
+                    <span class="hidden sm:inline">
+                        RPC <span class="text-accent" aria-hidden="true">●</span>
+                    </span>
+                    <span class="flex items-baseline gap-2">
+                        <span>{ t().network.blockHeight }</span>
+                        <b class="font-semibold text-ink">{ () => blockFigure() }</b>
+                    </span>
+                </span>
+            </div>
+
+            <h1 id="hero-title" class="mt-10 font-display text-5xl font-bold uppercase leading-[0.95] tracking-tight text-ink sm:text-7xl">
+                { t().hero.headline }
+            </h1>
+
+            <p id="hero-sub" class="mt-6 max-w-xl text-pretty text-base leading-relaxed text-muted sm:text-lg">
+                { t().hero.subhead }
+            </p>
+
+            <div id="hero-ctas" class="mt-9 flex flex-wrap items-center gap-3">
+                { /* The magnetic wrapper: the Button itself does not move, its container
+                     leans toward the cursor. The wrapper's box is the button's box, so
+                     hover detection stays on the control. */ }
+                <div id="hero-magnet">
+                    <Button href="#wallet" size="lg" shape="square">
+                        { t().hero.primaryCta }
+                        { /* Flipped in Persian: this arrow means "onward", and onward is
+                             leftward in RTL - the same contract the old hero kept. */ }
+                        { icon(ArrowRight, 'size-[18px] rtl:rotate-180') }
+                    </Button>
+                </div>
+
+                <Button href="#chain" size="lg" variant="secondary" shape="square">
+                    { t().hero.secondaryCta }
+                </Button>
+
+                <AddChainButton size="lg" shape="square" />
+            </div>
+
+            { /* The spec grid: real constants only, from site.ts. gap-px over bg-line is
+                 the hairline-grid trick - direction-neutral, so no divide-* utilities. */ }
+            <dl id="hero-spec" class="mt-12 grid grid-cols-1 gap-px border border-line bg-line sm:grid-cols-3">
+                <div class="bg-surface px-4 py-3">
+                    <dt class="font-mono text-[10px] uppercase tracking-[0.2em] text-faint">{ t().chain.chainId }</dt>
+                    <dd id="hero-spec-id" class="mt-1 font-mono text-lg font-semibold text-ink" dir="ltr">{ CHAIN_ID }</dd>
+                </div>
+                <div class="bg-surface px-4 py-3">
+                    <dt class="font-mono text-[10px] uppercase tracking-[0.2em] text-faint">{ t().chain.blockTime }</dt>
+                    <dd id="hero-spec-time" class="mt-1 font-mono text-lg font-semibold text-ink" dir="ltr">{ BLOCK_TIME }</dd>
+                </div>
+                <div class="bg-surface px-4 py-3">
+                    <dt class="font-mono text-[10px] uppercase tracking-[0.2em] text-faint">{ t().tokenomics.totalSupply }</dt>
+                    <dd id="hero-spec-supply" class="mt-1 font-mono text-lg font-semibold text-ink">
+                        { () => `${ number(SUPPLY.total) } ${ NATIVE_TOKEN_SYMBOL }` }
+                    </dd>
+                </div>
+            </dl>
+        </div>
+
+        <div id="hero-coords" class="absolute bottom-14 end-5 hidden font-mono text-[10px] tracking-[0.16em] text-faint sm:block" aria-hidden="true">
+            X 0000 · Y 0000
+        </div>
+
+        { /* The ticker tape. Decorative: every fact on it also lives in a real section
+             below, so the whole band is aria-hidden and the track is duplicated purely to
+             make the -50% wrap seamless. Latin direction is deliberate - these are values
+             and identifiers, and the tape runs one way regardless of locale. */ }
+        <div id="ticker-band" class="marquee relative border-t border-line py-2.5" dir="ltr" aria-hidden="true">
+            <div id="ticker-track" class="marquee-track inline-flex whitespace-nowrap">
+                <For each={ () => tickerLoop() } key={ (item) => item.key } let={ item }>
+                    <span class="inline-flex items-baseline gap-2 px-7 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
+                        <span>{ item.label }</span>
+                        <b class="font-semibold text-ink">{ item.value }</b>
+                        <i class="not-italic text-accent">◆</i>
+                    </span>
+                </For>
+                <For each={ () => tickerLoop() } key={ (item) => `d-${ item.key }` } let={ item }>
+                    <span class="inline-flex items-baseline gap-2 px-7 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
+                        <span>{ item.label }</span>
+                        <b class="font-semibold text-ink">{ item.value }</b>
+                        <i class="not-italic text-accent">◆</i>
+                    </span>
+                </For>
+            </div>
+        </div>
+    </section>
+}
