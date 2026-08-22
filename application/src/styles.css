@@ -1,11 +1,23 @@
 @import 'tailwindcss';
 
+/* Lenis's own sheet: keeps `height: auto` on html/body and, on the active instance,
+   `scroll-behavior: auto !important` - the smoothing is done by the library, and a native
+   smooth-scroll fighting it would produce the double-ease you get when two springs drive
+   one wheel. */
+@import 'lenis/dist/lenis.css';
+
 /* Self-hosted rather than a CDN link: the Persian face is not optional decoration, it is
    the only reason the site is legible in Persian, and a third-party font host is both a
    render-blocking dependency and a request that tells someone else who reads this site.
    The package ships `font-display: swap` and per-script unicode-range subsets, so a Latin
    visitor never downloads the Arabic-range file at all. */
 @import '@fontsource-variable/vazirmatn';
+
+/* The brutalist display face. Latin-only on purpose: Persian, Arabic, Devanagari and Han
+   glyphs fall through the stack to Vazirmatn / system faces per glyph, exactly the way the
+   mono stack already appends Vazirmatn for Persian digits. Self-hosted, variable, and the
+   package ships per-script unicode-range subsets, so nothing unused downloads. */
+@import '@fontsource-variable/space-grotesk';
 
 /* Themes are explicit, not inferred. `light-dark()` can only express two, and this site
    ships three, so every token is declared per `[data-theme]` and the attribute is set
@@ -157,6 +169,12 @@
 :root
 {
     --mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
+
+    /* Display sits behind a variable of its own for the same reason --mono does: `@theme
+       inline` inlines the literal, so the indirection is what keeps the stack readable
+       here and lets fa/ar reorder it below if a better Arabic display face ever ships. */
+    --display: 'Space Grotesk Variable', 'Space Grotesk', 'Vazirmatn Variable', Vazirmatn,
+        'Inter var', Inter, system-ui, sans-serif;
 }
 
 :root:lang(fa),
@@ -185,6 +203,7 @@
 
     --font-sans: 'Inter var', Inter, system-ui, sans-serif;
     --font-mono: var(--mono);
+    --font-display: var(--display);
 }
 
 @layer base
@@ -194,6 +213,10 @@
         background: var(--bg);
         color: var(--ink);
         -webkit-text-size-adjust: 100%;
+        /* Native smooth anchor jumps where Lenis is off (reduced motion turns it back to
+           `auto` through the global rule at the bottom of this file). This is the no-JS
+           fallback for the same glide the click delegation provides with Lenis. */
+        scroll-behavior: smooth;
     }
 
     body
@@ -285,6 +308,143 @@
     {
         background-image: var(--glow);
     }
+
+    /* Micro-labels in the brutalist sections: the mono face WITHOUT the `font-mono`
+       utility, which the test suite reserves for live figures (it selects `.font-mono`
+       to find the numbers). Labels and figures must not share a selector. */
+    .font-label
+    {
+        font-family: var(--mono);
+    }
+
+    /* The blueprint column grid behind the brutalist hero. It reads --line, so it follows
+       every theme; the contrast theme strips it below, the same way --glow becomes none. */
+    .blueprint
+    {
+        background-image: repeating-linear-gradient(
+            to right,
+            var(--line) 0 1px,
+            transparent 1px calc(100% / 12)
+        );
+    }
+
+    /* One scanline sweep across the hero on load. Position and visibility are custom
+       properties because the sweep is driven from anime.js, not a keyframe: it plays once,
+       exactly when the reveal timeline says so. The line sits at the physical left edge and
+       MOVES with transform - patching left/inset-inline-start would reflow the page every
+       frame, and the repo animates transform and opacity only. */
+    .hero-scanline::after
+    {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 1px;
+        transform: translateX(var(--sx, -8px));
+        background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+        opacity: var(--sweep-on, 0);
+        pointer-events: none;
+    }
+
+    /* The hero crosshair. Hidden until a fine pointer moves over the hero; JS writes
+       --ch and the transforms. Transforms are physical, which is correct here: the lines
+       track the cursor's physical position, not a logical one. */
+    .hero-cross-x,
+    .hero-cross-y
+    {
+        position: absolute;
+        background: var(--line-strong);
+        opacity: var(--ch, 0);
+        pointer-events: none;
+        transition: opacity 200ms ease;
+    }
+
+    .hero-cross-x
+    {
+        inset-inline: 0;
+        height: 1px;
+        top: 0;
+    }
+
+    .hero-cross-y
+    {
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        /* Physical, deliberately: the JS translateX that moves this line is physical, so
+           the origin must be too. `inset-inline-start` would park it on the right in RTL
+           and a physical transform would then push it off-panel. */
+        left: 0;
+    }
+
+    /* Per-word masks for the hero reveal, built at runtime by lib/motion.ts splitWords.
+       The word slides up out of its own clip box; at rest nothing is clipped. will-change
+       is applied by JS for the duration of the reveal and released on completion - a
+       standing hint on six text nodes would be a standing allocation for no gain. */
+    .hero-word
+    {
+        display: inline-block;
+        overflow: hidden;
+    }
+
+    .hero-word-inner
+    {
+        display: inline-block;
+    }
+
+    /* The section-heading rule, so the heading reveal can draw it from the reading side. */
+    .sh-rule
+    {
+        transform-origin: left center;
+    }
+
+    [dir='rtl'] .sh-rule
+    {
+        transform-origin: right center;
+    }
+
+    /* The ticker tape under the hero. Driven entirely from JS (lib/motion + the hero
+       effect): translateX only, velocity-reactive, IO-gated, and stilled under reduced
+       motion. The will-change is the one standing hint the page keeps - the track is the
+       only element that animates continuously, and a compositor layer is exactly what it
+       needs to move at 60fps. */
+    .marquee-track
+    {
+        will-change: transform;
+    }
+}
+
+/* The contrast theme drops decorative layers entirely: solid backgrounds, full-strength
+   borders, no glow. The blueprint grid is decoration, so it goes too. */
+:root[data-theme='contrast'] .blueprint
+{
+    background-image: none;
+}
+
+/* The circular theme reveal (lib/theme-transition.ts): the browser snapshots both
+   themes, and the JS drives a clip-path circle on the new-root layer. The default
+   crossfade is switched off because the circle IS the transition - two simultaneous
+   animations on the same layer would fight. */
+::view-transition-old(root),
+::view-transition-new(root)
+{
+    animation: none;
+    mix-blend-mode: normal;
+}
+
+/* The status-bar caret. steps(1) is the honest terminal blink, not a soft fade. */
+@keyframes caret
+{
+    50%
+    {
+        opacity: 0;
+    }
+}
+
+.caret-blink
+{
+    animation: caret 1.1s steps(1) infinite;
 }
 
 /* One keyframe, direction supplied by a custom property, so the drawer enters from the

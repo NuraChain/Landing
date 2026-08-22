@@ -1,5 +1,11 @@
 import { render } from 'azerothjs';
 
+import { initSmoothScroll } from './lib/smooth-scroll';
+
 import App from './App.azeroth';
 
 render(() => App(), document.getElementById('root')!);
+
+// Once per page load, not per component: wheel smoothing and the hash-link glide are
+// document-level concerns. Guarded internally (reduced motion, no ResizeObserver).
+initSmoothScroll();

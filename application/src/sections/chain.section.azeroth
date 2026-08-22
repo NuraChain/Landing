@@ -1,6 +1,7 @@
 import { For } from 'azerothjs';
 
 import { CHAIN } from '../lib/content/site';
+import { onReady, reveal, revealItems } from '../lib/motion';
 
 import CopyField from '../components/chain/copy-field.component.azeroth';
 import SectionHeading from '../components/layout/section-heading.component.azeroth';
@@ -17,11 +18,25 @@ export default component ChainSection()
 {
     const { t } = useLocale();
 
+    // The section entrance, once, on first scroll into view. Fallbacks live in lib/motion;
+    // onReady waits for the section to exist because effects run before DOM attachment.
+    effect
+    {
+        const releaseA = onReady('chain', (section) => reveal(section, { heading: true }));
+        const releaseB = onReady('chain', (section) => revealItems(section, '#chain dl'));
+
+        cleanup
+        {
+            releaseA();
+            releaseB();
+        }
+    }
+
     <section id="chain" class="border-t border-line px-5 py-16 sm:py-20">
         <div class="mx-auto max-w-4xl">
-            <SectionHeading title={ t().chain.title } subtitle={ t().chain.subtitle } />
+            <SectionHeading index="04" title={ t().chain.title } subtitle={ t().chain.subtitle } />
 
-            <dl class="mt-8 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+            <dl class="mt-8 divide-y divide-line overflow-hidden border border-line-strong bg-surface">
                 <For each={ () => [...CHAIN] } key={ (fact) => fact.key } let={ fact }>
                     { /* The value takes a line of its OWN below `sm:`.
 

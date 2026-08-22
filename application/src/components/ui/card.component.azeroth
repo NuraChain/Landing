@@ -12,11 +12,14 @@ export default component Card(props:
     href?: string;
     external?: boolean;
     padding?: 'sm' | 'md';
+    /** `square` drops the radius for the brutalist landing sections. Admin and blog keep the default. */
+    shape?: 'rounded' | 'square';
     class?: string;
     children?: Child;
 })
 {
-    derived classes = 'rounded-2xl border border-line bg-surface '
+    derived classes = (props.shape === 'square' ? 'border' : 'rounded-2xl border')
+        + ' border-line bg-surface '
         + (props.padding === 'sm' ? 'p-4' : 'p-5')
         + (props.href !== undefined ? ' transition-colors hover:border-line-strong hover:bg-elevated' : '')
         + (props.class !== undefined ? ` ${ props.class }` : '');

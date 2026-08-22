@@ -4,10 +4,14 @@ import { BUTTON_SIZE, BUTTON_VARIANT, type ButtonSize, type ButtonVariant } from
 
 export type { ButtonSize, ButtonVariant };
 
+/** `square` drops the radius for the brutalist landing hero; every other caller keeps the default. */
+export type ButtonShape = 'rounded' | 'square';
+
 interface ButtonProps
 {
     variant?: ButtonVariant;
     size?: ButtonSize;
+    shape?: ButtonShape;
     /** Present means this renders an anchor. A control that navigates must BE a link, not a button that calls the router, or middle-click and open-in-new-tab both stop working. */
     href?: string;
     /** Only meaningful alongside `href`. Adds the safe rel automatically. */
@@ -26,7 +30,8 @@ interface ButtonProps
  */
 export default component Button(props: ButtonProps)
 {
-    derived classes = 'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-colors '
+    derived classes = 'inline-flex items-center justify-center gap-2 font-semibold transition-colors '
+        + (props.shape === 'square' ? '' : 'rounded-xl ')
         + BUTTON_SIZE[props.size ?? 'md']
         + ' ' + BUTTON_VARIANT[props.variant ?? 'primary']
         + (props.disabled === true ? ' cursor-not-allowed opacity-55' : '')
