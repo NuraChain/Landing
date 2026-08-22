@@ -6,9 +6,11 @@
 //
 // The renderer builds a tree and never a string, so the class of bug these guard is "the parser
 // produced a node it should have refused", not "the escaping missed a case".
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
+import { renderTest, cleanup } from '@azerothjs/testing';
 
 import { parseInline, parseMarkdown, safeHref, safeSrc, type Block } from '../src/lib/markdown';
+import Markdown from '../src/components/content/markdown.component.azeroth';
 
 const kinds = (blocks: Block[]): string[] => blocks.map((block) => block.kind);
 
@@ -273,5 +275,46 @@ describe('the parser cannot be made to emit a dangerous node', () =>
                 }
             }
         }
+    });
+});
+
+afterEach(cleanup);
+
+// A post body is the one place on the site where a Latin run - a method name, a hex chain id,
+// a url, a JSON fragment - is written by an author rather than by a component, and it is read
+// in ten languages including two that mirror. These are the direction pins that keep such a run
+// ordering on its own terms inside a Persian or Arabic sentence.
+describe('code keeps its own direction inside a mirrored page', () =>
+{
+    it('pins an inline code span', () =>
+    {
+        // The edges are what break: `{`, `}`, `"` and `*` are bidi neutral, so without an
+        // isolate they resolve against the paragraph and the span renders inside out.
+        const { container } = renderTest(() => Markdown({ source: 'مقدار `personal_*` را بخوانید.' }));
+        const code = container.querySelector('code');
+
+        expect(code).not.toBeNull();
+        expect(code!.getAttribute('dir')).toBe('ltr');
+        expect(code!.textContent).toBe('personal_*');
+    });
+
+    it('pins a fenced block and leaves it keyboard reachable', () =>
+    {
+        const fenced = ['```', 'curl -s https://rpc.nurachain.net', '```'].join('\n');
+        const { container } = renderTest(() => Markdown({ source: fenced }));
+        const pre = container.querySelector('pre');
+
+        expect(pre).not.toBeNull();
+        expect(pre!.getAttribute('dir')).toBe('ltr');
+        // `overflow-x-auto` makes this a scrollable region on a narrow screen; a scrollable
+        // region that cannot be focused is unreachable by keyboard - WCAG 2.1.1.
+        expect(pre!.getAttribute('tabindex')).toBe('0');
+    });
+
+    it('does not pin ordinary prose, which must follow the reader', () =>
+    {
+        const { container } = renderTest(() => Markdown({ source: 'یک جمله فارسی بدون کد.' }));
+
+        expect(container.querySelector('[dir]')).toBeNull();
     });
 });

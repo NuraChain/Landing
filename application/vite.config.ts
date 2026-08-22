@@ -16,13 +16,13 @@ export default defineConfig({
     },
 
     server: {
-        port: 4000,
+        port: 5001,
 
         // The whole dev wiring to the server half. In production the server serves the built
         // client itself, from one origin, so neither of these exists there.
         proxy: {
-            '/api': 'http://localhost:3000',
-            '/_image': 'http://localhost:3000'
+            '/api': 'http://localhost:5000',
+            '/_image': 'http://localhost:5000'
         }
     },
 

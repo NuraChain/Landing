@@ -1,6 +1,6 @@
-import { App, ConflictError, NotFoundError, json, type ErrorObserver, type RequestObserver } from '@azerothjs/http';
+import { App, ConflictError, NotFoundError, json, text, type ErrorObserver, type RequestObserver } from '@azerothjs/http';
 import { feature, manifestOf, register, reply } from '@azerothjs/http/api';
-import { mountPages, type KitOptions } from '@azerothjs/kit';
+import { mountPages, type KitOptions, type PageRenderer } from '@azerothjs/kit';
 import { array } from '@azerothjs/schema';
 
 import { adminGuards } from './admin/guard.ts';
@@ -8,6 +8,8 @@ import { matchesKey } from './admin/key.ts';
 import { SESSION_TTL_SECONDS, type SessionStore } from './admin/sessions.ts';
 import { pageCount, toCards, toDetail, toEditor, toRecord } from './blog/present.ts';
 import type { BlogStore } from './blog/store.ts';
+import { injectMeta, isMissingPost, metaFor } from './seo/pages.ts';
+import { buildSitemap } from './seo/sitemap.ts';
 import {
     adminKeyInput,
     createPostInput,
@@ -343,11 +345,23 @@ export function createApi(deps: ApiDeps)
 
 export type Api = ReturnType<typeof createApi>;
 
+/**
+ * The canonical origin, used for every absolute url the site emits about itself.
+ *
+ * A default rather than a required option so a test and a dev boot need not supply one; a
+ * deployment sets SITE_URL. Getting it wrong costs canonical tags and a sitemap pointing at
+ * the wrong host, which is why it is one constant and not a value each call site invents.
+ */
+export const DEFAULT_SITE_URL = 'https://nurachain.net';
+
 export interface AppOptions extends ApiDeps
 {
     dev: boolean;
     observe?: RequestObserver;
     onError?: ErrorObserver;
+
+    /** Canonical origin, no trailing slash. Defaults to {@link DEFAULT_SITE_URL}. */
+    siteUrl?: string;
 
     /**
      * The built client + SSR renderer (production); omit in dev - vite serves the client.
@@ -371,11 +385,86 @@ export function buildApp(options: AppOptions): App
     // hydration costs no round trip; this endpoint is what a plain vite dev page falls back to.
     app.get('/api/_manifest', () => json(manifestOf(api)));
 
+    const siteUrl = (options.siteUrl ?? DEFAULT_SITE_URL).replace(/\/+$/, '');
+
+    /*
+     * Generated per request rather than written to a file at build.
+     *
+     * Posts are published from the dashboard at runtime, so a sitemap baked at build time is
+     * stale the moment anybody writes anything - and stale in the silent direction, where the
+     * new post is simply never crawled. This reads the store, so publishing IS listing.
+     *
+     * Registered before `mountPages` for the same reason `/api` is: the kit's asset fallback
+     * matches every path, and a static `sitemap.xml` in public/ would otherwise win.
+     */
+    app.get('/sitemap.xml', () => text(buildSitemap(options.store, siteUrl), {
+        headers: {
+            'content-type': 'application/xml; charset=utf-8',
+            // Crawlers re-read this often; an hour keeps it fresh without regenerating per hit.
+            'cache-control': 'public, max-age=3600'
+        }
+    }));
+
     // Mounted LAST so nothing can shadow /api: the kit's asset fallback matches everything.
     if (options.pages !== undefined)
     {
-        mountPages(app, { ...options.pages, manifest: manifestOf(api) });
+        mountPages(app, {
+            ...options.pages,
+            renderer: withMeta(options.pages.renderer, options.store, siteUrl),
+            manifest: manifestOf(api)
+        });
     }
 
     return app;
+}
+
+/**
+ * Wraps the page renderer so a server-rendered blog page carries its own head.
+ *
+ * The kit splices markup into the shell and leaves `<head>` alone, which would give all ten
+ * posts index.html's single title and description - the two fields a search result is built
+ * from. `PageRenderer` hands back the finished document as a string, so the head can be
+ * rewritten here without the kit growing an API for it and without a route moving.
+ *
+ * Everything that is not one of the two blog routes falls through untouched: `metaFor` answers
+ * null and the original result is returned as-is. A page whose head this module does not
+ * understand keeps the one it already had.
+ */
+function withMeta(renderer: PageRenderer | undefined, store: BlogStore, siteUrl: string): PageRenderer | undefined
+{
+    if (renderer === undefined)
+    {
+        return undefined;
+    }
+
+    return async (url, shell) =>
+    {
+        const result = await renderer(url, shell);
+
+        // The union may grow - a streaming arm is planned - so this switches on the one arm it
+        // can rewrite rather than assuming anything about the others.
+        if (result.kind !== 'html')
+        {
+            return result;
+        }
+
+        const deps = { store, siteUrl };
+        const meta = metaFor(url, deps);
+
+        if (meta === null)
+        {
+            /*
+             * A post address that resolves to nothing is served as a real 404.
+             *
+             * The app renders its own not-found state either way, so the page a visitor sees is
+             * unchanged - what changes is the status line above it. It used to be 200, which is
+             * a soft 404: a crawler is told "this is a page" and indexes the generic shell
+             * title, so every mistyped or retired post url becomes a duplicate of the home page
+             * in the index. The status is the only thing that distinguishes them.
+             */
+            return isMissingPost(url, deps) ? { ...result, status: 404 } : result;
+        }
+
+        return { ...result, html: injectMeta(result.html, meta) };
+    };
 }

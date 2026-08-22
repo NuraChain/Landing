@@ -6,7 +6,7 @@ import type { PageRenderer, PageRoute } from '@azerothjs/kit';
 import { createLogger, teeSink, terminalSink } from '@azerothjs/logger';
 import { fileSink } from '@azerothjs/logger/node';
 
-import { buildApp } from './app.ts';
+import { buildApp, DEFAULT_SITE_URL } from './app.ts';
 import { loadAdminKey } from './admin/key.ts';
 import { SessionStore } from './admin/sessions.ts';
 import { BlogStore } from './blog/store.ts';
@@ -38,7 +38,11 @@ const config = loadConfig({
     // On behind a reverse proxy, or every client shares the proxy's rate bucket and the
     // login throttle becomes one global budget an attacker can exhaust for everybody.
     trustProxy: flag('TRUST_PROXY', { default: false }),
-    ssrEntry: str('SSR_ENTRY', { default: '../application/dist-server/entry.server.js' })
+    ssrEntry: str('SSR_ENTRY', { default: '../application/dist-server/entry.server.js' }),
+    // The origin the site names itself by: canonical tags, Open Graph urls, JSON-LD and the
+    // sitemap are all built from it. A deployment behind a different host sets this, or every
+    // one of those points somewhere the site is not actually served.
+    siteUrl: str('SITE_URL', { default: DEFAULT_SITE_URL })
 });
 const isProduction = config.env === 'production';
 
@@ -70,6 +74,7 @@ const app = buildApp({
     adminKey: admin === null ? null : admin.key,
     secure: isProduction,
     trustProxy: config.trustProxy,
+    siteUrl: config.siteUrl,
     dev: !isProduction,
     observe: logRequests(log),
     onError: (error, mapped) =>

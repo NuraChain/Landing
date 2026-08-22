@@ -22,8 +22,16 @@ export default component InlineText(props: { nodes: Inline[] })
             <Show when={ node.kind === 'em' }>
                 <em>{ node.kind === 'em' ? node.text : '' }</em>
             </Show>
+            { /* `dir="ltr"`, for the same reason the `pre` block in markdown.component carries
+                 it. An inline code span is a Latin run - a method name, a hex chain id, a url,
+                 a JSON fragment - and inside a Persian or Arabic sentence its EDGES are bidi
+                 neutral. `{`, `}`, `"`, `*` and a trailing `.` all resolve against the
+                 paragraph's direction, not the span's, so `personal_*` renders as `*personal_`
+                 and a braced JSON fragment turns itself inside out. The attribute is what
+                 isolates it: HTML gives any element with `dir` a `unicode-bidi: isolate`, so
+                 the run orders on its own and cannot leak into the sentence around it. */ }
             <Show when={ node.kind === 'code' }>
-                <code class="rounded bg-elevated px-1.5 py-0.5 font-mono text-[0.9em]">{ node.kind === 'code' ? node.text : '' }</code>
+                <code dir="ltr" class="rounded bg-elevated px-1.5 py-0.5 font-mono text-[0.9em]">{ node.kind === 'code' ? node.text : '' }</code>
             </Show>
             { /* Every outbound link carries the safe rel - the rule the rest of the site already
                  holds, and a post body is the one place a url arrives from outside the repo.

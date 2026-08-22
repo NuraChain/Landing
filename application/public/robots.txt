@@ -5,3 +5,8 @@ User-agent: *
 Disallow: /admin
 
 Allow: /
+
+# Generated from the blog store on request, not written to a file - see server/src/seo/sitemap.ts.
+# The absolute url is required here: a relative path is the one thing the sitemap directive
+# does not accept, and a crawler silently ignores the line rather than reporting it.
+Sitemap: https://nurachain.net/sitemap.xml

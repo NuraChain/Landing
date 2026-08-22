@@ -12,6 +12,20 @@ const CHIP = 'rounded-full border px-3 py-1 text-sm transition-colors ';
 const CHIP_ON = 'cursor-default border-accent bg-accent text-accent-ink';
 const CHIP_OFF = 'cursor-pointer border-line text-muted hover:text-ink';
 
+/*
+ * The count has to change colour with the chip, and that is not cosmetic.
+ *
+ * `--faint` is measured against the page surfaces and clears 4.5:1 on all three themes there.
+ * The SELECTED chip is not a page surface - it is filled with `--accent` - and faint on accent
+ * measures 1.84:1, which is a serious contrast failure sitting in plain sight. `--accent-ink`
+ * is the ink the design system pairs with that fill, so the selected count uses it at full
+ * strength; de-emphasising it with an opacity modifier would walk straight back toward the
+ * floor it just cleared.
+ */
+const COUNT = 'ms-1.5 tabular-nums ';
+const COUNT_ON = 'text-accent-ink';
+const COUNT_OFF = 'text-faint';
+
 /**
  * The blog index.
  *
@@ -166,7 +180,9 @@ export default component Blog()
                     aria-current={ () => tag() === null ? 'true' : undefined }
                 >
                     { t().blog.everyTag }
-                    <span class="ms-1.5 tabular-nums text-faint">{ () => count(publishedCount) }</span>
+                    <span class={ () => COUNT + (tag() === null ? COUNT_ON : COUNT_OFF) }>
+                        { () => count(publishedCount) }
+                    </span>
                 </Link>
                 <For each={ tags } key={ (row) => row.tag } let={ row }>
                     <span class="contents">
@@ -176,9 +192,12 @@ export default component Blog()
                             aria-current={ () => tag() === row.tag ? 'true' : undefined }
                         >
                             { row.tag }
-                            { /* `tabular-nums` so the chips do not jitter as counts change, and
-                                 `text-faint` so the tag stays the thing being read. */ }
-                            <span class="ms-1.5 tabular-nums text-faint">{ () => count(row.count) }</span>
+                            { /* `tabular-nums` so the chips do not jitter as counts change, and a
+                                 dimmer ink so the tag stays the thing being read - but only while
+                                 the chip is unselected. See COUNT_ON above. */ }
+                            <span class={ () => COUNT + (tag() === row.tag ? COUNT_ON : COUNT_OFF) }>
+                                { () => count(row.count) }
+                            </span>
                         </Link>
                     </span>
                 </For>

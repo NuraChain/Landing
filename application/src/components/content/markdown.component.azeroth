@@ -53,9 +53,17 @@ export default component Markdown(props: { source: string })
 
                 { /* `dir="ltr"` on the code, always: a shell command or a JSON body is a Latin
                      run, and inside a mirrored paragraph it would reorder while reading
-                     identically to a screen reader - the worst kind of wrong. */ }
+                     identically to a screen reader - the worst kind of wrong.
+
+                     `tabindex="0"` because `overflow-x-auto` makes this a SCROLLABLE REGION as
+                     soon as a line is wider than the column, which on a 390px phone is most
+                     shell commands. A region that scrolls but cannot be focused is unreachable
+                     by keyboard - WCAG 2.1.1 - so the content inside it is simply unavailable
+                     to anyone not using a pointer. Focusable is the whole fix; no `role` and no
+                     label go with it, because a `region` without an accessible name announces
+                     worse than a plain `pre` and this file does not add ARIA on spec. */ }
                 <Show when={ block.kind === 'code' }>
-                    <pre class="overflow-x-auto rounded-lg bg-elevated p-4 text-sm" dir="ltr"><code class="font-mono">{ block.kind === 'code' ? block.text : '' }</code></pre>
+                    <pre class="overflow-x-auto rounded-lg bg-elevated p-4 text-sm" dir="ltr" tabindex="0"><code class="font-mono">{ block.kind === 'code' ? block.text : '' }</code></pre>
                 </Show>
 
                 <Show when={ block.kind === 'rule' }>
