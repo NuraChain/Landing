@@ -26,7 +26,6 @@
         "test:server": "npm test --workspace server",
         "coverage": "npm run coverage --workspace application",
         "qa:visual": "node scripts/visual-qa.mjs",
-        "admin:key": "npm run admin:key --workspace server",
         "service:install": "bash scripts/service-install.sh",
         "service:start": "bash scripts/service-start.sh",
         "service:stop": "bash scripts/service-stop.sh",

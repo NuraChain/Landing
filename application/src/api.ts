@@ -13,11 +13,8 @@ export { ApiError };
 export type {
     PostCard,
     PostDetail,
-    PostEditor,
     PostLocale,
     PostPage,
-    PostRecord,
-    SessionState,
     TagCount
 } from '../../server/src/schemas.ts';
 

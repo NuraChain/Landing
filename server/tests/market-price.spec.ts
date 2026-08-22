@@ -5,13 +5,11 @@
 // going away - and it is driven with a stub fetch and a stub clock, so none of it waits and
 // none of it reaches the network. The ROUTE is thinner: it turns a reading into a body and a
 // failure into a 503, and that is all it should ever do.
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 import { createPriceGateway } from '../src/market/price.ts';
 import type { NuraPrice } from '../src/schemas.ts';
-import { closeAll, harness } from './support/fixtures.ts';
-
-afterEach(closeAll);
+import { harness } from './support/fixtures.ts';
 
 /** The shape the swap actually answers with, trimmed to the fields this reads. */
 const TOKENS = [

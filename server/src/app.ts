@@ -1,81 +1,36 @@
 import { join } from 'node:path';
 
-import { App, ConflictError, HttpError, NotFoundError, json, pipeline, rateLimit, requestId, securityHeaders, text, type ErrorObserver, type RequestObserver, type WebHandler } from '@azerothjs/http';
+import { App, HttpError, NotFoundError, json, pipeline, rateLimit, requestId, securityHeaders, text, type ErrorObserver, type RequestObserver, type WebHandler } from '@azerothjs/http';
 import { staticFiles } from '@azerothjs/http/node';
-import { feature, manifestOf, register, reply } from '@azerothjs/http/api';
+import { feature, manifestOf, register } from '@azerothjs/http/api';
 import { mountPages, type KitOptions, type PageRenderer } from '@azerothjs/kit';
 import { array } from '@azerothjs/schema';
 
-import { adminGuards } from './admin/guard.ts';
-import { matchesKey } from './admin/key.ts';
-import { SESSION_TTL_SECONDS, type SessionStore } from './admin/sessions.ts';
-import { pageCount, toCards, toDetail, toEditor, toRecord } from './blog/present.ts';
-import type { BlogStore } from './blog/store.ts';
+import type { BlogContent } from './blog/content.ts';
+import { pageCount, toCards, toDetail } from './blog/present.ts';
 import { createPriceGateway, type PriceGateway } from './market/price.ts';
-import { injectMeta, isMissingPost, metaFor } from './seo/pages.ts';
+import { articleMarkup, injectArticle } from './seo/article.ts';
+import { injectMeta, isMissingPost, metaFor, postFor } from './seo/pages.ts';
 import { buildSitemap } from './seo/sitemap.ts';
 import {
-    adminKeyInput,
-    createPostInput,
     nuraPrice,
     pageQuery,
     postDetail,
-    postEditor,
-    postInput,
     postPage,
-    adminPageQuery,
-    postRecordPage,
     readQuery,
-    removed,
-    sessionState,
-    tagCount,
-    translationInput,
-    type PostLocale
+    tagCount
 } from './schemas.ts';
 
 /** How many posts a blog index page holds when the caller does not say. */
 const DEFAULT_LIMIT = 10;
 
-/** The dashboard shows more per page than the blog: it is a work list, not a reading one. */
-const ADMIN_LIMIT = 20;
-
 /** The language a reader gets when they ask for none - the same default the site falls to. */
 const DEFAULT_LOCALE = 'en';
 
-/** The one answer every failed sign-in gives, whatever went wrong. */
-const SIGNED_OUT = { signedIn: false, expiresAt: null };
-
-const iso = (seconds: number): string => new Date(seconds * 1000).toISOString();
-
-/** Turns a store miss into the 404 every admin route would otherwise repeat by hand. */
-function found<T>(value: T | null): T
-{
-    if (value === null)
-    {
-        throw new NotFoundError('No such post.');
-    }
-
-    return value;
-}
-
 export interface ApiDeps
 {
-    store: BlogStore;
-    sessions: SessionStore;
-
-    /**
-     * The configured admin key, or null when none is set.
-     *
-     * Null is a real state, not an oversight: development without a key disables the dashboard
-     * outright. "No key configured" must never resolve to "no key required".
-     */
-    adminKey: string | null;
-
-    /** Whether cookies are minted Secure - production, in practice. */
-    secure: boolean;
-
-    /** Behind a reverse proxy this must be on, or every client shares one rate bucket. */
-    trustProxy?: boolean;
+    /** The blog, already read off disk. Constructed once and shared; see blog/content.ts. */
+    store: BlogContent;
 
     /**
      * Where the NURA price comes from. Defaults to the live swap.
@@ -93,21 +48,15 @@ export interface ApiDeps
  * A route's name keys this object, the served manifest, the browser's typed client and the
  * OpenAPI operation, so a route is named in exactly one place.
  *
- * A factory rather than a module constant so the store, the sessions and the key can be handed
- * in: every spec builds the app over an in-memory database with a key of its own choosing, which
- * is what lets the suite run with nothing on disk and no order dependence between files.
+ * A factory rather than a module constant so the content can be handed in: every spec builds
+ * the app over a blog of its own choosing, which is what lets one describe a two-post site
+ * without writing twenty markdown files.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- the route literal IS the type; naming it would erase per-route inference
 export function createApi(deps: ApiDeps)
 {
-    const { store, sessions } = deps;
+    const { store } = deps;
     const market = deps.market ?? createPriceGateway();
-    const guards = adminGuards({
-        sessions,
-        secure: deps.secure,
-        key: deps.adminKey,
-        trustProxy: deps.trustProxy
-    });
 
     return {
         blog: feature('/blog', (routes) => ({
@@ -197,201 +146,8 @@ export function createApi(deps: ApiDeps)
                     });
                 }
             })
-        })),
-
-        /*
-         * Guarded at the FEATURE, so authentication is what a route gets by default and any
-         * route added here later is protected without anyone remembering to say so.
-         *
-         * The session routes step back out with `routes.only(...)`: sign-in and sign-out to
-         * same-origin alone, and the read-only "am I signed in" to nothing at all. Dropping an
-         * inherited guard is the one thing here that turns a protected route into an open one,
-         * which is why it has its own name - `grep -rn 'routes.only'` is the complete list of
-         * every place this feature's protection stops, and it is three lines long.
-         */
-        admin: feature('/admin', [guards.sameOrigin, guards.requireAdmin], (routes) => ({
-            /**
-             * Whether this browser is signed in.
-             *
-             * Unguarded, and both halves of that are deliberate.
-             *
-             * Not behind `requireAdmin`: the dashboard calls it on load to choose between the key
-             * form and the editor, and a 401 would be an error to handle where a plain "no" is
-             * the answer.
-             *
-             * Not behind `sameOrigin` either. That guard exists to stop a cross-site request
-             * CHANGING something, and this changes nothing - it reads a cookie the browser will
-             * not send cross-site anyway (SameSite=Strict) and reports one bit. Guarding it
-             * would only add a way for a non-browser caller to fail.
-             */
-            session: routes.only().get('/session', { output: sessionState }, (context) =>
-            {
-                const token = guards.readToken(context.request);
-
-                if (token === undefined || deps.adminKey === null)
-                {
-                    return SIGNED_OUT;
-                }
-
-                const live = sessions.verify(token);
-
-                return live === null ? SIGNED_OUT : { signedIn: true, expiresAt: iso(live.expiresAt) };
-            }),
-
-            /**
-             * Exchanges the key for a session.
-             *
-             * The failure answers are deliberately uniform in BODY: a wrong key and a dashboard
-             * with no key configured say the same nothing. Only the status differs, and only
-             * where a caller has to be told something actionable - 429 so they stop retrying.
-             *
-             * There is no "no such key" versus "wrong key" to leak, because there is one key;
-             * distinguishing them would say whether one is configured at all.
-             */
-            signIn: routes.only(guards.sameOrigin).post('/session', {
-                input: adminKeyInput,
-                output: sessionState,
-                responses: { 401: sessionState, 429: sessionState, 503: sessionState }
-            }, (context) =>
-            {
-                if (guards.throttleLogin(context.request) !== undefined)
-                {
-                    return reply(429, SIGNED_OUT);
-                }
-
-                if (deps.adminKey === null)
-                {
-                    return reply(503, SIGNED_OUT);
-                }
-
-                if (!matchesKey(context.input.key, deps.adminKey))
-                {
-                    return reply(401, SIGNED_OUT);
-                }
-
-                const issued = sessions.create();
-
-                return reply(200, { signedIn: true, expiresAt: iso(issued.expiresAt) }, {
-                    'set-cookie': guards.setCookie(issued.token, SESSION_TTL_SECONDS)
-                });
-            }),
-
-            /**
-             * Ends this session.
-             *
-             * Behind `sameOrigin` but NOT behind `requireAdmin`: signing out has to work even
-             * once the session has expired, and a 401 would leave a stale cookie in the browser
-             * with nothing able to clear it. The cookie is expired either way.
-             */
-            signOut: routes.only(guards.sameOrigin).post('/session/end', { output: sessionState }, (context) =>
-            {
-                const token = guards.readToken(context.request);
-
-                if (token !== undefined)
-                {
-                    sessions.revoke(token);
-                }
-
-                return reply(200, SIGNED_OUT, { 'set-cookie': guards.clearCookie() });
-            }),
-
-            // ------------------------------------------------------------------------------
-            // Everything below inherits the feature's guards: a live session and same-origin.
-            // ------------------------------------------------------------------------------
-
-            /**
-             * A page of posts, drafts included, newest first - the dashboard's own list.
-             *
-             * `total` is the count BEFORE paging, so the dashboard can draw a pager. It used to
-             * take no query at all and answer with a bare array capped at 200, which made the
-             * 201st post unreachable from the only screen that can edit it.
-             */
-            posts: routes.get('/posts', { query: adminPageQuery, output: postRecordPage }, ({ query }) =>
-            {
-                const limit = query.limit ?? ADMIN_LIMIT;
-                const page = query.page ?? 1;
-                const { rows, total } = store.list({
-                    limit,
-                    offset: (page - 1) * limit,
-                    includeDrafts: true
-                });
-
-                return { rows: rows.map(toRecord), total, page, pages: pageCount(total, limit) };
-            }),
-
-            /** One post with every language in full, for the editor. */
-            post: routes.get('/posts/:id', { output: postEditor }, ({ params }) =>
-                toEditor(found(store.byId(Number(params.id))))),
-
-            create: routes.post('/posts', { input: createPostInput, output: postEditor }, ({ input }) =>
-            {
-                // Checked before the insert so the answer is a 409 a form can show against the
-                // slug field, rather than a 500 from the UNIQUE index saying nothing useful.
-                if (store.slugTaken(input.slug))
-                {
-                    throw new ConflictError('That slug is already taken.');
-                }
-
-                const { locale, translation, ...fields } = input;
-
-                return toEditor(store.create(fields, locale, translation));
-            }),
-
-            update: routes.patch('/posts/:id', { input: postInput, output: postEditor }, ({ params, input }) =>
-            {
-                const id = Number(params.id);
-
-                if (store.slugTaken(input.slug, id))
-                {
-                    throw new ConflictError('That slug is already taken.');
-                }
-
-                return toEditor(found(store.update(id, input)));
-            }),
-
-            remove: routes.del('/posts/:id', { output: removed }, ({ params }) =>
-            {
-                if (!store.remove(Number(params.id)))
-                {
-                    throw new NotFoundError('No such post.');
-                }
-
-                return { removed: true };
-            }),
-
-            /** Writes one language of a post. The same call creates it and corrects it. */
-            translate: routes.put('/posts/:id/translations/:locale', {
-                input: translationInput,
-                output: postEditor
-            }, ({ params, input }) =>
-                toEditor(found(store.upsertTranslation(Number(params.id), params.locale as PostLocale, input)))),
-
-            /**
-             * Drops one language.
-             *
-             * Refusing to remove the DEFAULT one is the store's rule rather than this route's -
-             * it is what every other reader falls back to. A 409 and not a 400: the request is
-             * well formed, it conflicts with the post's current state, and the dashboard turns
-             * that into "change the default language first".
-             */
-            untranslate: routes.del('/posts/:id/translations/:locale', { output: postEditor }, ({ params }) =>
-            {
-                const id = Number(params.id);
-                const outcome = store.removeTranslation(id, params.locale as PostLocale);
-
-                if (outcome === 'missing')
-                {
-                    throw new NotFoundError('No such post or language.');
-                }
-
-                if (outcome === 'default')
-                {
-                    throw new ConflictError('That is the language this post falls back to. Change the default first.');
-                }
-
-                return toEditor(found(store.byId(id)));
-            })
         }))
+
     };
 }
 
@@ -503,7 +259,7 @@ export function buildApp(options: AppOptions): App
  * null and the original result is returned as-is. A page whose head this module does not
  * understand keeps the one it already had.
  */
-function withMeta(renderer: PageRenderer | undefined, store: BlogStore, siteUrl: string): PageRenderer | undefined
+function withMeta(renderer: PageRenderer | undefined, store: BlogContent, siteUrl: string): PageRenderer | undefined
 {
     if (renderer === undefined)
     {
@@ -538,7 +294,24 @@ function withMeta(renderer: PageRenderer | undefined, store: BlogStore, siteUrl:
             return isMissingPost(url, deps) ? { ...result, status: 404 } : result;
         }
 
-        return { ...result, html: injectMeta(result.html, meta) };
+        /*
+         * The head, then the BODY.
+         *
+         * A post route renders its text into the document here rather than leaving the frame's
+         * loading skeleton for a crawler to index. The page fetches inside an `effect`, which
+         * never runs on a server, so before this the indexed article was a correct `<title>`
+         * over an empty page - the head described something the body did not contain.
+         *
+         * Only a post: `postFor` answers null for /blog and for everything else, and the index
+         * has nothing to server-render that the frame does not already carry.
+         */
+        const html = injectMeta(result.html, meta);
+        const detail = postFor(url, deps);
+
+        return {
+            ...result,
+            html: detail === null ? html : injectArticle(html, articleMarkup(detail))
+        };
     };
 }
 

@@ -5,7 +5,6 @@
 import type { PageRoute } from '@azerothjs/kit';
 
 import About from './pages/about.page.azeroth';
-import Admin from './pages/admin.page.azeroth';
 import Blog from './pages/blog.page.azeroth';
 import Home from './pages/home.page.azeroth';
 import Post from './pages/post.page.azeroth';
@@ -53,16 +52,5 @@ export const routes: PageRoute[] = [
      * comment is not going to say that it is.
      */
     { path: '/blog', component: Blog, render: 'server' },
-    { path: '/blog/:slug', component: Post, render: 'server' },
-
-    /*
-     * Not linked from anywhere on the site, and not an oversight: a single shared key is
-     * the only thing guarding this, so the door is not advertised. robots.txt disallows
-     * it as well - that stops an honest crawler indexing the path, and nothing else.
-     *
-     * 'client' because every branch of the page depends on a session cookie. Rendering it
-     * on the server would produce a signed-out shell for a signed-in operator, replaced a
-     * moment later - slower than not rendering it at all, and briefly wrong.
-     */
-    { path: '/admin', component: Admin, render: 'client' }
+    { path: '/blog/:slug', component: Post, render: 'server' }
 ];

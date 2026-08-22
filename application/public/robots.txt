@@ -1,12 +1,12 @@
-# The dashboard is guarded by a key, not by this file - a disallow is a request, and the
-# crawlers worth worrying about are the ones that ignore it. It is here so an honest crawler
-# does not index a path that is no use to a reader.
+# Everything here is meant to be read. There is nothing to disallow: the dashboard this file
+# used to keep crawlers away from is gone, and with it the only path on the site that was not
+# for readers. Posts are files in the repository now, so publishing is a commit and there is no
+# private surface left to hide.
 User-agent: *
-Disallow: /admin
 
 Allow: /
 
-# Generated from the blog store on request, not written to a file - see server/src/seo/sitemap.ts.
+# Generated from the blog content on request, not written to a file - see server/src/seo/sitemap.ts.
 # The absolute url is required here: a relative path is the one thing the sitemap directive
 # does not accept, and a crawler silently ignores the line rather than reporting it.
 Sitemap: https://nurachain.net/sitemap.xml

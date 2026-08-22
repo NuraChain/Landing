@@ -8,12 +8,10 @@
 // The one thing worth pinning is the trust boundary. A limiter keyed on the wrong address is
 // not a limiter that is slightly off - it is one global bucket for the whole internet, and the
 // site refusing strangers at random for the rest of every minute.
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 import { createHandler, RATE_LIMIT } from '../src/app.ts';
-import { closeAll, harness } from './support/fixtures.ts';
-
-afterEach(closeAll);
+import { harness } from './support/fixtures.ts';
 
 /** A request as it arrives from a reverse proxy that appended the caller's address. */
 const forwarded = (ip: string): Request =>

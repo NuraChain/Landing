@@ -1,25 +1,19 @@
-// The blog's public read API - what a visitor can reach without a key.
+// The blog's public read API.
 //
-// The store's own suite already covers the fallback chain and the cascade. What is worth
-// pinning HERE is the boundary: that a draft is unreachable by any arrangement of parameters,
-// that a malformed query is refused rather than coerced into something plausible, and that the
-// locale a reader asks for reaches the resolver at all.
-import { describe, it, expect, afterEach } from 'vitest';
+// content.spec.ts covers the loader and present.ts's fallback chain. What is worth pinning
+// HERE is the boundary: that a draft is unreachable by any arrangement of parameters, that a
+// malformed query is refused rather than coerced into something plausible, and that the locale
+// a reader asks for reaches the resolver at all.
+import { describe, it, expect } from 'vitest';
 
 import type { PostDetail, PostPage, TagCount } from '../src/schemas.ts';
-import { closeAll, harness, postFields, postText } from './support/fixtures.ts';
-
-afterEach(closeAll);
+import { harness, post, translation } from './support/fixtures.ts';
 
 describe('the blog index', () =>
 {
     it('lists published posts in a countable envelope', async () =>
     {
-        const { store, json } = harness();
-
-        store.create(postFields({ slug: 'first' }), 'en', postText({ title: 'First' }));
-        store.create(postFields({ slug: 'second' }), 'en', postText({ title: 'Second' }));
-
+        const { json } = harness({ posts: [post({ slug: 'first' }), post({ slug: 'second' })] });
         const page = await json<PostPage>('/api/blog');
 
         expect(page.total).toBe(2);
@@ -32,11 +26,11 @@ describe('the blog index', () =>
 
     it('never reaches a draft, whatever the caller asks for', async () =>
     {
-        // Drafts are absent from the reader's query rather than filtered downstream, so there
-        // is no page, limit or tag that walks into one.
-        const { store, get, json } = harness();
-
-        store.create(postFields({ slug: 'secret', status: 'draft' }), 'en', postText());
+        // A draft is filtered at the source rather than downstream, so there is no page, limit
+        // or tag that walks into one.
+        const { get, json } = harness({
+            posts: [post({ slug: 'secret', status: 'draft', tags: ['release'] })]
+        });
 
         expect((await json<PostPage>('/api/blog')).total).toBe(0);
         expect((await json<PostPage>('/api/blog?limit=50&page=1')).total).toBe(0);
@@ -46,12 +40,9 @@ describe('the blog index', () =>
 
     it('pages, and reports the page count the pager draws', async () =>
     {
-        const { store, json } = harness();
-
-        for (let at = 0; at < 5; at++)
-        {
-            store.create(postFields({ slug: `post-${ at }` }), 'en', postText());
-        }
+        const { json } = harness({
+            posts: Array.from({ length: 5 }, (_, at) => post({ slug: `post-${ at }` }))
+        });
 
         const first = await json<PostPage>('/api/blog?limit=2');
 
@@ -63,6 +54,22 @@ describe('the blog index', () =>
 
         expect(last.rows).toHaveLength(1);
         expect(last.page).toBe(3);
+    });
+
+    it('orders newest first', async () =>
+    {
+        // The dates are the spec's own, not a clock's, so this asserts the ordering rule
+        // rather than the order the array happened to be written in.
+        const { json } = harness({
+            posts: [
+                post({ slug: 'older', publishedAt: '2026-01-01T00:00:00.000Z' }),
+                post({ slug: 'newest', publishedAt: '2026-06-01T00:00:00.000Z' }),
+                post({ slug: 'middle', publishedAt: '2026-03-01T00:00:00.000Z' })
+            ]
+        });
+
+        expect((await json<PostPage>('/api/blog')).rows.map((row) => row.slug))
+            .toEqual(['newest', 'middle', 'older']);
     });
 
     it('refuses a malformed query rather than coercing it into something plausible', async () =>
@@ -77,12 +84,15 @@ describe('the blog index', () =>
         expect((await get('/api/blog?locale=de')).status).toBe(422);
     });
 
-    it('narrows to a tag', async () =>
+    it('narrows to a tag, by equality and not by substring', async () =>
     {
-        const { store, json } = harness();
-
-        store.create(postFields({ slug: 'one', tags: ['release'] }), 'en', postText());
-        store.create(postFields({ slug: 'two', tags: ['wallet'] }), 'en', postText());
+        const { json } = harness({
+            posts: [
+                post({ slug: 'one', tags: ['release'] }),
+                post({ slug: 'two', tags: ['wallet'] }),
+                post({ slug: 'three', tags: ['wallet-guides'] })
+            ]
+        });
 
         expect((await json<PostPage>('/api/blog?tag=wallet')).rows.map((row) => row.slug)).toEqual(['two']);
     });
@@ -92,10 +102,12 @@ describe('reading one post', () =>
 {
     it('serves the reader the language they asked for, and says so', async () =>
     {
-        const { store, json } = harness();
-        const created = store.create(postFields({ defaultLocale: 'en' }), 'en', postText());
-
-        store.upsertTranslation(created.post.id, 'fa', postText({ title: 'شبکه اصلی نورا' }));
+        const { json } = harness({
+            posts: [post({ defaultLocale: 'en' }, [
+                translation('en'),
+                translation('fa', { title: 'شبکه اصلی نورا' })
+            ])]
+        });
 
         const persian = await json<PostDetail>('/api/blog/nura-mainnet-is-live?locale=fa');
 
@@ -110,10 +122,7 @@ describe('reading one post', () =>
     {
         // A bare `translated: false` is not enough to write the notice with: it has to say
         // which language the reader is actually looking at.
-        const { store, json } = harness();
-
-        store.create(postFields({ defaultLocale: 'en' }), 'en', postText());
-
+        const { json } = harness({ posts: [post({ defaultLocale: 'en' })] });
         const spanish = await json<PostDetail>('/api/blog/nura-mainnet-is-live?locale=es');
 
         expect(spanish.requestedLocale).toBe('es');
@@ -124,9 +133,7 @@ describe('reading one post', () =>
 
     it('defaults to English when no language is named', async () =>
     {
-        const { store, json } = harness();
-
-        store.create(postFields(), 'en', postText());
+        const { json } = harness();
 
         expect((await json<PostDetail>('/api/blog/nura-mainnet-is-live')).requestedLocale).toBe('en');
     });
@@ -144,11 +151,13 @@ describe('tags', () =>
     it('answers /tags with tags, not with a post called "tags"', async () =>
     {
         // The static segment has to win over the `/:slug` parameter beside it. This is the
-        // assertion that says so - the declaration order above is only belt and braces.
-        const { store, json } = harness();
-
-        store.create(postFields({ slug: 'one', tags: ['release', 'wallet'] }), 'en', postText());
-        store.create(postFields({ slug: 'two', tags: ['release'] }), 'en', postText());
+        // assertion that says so - the declaration order in app.ts is only belt and braces.
+        const { json } = harness({
+            posts: [
+                post({ slug: 'one', tags: ['release', 'wallet'] }),
+                post({ slug: 'two', tags: ['release'] })
+            ]
+        });
 
         const tags = await json<TagCount[]>('/api/blog/tags');
 
@@ -160,9 +169,9 @@ describe('tags', () =>
 
     it('offers no tag that only a draft carries', async () =>
     {
-        const { store, json } = harness();
-
-        store.create(postFields({ slug: 'hidden', status: 'draft', tags: ['unreleased'] }), 'en', postText());
+        const { json } = harness({
+            posts: [post({ slug: 'hidden', status: 'draft', tags: ['unreleased'] })]
+        });
 
         expect(await json<TagCount[]>('/api/blog/tags')).toEqual([]);
     });

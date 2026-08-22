@@ -1,10 +1,10 @@
 # Nura Landing — working notes
 
-Marketing site for Nura Wallet, with a blog and a dashboard behind it. Ten languages,
+Marketing site for Nura Wallet, with a blog behind it. Ten languages,
 two right-to-left, three themes, live chain figures read in the browser.
 
-**Two npm workspaces.** `application/` is the site; `server/` is the HTTP API, the sqlite
-index and the process that serves the built bundles. Paths below are relative to whichever
+**Two npm workspaces.** `application/` is the site; `server/` is the HTTP API, the blog content
+and the process that serves the built bundles. Paths below are relative to whichever
 half they belong to - a bare `src/` in this file means `application/src/`.
 
 Everything below describes what is actually in this repository. If a rule here
@@ -24,15 +24,14 @@ disagrees with the code, the code is the source of truth — fix the note.
 | Build | Vite 8 |
 | Tests | Vitest 4 + happy-dom, through the real compiler |
 | Browser QA | Playwright + axe, via `npm run qa:visual` |
-| Server | **`@azerothjs/http`** + `@azerothjs/kit`, `node:sqlite`, Vitest against `:memory:` |
+| Server | **`@azerothjs/http`** + `@azerothjs/kit`, no database, Vitest in-process |
 
 Layout of `application/src/`:
 
 ```
 components/       reusable UI  (Button, Card, Banner, CopyField, SectionHeading, icon helpers)
-components/admin/ the dashboard's own pieces (login, posts list, editor, field, controls)
 sections/         page sections (network, tokenomics, chain, explorer, social)
-pages/            route components (home, about, blog, post, admin)
+pages/            route components (home, about, blog, post)
 stores/           locale and theme, each a createStore singleton
 lib/              content/site.ts (every fact the site states), network.ts, wallet.ts,
                   markdown.ts, overlay.ts, section-href.ts, i18n/
@@ -46,10 +45,10 @@ And of `server/src/`:
 ```
 schemas.ts     every wire shape, declared once; the browser's types are inferred from it
 app.ts         createApi/buildApp - features, guards, and the kit's page mount
-blog/store.ts  sqlite: posts + post_translations, migrated by PRAGMA user_version
+blog/content.ts the blog, read off disk at boot - loadArticles + an in-memory index
 blog/present.ts the fallback policy - which translation a given reader is served
 market/price.ts the ONE outbound call this half makes - see below
-admin/         key.ts (timing-safe compare), sessions.ts, guard.ts
+seo/           pages.ts (the head), article.ts (the body), sitemap.ts, meta.ts
 main.ts        config, connections, the listening process
 ```
 
@@ -97,43 +96,61 @@ manager. Do not add one to solve a problem the existing pieces already solve.
 - `<For each>` needs a mutable array — a readonly tuple collapses the row type. Spread it:
   `each={ [...LOCALES] }`.
 - **Component props are compiled to getters; DOM attributes are not.** Pass a plain
-  expression to a component (`label={ t().admin.slug }`) and a thunk to an element
+  expression to a component (`label={ t().blog.all }`) and a thunk to an element
   (`class={ () => ... }`). A thunk passed as a component prop arrives as a function.
 - **`value` on a `<select>` whose options come from a `<For>` does not stick** — the options
   do not exist at the moment it is applied, and the control renders blank. Put `selected` on
   the option instead. Inline options are fine, which is what makes this easy to miss.
 
-## The blog and the dashboard
+## The blog
 
-Reader-facing pages are `/blog` and `/blog/:slug`; the dashboard is `/admin`, reached by
-typing the path. Nothing links to it, and `robots.txt` disallows it - the key is the guard,
-the disallow is only a request to honest crawlers.
+`/blog` and `/blog/:slug`, and nothing else - **there is no dashboard and no database.** Both
+were deleted: posts arrived through a seed script that read `server/content/blog/`, so sqlite
+was a cache of the repository with an editor bolted to the side. A post is a commit now.
+
+**An article is a directory.** `server/content/blog/<slug>/` holds one `.md` per language plus
+`article.ts`, the typed head - title and summary per locale, tags, `defaultLocale`, `status`,
+`publishedAt` and `updatedAt`. `heads` is a full `Record`, not a `Partial`, so an article
+missing a language is a COMPILE error. `index.ts` lists them; adding one is a directory and a
+line. `blog/content.ts` reads the lot at boot and refuses to start if a declared translation
+has no file behind it, naming every missing path at once.
+
+Editing an article on a running server changes nothing until it restarts - the same deal the
+bundle already makes.
 
 **One post, many translations, with a fallback.** A post carries any subset of the ten
 languages plus a `defaultLocale`. A reader whose language is missing gets the fallback and is
 told so, with the languages the post *does* have offered beside it. `server/src/blog/present.ts`
 is the whole policy: the reader's language, else the post's default, else anything it holds.
 
-- The **fallback language must be one the post has.** The editor only offers languages present,
-  and the server refuses to delete the last one. A fallback naming a translation that does not
-  exist is the single setting that breaks every reader at once.
+- The **fallback language must be one the post has.** `heads` covers all ten and the loader
+  refuses a missing `.md`, so the pair cannot drift - which is what makes the fallback safe.
+  A `defaultLocale` naming a translation that does not exist breaks every reader at once.
 - `POST_LOCALES` and the site's `LOCALES` must stay in step; `tests/blog-locales.spec.ts`
   fails if they drift.
 - Bodies are markdown in the strict subset `lib/markdown.ts` parses into a **tree** - never
   `innerHTML`. Headings level against the document's own shallowest heading, so `#`/`##` and
   `##`/`###` both come out h2/h3 rather than skipping a level under the page's h1.
 
-**Rendering.** `/blog` and `/blog/:slug` are `render: 'server'`, `/admin` is `render: 'client'`,
-and the landing pages stay `'client'`. The blog server-renders the FRAME only - beta.2 splices
-just the root div and the loader handoff into the shell, so `<title>` and meta stay as
-index.html declared them, and a loader gets no request headers with which to resolve a
-reader's language. Real per-post SSR wants the locale in the path; see the comment in
-`routes.ts` before assuming otherwise.
+**Rendering, and the SEO that depends on it.** `/blog` and `/blog/:slug` are
+`render: 'server'`; the landing pages stay `'client'`.
 
-**Admin auth.** A single key, compared with `timingSafeEqual` over SHA-256 digests, exchanged
-for an httpOnly `__Host-` cookie with `SameSite=Strict`. Sessions are stored as digests, never
-as tokens. `npm run admin:key` generates one. Production refuses to boot without `ADMIN_KEY`;
-development runs with the dashboard disabled rather than unlocked.
+A post route serves the REAL ARTICLE, not a loading skeleton. The page fetches inside an
+`effect`, which never runs on a server, so what used to be indexed was a correct `<title>`
+over an empty body. `seo/pages.ts` writes the head - title, description, canonical, OG,
+Twitter, JSON-LD - and `seo/article.ts` renders the markdown into the same document.
+
+- `seo/article.ts` is a SECOND reading of the markdown subset `lib/markdown.ts` parses, and
+  that duplication is deliberate. It is safe for one reason: `main.azeroth` mounts with
+  `render()`, not `hydrate()`, and `render()` EMPTIES its container first. Server markup is
+  deleted the moment the bundle boots, so nothing hydrates against it and it cannot mismatch.
+  It has to say the same words, not carry the same classes.
+- The head and the body resolve through the SAME call - `postFor` - so a page cannot describe
+  one article and print another.
+- Served in the post's own `defaultLocale`: the renderer gets a url and a shell and no request
+  headers, so there is no reader to resolve against. One address per post, no hreflang. Ten
+  indexable addresses would want the locale in the path; see the comment in `routes.ts`.
+- A slug that resolves to nothing is a real 404, never a soft one.
 
 ## Design system
 
@@ -280,8 +297,10 @@ npm run test:i18n          # string tables, direction, pre-paint script
 ```
 
 Use the framework that is here. Do not add a second test runner. Every spec stubs `fetch`,
-and the server suite runs against `:memory:` sqlite with a stubbed chain gateway — nothing
-binds a port or reaches the network, so a red build is always a real change.
+and the server suite builds its blog from posts declared inline with a stubbed chain gateway —
+nothing binds a port, touches the disk or reaches the network, so a red build is always a real
+change. `tests/content.spec.ts` is the one exception and reads the repository's own cluster on
+purpose: that it loads in all ten languages IS the assertion.
 
 **Both halves lean on module-level singletons, so `npm run test:shuffle` is a gate**: a test
 that only passes in declaration order will fail for somebody else at random. Run it from the
@@ -297,8 +316,8 @@ the provider publishes its context.
 
 Measure before changing; an optimisation with no before/after number is a guess.
 
-- The landing page is one document; sections are anchors, not routes. `/about`, `/blog` and
-  `/admin` are real routes, so a link to a SECTION from one of them has to be rooted -
+- The landing page is one document; sections are anchors, not routes. `/about` and `/blog`
+  are real routes, so a link to a SECTION from one of them has to be rooted -
   `lib/section-href.ts` returns a bare `#chain` at home and `/#chain` everywhere else, and
   a plain `<a href="/#chain">` on the landing page itself would reload the page it is
   already showing.

@@ -4,11 +4,9 @@
 // manifest the browser's typed client boots from is projected from the same declaration the
 // routes were registered from, and nothing outside /api is invented. Each of those is a thing a
 // later commit could break without any page looking wrong.
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
-import { closeAll, harness } from './support/fixtures.ts';
-
-afterEach(closeAll);
+import { harness } from './support/fixtures.ts';
 
 describe('the server shell', () =>
 {

@@ -7,9 +7,7 @@ import { createLogger, teeSink, terminalSink } from '@azerothjs/logger';
 import { fileSink } from '@azerothjs/logger/node';
 
 import { buildApp, createHandler, DEFAULT_SITE_URL } from './app.ts';
-import { loadAdminKey } from './admin/key.ts';
-import { SessionStore } from './admin/sessions.ts';
-import { BlogStore } from './blog/store.ts';
+import { BlogContent, loadArticles } from './blog/content.ts';
 
 try
 {
@@ -29,12 +27,6 @@ const config = loadConfig({
      */
     env: oneOf('NODE_ENV', ['development', 'production', 'test'], { default: 'production' }),
     clientDir: str('CLIENT_DIR', { default: '../application/dist' }),
-    // Outside the server workspace so a `npm ci` in either half cannot touch it, and
-    // gitignored: this file IS the blog, and it is restored from a backup, never a clone.
-    dbPath: str('DB_PATH', { default: '../.data/blog.db' }),
-    // Optional here so a missing key is a decision this file makes, with a message,
-    // rather than loadConfig refusing to boot with a generic one.
-    adminKey: str('ADMIN_KEY', { default: '' }),
     // On behind a reverse proxy, or every client shares the proxy's rate bucket and the
     // login throttle becomes one global budget an attacker can exhaust for everybody.
     trustProxy: flag('TRUST_PROXY', { default: false }),
@@ -59,21 +51,17 @@ const ssr = isProduction
     : undefined;
 
 /*
- * Refuses to start rather than starting insecure: in production a missing or weak key is
- * fatal here, before a port is bound. The alternative - warn and serve anyway - produces
- * exactly the deployment where the dashboard is reachable and nobody knows it.
+ * The whole blog, read off disk once, before a port is bound.
+ *
+ * A missing or empty translation throws HERE rather than on the request that would have served
+ * it: the content ships with the code, so an incomplete cluster is a bad deploy and the loud
+ * failure is the one that gets noticed. Nothing writes to it afterwards - publishing is a
+ * commit, and a running process serves what it read at boot.
  */
-const admin = loadAdminKey(config.adminKey, { production: isProduction });
-
-const store = new BlogStore(config.dbPath);
-const sessions = new SessionStore(config.dbPath);
+const store = new BlogContent(loadArticles());
 
 const app = buildApp({
     store,
-    sessions,
-    adminKey: admin === null ? null : admin.key,
-    secure: isProduction,
-    trustProxy: config.trustProxy,
     siteUrl: config.siteUrl,
     dev: !isProduction,
     observe: logRequests(log),
@@ -92,9 +80,9 @@ const app = buildApp({
 /*
  * The edges, and the trust boundary they are keyed on.
  *
- * `trustProxy` is passed HERE and not only to the admin guard, which is where it used to
- * stop. The limiter keys on the client address, and without the flag that address is the TCP
- * peer - behind a reverse proxy, the proxy. Every visitor on the internet then shared one
+ * `trustProxy` has to reach the LIMITER, which is where it once failed to. The limiter keys
+ * on the client address, and without the flag that address is the TCP peer - behind a reverse
+ * proxy, the proxy. Every visitor on the internet then shared one
  * bucket of 200 requests a minute, and since the limiter wraps the whole app rather than just
  * /api, a single cold page load spends a dozen of them on its own script, stylesheet, fonts
  * and icons. The site went down for whoever asked next, for the rest of the minute, and came
@@ -129,18 +117,4 @@ if (process.env.NODE_ENV === 'development')
     }
 }
 
-// The database holds a file handle and a write-ahead log; a shutdown that leaves them open
-// keeps the process alive and the database locked against the next boot.
-process.on('exit', () =>
-{
-    store.close();
-    sessions.close();
-});
-
-// Says which, never what. A log line is the last place a key should be recoverable from.
-if (admin === null)
-{
-    log.warn('admin dashboard disabled - no ADMIN_KEY set (development only)');
-}
-
-log.info('Listening', { url: `http://localhost:${ served.port }`, env: config.env, db: config.dbPath, admin: admin !== null });
+log.info('Listening', { url: `http://localhost:${ served.port }`, env: config.env, posts: store.list({ limit: 0, offset: 0 }).total });

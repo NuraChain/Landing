@@ -13,6 +13,11 @@ export const article: Article = {
     tags: ['wallet', 'guides', 'nura-chain'],
     defaultLocale: 'en',
     status: 'published',
+
+    // Carried over from the sqlite the store used to keep these in, not invented here:
+    // these are the timestamps the cluster was actually published and last revised under.
+    publishedAt: '2026-08-22T01:10:54.000Z',
+    updatedAt: '2026-08-22T01:53:27.000Z',
     coverImage: null,
 
     heads: {

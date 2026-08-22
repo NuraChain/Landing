@@ -8,8 +8,8 @@
  * SEO that already works.
  */
 import { toDetail } from '../blog/present.ts';
-import type { BlogStore } from '../blog/store.ts';
-import type { PostLocale } from '../schemas.ts';
+import type { BlogContent } from '../blog/content.ts';
+import type { PostDetail, PostLocale } from '../schemas.ts';
 
 import { directionOf, renderMeta, type PageMeta } from './meta.ts';
 
@@ -73,7 +73,7 @@ const breadcrumbs = (trail: Array<{ name: string; url: string }>): Record<string
 
 export interface SeoDeps
 {
-    store: BlogStore;
+    store: BlogContent;
     /** The canonical origin, no trailing slash - every absolute url below is built from it. */
     siteUrl: string;
 }
@@ -150,7 +150,7 @@ export function metaFor(url: string, deps: SeoDeps): PageMeta | null
      * reader here to resolve against - see the note at the top of meta.ts. The post's authored
      * language is the one stable answer, and it is what the served `<html lang>` will say.
      */
-    const detail = toDetail(stored, stored.post.default_locale);
+    const detail = toDetail(stored, stored.post.defaultLocale);
 
     if (detail === null)
     {
@@ -266,3 +266,26 @@ export function injectMeta(html: string, meta: PageMeta): string
 
 /** Every locale the site ships, for the sitemap's own use. Kept as the schema's list. */
 export type { PostLocale };
+
+/**
+ * The post one url serves, in the language it was authored in - or null for anything else.
+ *
+ * Split out of `metaFor` so the BODY can be rendered from the same resolution the HEAD was: a
+ * page whose `<title>` names one article and whose text is another is worse than either alone.
+ * Same reasoning as the head, too - the renderer sees a url and a shell and no request headers,
+ * so there is no reader to resolve against and the post's own default language is what a
+ * crawler is served.
+ */
+export function postFor(url: string, deps: SeoDeps): PostDetail | null
+{
+    const match = POST_PATH.exec(pathOf(url, deps.siteUrl));
+
+    if (match === null)
+    {
+        return null;
+    }
+
+    const stored = deps.store.bySlug(decodeURIComponent(match[1] ?? ''));
+
+    return stored === null ? null : toDetail(stored, stored.post.defaultLocale);
+}

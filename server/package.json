@@ -13,8 +13,7 @@
         "test:watch": "vitest",
         "test:shuffle": "vitest run --sequence.shuffle",
         "coverage": "vitest run --coverage",
-        "start": "node src/main.ts",
-        "admin:key": "node scripts/admin-key.mjs"
+        "start": "node src/main.ts"
     },
     "dependencies": {
         "@azerothjs/http": "2.0.0-beta.2",

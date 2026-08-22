@@ -5,7 +5,7 @@
  * is silent in the direction that matters: a post published and not added here is simply never
  * crawled. Reading the store means publishing IS listing, with nothing to remember.
  */
-import type { BlogStore } from '../blog/store.ts';
+import type { BlogContent } from '../blog/content.ts';
 
 /**
  * How many rows one store read pulls back while walking the posts.
@@ -62,7 +62,7 @@ const entry = (item: Entry): string =>
 /**
  * The whole sitemap as one document.
  *
- * Only PUBLISHED posts: `store.list` without `includeDrafts` cannot reach a draft at all, so
+ * Only PUBLISHED posts: `store.list` cannot reach a draft at all, so
  * there is no arrangement of this function that leaks one to a crawler.
  *
  * No `hreflang` alternates. The site keeps the reader's language in a store rather than in the
@@ -70,7 +70,7 @@ const entry = (item: Entry): string =>
  * routes.ts about what changing that would cost. Ten `xhtml:link` entries all pointing at the
  * same url would be a claim that ten pages exist where one does.
  */
-export function buildSitemap(store: BlogStore, siteUrl: string): string
+export function buildSitemap(store: BlogContent, siteUrl: string): string
 {
     const entries: string[] = STATIC.map((route) => entry({
         loc: `${ siteUrl }${ route.path === '/' ? '/' : route.path }`,
@@ -87,8 +87,9 @@ export function buildSitemap(store: BlogStore, siteUrl: string): string
             entries.push(entry({
                 loc: `${ siteUrl }/blog/${ post.slug }`,
                 // The post's own last edit, in any language: a translation landing IS a change
-                // to what this url serves, and `updated_at` already moves when one does.
-                lastmod: new Date(post.updated_at * 1000).toISOString(),
+                // to what this url serves, and `updatedAt` already moves when one does -
+                // it is declared per article, so a revision that forgets it goes uncrawled.
+                lastmod: post.updatedAt,
                 changefreq: 'monthly',
                 priority: '0.7'
             }));

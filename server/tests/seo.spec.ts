@@ -3,37 +3,18 @@
 // Two things are worth pinning here above all else. The first is the NEGATIVE case: `metaFor`
 // answering null for everything that is not a blog page is what guarantees this module cannot
 // disturb the landing pages' existing head. The second is escaping - every value below is text
-// somebody typed into the dashboard, and it lands inside an HTML attribute and inside a
-// `<script>` payload, which are the two places where getting it wrong is not a cosmetic bug.
-import { describe, it, expect, afterEach } from 'vitest';
+// an author committed, and it lands inside an HTML attribute and inside a `<script>` payload,
+// which are the two places where getting it wrong is not a cosmetic bug.
+import { describe, it, expect } from 'vitest';
 
-import { BlogStore } from '../src/blog/store.ts';
+import { BlogContent, type LoadedPost } from '../src/blog/content.ts';
 import { injectMeta, isMissingPost, metaFor, excerpt } from '../src/seo/pages.ts';
 import { buildSitemap } from '../src/seo/sitemap.ts';
-import { closeAll, harness, postFields, postText } from './support/fixtures.ts';
-
-afterEach(closeAll);
+import { harness, post, translation } from './support/fixtures.ts';
 
 const SITE = 'https://nurachain.net';
 
-const opened: BlogStore[] = [];
-
-afterEach(() =>
-{
-    while (opened.length > 0)
-    {
-        opened.pop()?.close();
-    }
-});
-
-function storeWith(): BlogStore
-{
-    const store = new BlogStore(':memory:');
-
-    opened.push(store);
-
-    return store;
-}
+const storeWith = (...posts: LoadedPost[]): BlogContent => new BlogContent(posts);
 
 /** The shape the built index.html has: one title, one description, one head to replace. */
 const SHELL = `<!doctype html>
@@ -55,7 +36,7 @@ describe('which pages get a head of their own', () =>
         // that already works.
         const store = storeWith();
 
-        for (const path of ['/', '/about', '/admin', '/assets/index-abc123.js', '/favicon-32.png'])
+        for (const path of ['/', '/about', '/assets/index-abc123.js', '/favicon-32.png'])
         {
             expect(metaFor(path, { store, siteUrl: SITE })).toBeNull();
         }
@@ -63,9 +44,7 @@ describe('which pages get a head of their own', () =>
 
     it('says nothing about a slug nobody has published', () =>
     {
-        const store = storeWith();
-
-        store.create(postFields({ slug: 'draft-only', status: 'draft' }), 'en', postText());
+        const store = storeWith(post({ slug: 'draft-only', status: 'draft' }));
 
         // A draft resolves to null through `bySlug`, so the not-found page keeps the shell's
         // title rather than being described as an article that does not exist.
@@ -93,10 +72,7 @@ describe('the soft-404 guard', () =>
 {
     it('marks a post address that resolves to nothing', () =>
     {
-        const store = storeWith();
-
-        store.create(postFields({ slug: 'real' }), 'en', postText());
-        store.create(postFields({ slug: 'hidden', status: 'draft' }), 'en', postText());
+        const store = storeWith(post({ slug: 'real' }), post({ slug: 'hidden', status: 'draft' }));
 
         expect(isMissingPost('/blog/never-written', { store, siteUrl: SITE })).toBe(true);
         // A draft is not readable, so its url is not a page either.
@@ -110,7 +86,7 @@ describe('the soft-404 guard', () =>
         // landing page into a 404, which is the failure this separation exists to prevent.
         const store = storeWith();
 
-        for (const path of ['/', '/about', '/blog', '/blog?page=2', '/admin', '/favicon-32.png'])
+        for (const path of ['/', '/about', '/blog', '/blog?page=2', '/favicon-32.png'])
         {
             expect(isMissingPost(path, { store, siteUrl: SITE })).toBe(false);
         }
@@ -121,13 +97,9 @@ describe('a post head', () =>
 {
     it('carries the post title, summary and a self-referencing canonical', () =>
     {
-        const store = storeWith();
-
-        store.create(
-            postFields({ slug: 'nura-chain-rpc', tags: ['rpc', 'developers'] }),
-            'en',
-            postText({ title: 'Connecting to the Nura Chain RPC', summary: 'Chain ID 1020, over HTTPS.' })
-        );
+        const store = storeWith(post({ slug: 'nura-chain-rpc', tags: ['rpc', 'developers'] }, [
+            translation('en', { title: 'Connecting to the Nura Chain RPC', summary: 'Chain ID 1020, over HTTPS.' })
+        ]));
 
         const meta = metaFor('/blog/nura-chain-rpc', { store, siteUrl: SITE })!;
 
@@ -142,13 +114,9 @@ describe('a post head', () =>
     {
         // The renderer gets no request headers, so there is no reader to resolve against. A post
         // authored in Persian must not be described to a crawler in a language it does not hold.
-        const store = storeWith();
-
-        store.create(
-            postFields({ slug: 'persian-first', defaultLocale: 'fa' }),
-            'fa',
-            postText({ title: 'نورا چین چیست', summary: 'خلاصه' })
-        );
+        const store = storeWith(post({ slug: 'persian-first', defaultLocale: 'fa' }, [
+            translation('fa', { title: 'نورا چین چیست', summary: 'خلاصه' })
+        ]));
 
         const meta = metaFor('/blog/persian-first', { store, siteUrl: SITE })!;
 
@@ -161,11 +129,11 @@ describe('a post head', () =>
 
     it('names every other language the same url can be read in', () =>
     {
-        const store = storeWith();
-        const post = store.create(postFields({ slug: 'many' }), 'en', postText());
-
-        store.upsertTranslation(post.post.id, 'fa', postText({ title: 'فارسی' }));
-        store.upsertTranslation(post.post.id, 'tr', postText({ title: 'Turkce' }));
+        const store = storeWith(post({ slug: 'many' }, [
+            translation('en'),
+            translation('fa', { title: 'فارسی' }),
+            translation('tr', { title: 'Turkce' })
+        ]));
 
         const html = injectMeta(SHELL, metaFor('/blog/many', { store, siteUrl: SITE })!);
 
@@ -184,10 +152,7 @@ describe('replacing the shell head', () =>
 {
     it('leaves exactly one title and one description', () =>
     {
-        const store = storeWith();
-
-        store.create(postFields({ slug: 'one' }), 'en', postText({ title: 'One' }));
-
+        const store = storeWith(post({ slug: 'one' }, [translation('en', { title: 'One' })]));
         const html = injectMeta(SHELL, metaFor('/blog/one', { store, siteUrl: SITE })!);
 
         // Two titles in a document is undefined behaviour every parser resolves differently.
@@ -202,12 +167,10 @@ describe('replacing the shell head', () =>
 
     it('escapes a title that would otherwise close an attribute or a tag', () =>
     {
-        const store = storeWith();
-
-        store.create(postFields({ slug: 'hostile' }), 'en', postText({
+        const store = storeWith(post({ slug: 'hostile' }, [translation('en', {
             title: 'Tags & "quotes" <script>alert(1)</script>',
             summary: "It's a <b>summary</b> & nothing more"
-        }));
+        })]));
 
         const html = injectMeta(SHELL, metaFor('/blog/hostile', { store, siteUrl: SITE })!);
 
@@ -222,11 +185,9 @@ describe('replacing the shell head', () =>
     {
         // An HTML parser ends a script at the first `</script`, whatever the JSON thinks - so a
         // title containing one would put the rest of the payload into the page as markup.
-        const store = storeWith();
-
-        store.create(postFields({ slug: 'breakout' }), 'en', postText({
+        const store = storeWith(post({ slug: 'breakout' }, [translation('en', {
             title: 'A </script><img src=x onerror=alert(1)> title'
-        }));
+        })]));
 
         const html = injectMeta(SHELL, metaFor('/blog/breakout', { store, siteUrl: SITE })!);
         const block = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html);
@@ -244,10 +205,7 @@ describe('replacing the shell head', () =>
     {
         // `String.replace` reads `$&` in a REPLACEMENT string as the whole match. Every replace
         // in injectMeta takes a function for exactly this reason.
-        const store = storeWith();
-
-        store.create(postFields({ slug: 'dollar' }), 'en', postText({ title: 'Cost $& value $1' }));
-
+        const store = storeWith(post({ slug: 'dollar' }, [translation('en', { title: 'Cost $& value $1' })]));
         const html = injectMeta(SHELL, metaFor('/blog/dollar', { store, siteUrl: SITE })!);
 
         expect(html).toContain('<title>Cost $&amp; value $1 — Nura Chain</title>');
@@ -259,11 +217,7 @@ describe('the sitemap', () =>
 {
     it('lists the static routes and every published post', () =>
     {
-        const store = storeWith();
-
-        store.create(postFields({ slug: 'live-one' }), 'en', postText());
-        store.create(postFields({ slug: 'live-two' }), 'en', postText());
-
+        const store = storeWith(post({ slug: 'live-one' }), post({ slug: 'live-two' }));
         const xml = buildSitemap(store, SITE);
 
         expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
@@ -275,29 +229,28 @@ describe('the sitemap', () =>
         expect(xml).toContain('</urlset>');
     });
 
-    it('never lists a draft, and never lists the dashboard', () =>
+    it('reports each post lastmod from its own updatedAt', () =>
     {
-        const store = storeWith();
+        // The sitemap is the only consumer of `updatedAt`, so a post revised without touching
+        // that field is one a crawler is never told to re-read.
+        const store = storeWith(post({ slug: 'revised', updatedAt: '2026-07-04T12:00:00.000Z' }));
 
-        store.create(postFields({ slug: 'secret', status: 'draft' }), 'en', postText());
+        expect(buildSitemap(store, SITE)).toContain('<lastmod>2026-07-04T12:00:00.000Z</lastmod>');
+    });
 
+    it('never lists a draft', () =>
+    {
+        const store = storeWith(post({ slug: 'secret', status: 'draft' }));
         const xml = buildSitemap(store, SITE);
 
         expect(xml).not.toContain('secret');
-        expect(xml).not.toContain('/admin');
     });
 
     it('pages through more posts than one store read returns', () =>
     {
         // The chunk is 500; this asserts the loop terminates and covers everything rather than
         // silently stopping at the first read - the failure mode a hard limit produces.
-        const store = storeWith();
-
-        for (let at = 0; at < 12; at++)
-        {
-            store.create(postFields({ slug: `post-${ at }` }), 'en', postText());
-        }
-
+        const store = storeWith(...Array.from({ length: 12 }, (_, at) => post({ slug: `post-${ at }` })));
         const xml = buildSitemap(store, SITE);
 
         expect(xml.match(/<url>/g)).toHaveLength(12 + 3);
@@ -305,10 +258,7 @@ describe('the sitemap', () =>
 
     it('is served as XML from the app', async () =>
     {
-        const { store, get } = harness();
-
-        store.create(postFields({ slug: 'served' }), 'en', postText());
-
+        const { get } = harness({ posts: [post({ slug: 'served' })] });
         const response = await get('/sitemap.xml');
 
         expect(response.status).toBe(200);

@@ -8,9 +8,9 @@ import Pagination from '../components/ui/pagination.component.azeroth';
 import EmptyState from '../components/ui/empty-state.component.azeroth';
 import Skeleton from '../components/ui/skeleton.component.azeroth';
 
-const CHIP = 'rounded-full border px-3 py-1 text-sm transition-colors ';
+const CHIP = 'border px-3 py-1.5 font-label text-xs font-medium uppercase tracking-[0.12em] transition-colors ';
 const CHIP_ON = 'cursor-default border-accent bg-accent text-accent-ink';
-const CHIP_OFF = 'cursor-pointer border-line text-muted hover:text-ink';
+const CHIP_OFF = 'cursor-pointer border-line text-muted hover:border-line-strong hover:text-ink';
 
 /*
  * The count has to change colour with the chip, and that is not cosmetic.
@@ -158,10 +158,15 @@ export default component Blog()
         }
     }
 
-    <section class="mx-auto flex max-w-3xl flex-col gap-8 px-5 py-16">
-        <header class="flex flex-col gap-2">
-            <h1 class="text-[clamp(1.8rem,5vw,2.4rem)] font-semibold tracking-tight text-ink">{ t().blog.title }</h1>
-            <p class="text-muted">{ t().blog.subtitle }</p>
+    { /* `max-w-4xl` and `py-16 sm:py-20`: the same measure and the same rhythm every landing
+         section uses, so the page keeps one left edge as a reader moves between them. */ }
+    <section class="mx-auto flex max-w-4xl flex-col gap-8 px-5 py-16 sm:py-20">
+        <header class="flex flex-col gap-3">
+            { /* The rule above the heading is the SectionHeading motif, drawn here by hand: that
+                 component numbers a landing section, and a route is not one of those. */ }
+            <span class="h-px w-full bg-line" aria-hidden="true"></span>
+            <h1 class="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">{ t().blog.title }</h1>
+            <p class="max-w-lg text-muted">{ t().blog.subtitle }</p>
         </header>
 
         <Show when={ tags.length > 0 }>
@@ -232,7 +237,7 @@ export default component Blog()
                     <li>
                         <Link
                             to={ `/blog/${ post.slug }` }
-                            class="flex flex-col gap-2 rounded-xl border border-line bg-surface p-5 transition-colors hover:border-line-strong"
+                            class="flex flex-col gap-2 border border-line-strong bg-surface p-5 transition-colors hover:border-accent"
                         >
                             <span class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                                 { /* Card text may be in a language the reader is not using, so it
@@ -248,13 +253,13 @@ export default component Blog()
                                      language. The post page does the opposite on purpose: there
                                      the body IS the page, so the article takes its own direction
                                      outright. */ }
-                                <span class="text-lg font-semibold text-ink">
+                                <span class="font-display text-lg font-bold tracking-tight text-ink">
                                     <bdi lang={ post.locale } dir={ directionOf(post.locale) }>{ post.title }</bdi>
                                 </span>
                                 { /* The date is a Latin numeric run inside a possibly mirrored
                                      line, so it carries its own isolate - `bdi` on the inner
                                      element, never on the block that holds the alignment. */ }
-                                <bdi dir="ltr" class="text-sm text-faint">{ day(post.publishedAt) }</bdi>
+                                <bdi dir="ltr" class="font-mono text-xs text-faint">{ day(post.publishedAt) }</bdi>
                             </span>
 
                             <Show when={ post.summary !== '' }>
