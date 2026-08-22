@@ -73,9 +73,14 @@ export const es: Strings =
     network:
     {
         title: 'Actividad de la red',
-        subtitle: 'Leído en directo del RPC y el explorador de Nura, con un minuto de caché.',
+        subtitle: 'Leído en directo del RPC, el explorador y el swap de Nura, con un minuto de caché.',
         blockHeight: 'Altura de bloque',
         transactions: 'Transacciones totales',
+        price: 'Precio de NURA',
+        priceNote: 'Sobre este precio',
+        priceThin: 'Cotizado por el pool de Nura Swap. Ese pool es pequeño, así que una sola operación puede mover mucho esta cifra: es un precio de mercado, no un listado en un exchange.',
+        priceSource: 'Fuente',
+        priceAsOf: 'Última lectura',
         tvl: 'Valor total bloqueado',
         holder: 'En poder de',
         breakdown: 'Qué compone esta cifra',

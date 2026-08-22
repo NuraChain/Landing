@@ -1,3 +1,9 @@
+// Types only, and from `api.ts` rather than from the server directly - that file is the one
+// crossing this half makes, and it re-exports the wire shapes for exactly this. The shape is
+// declared once in `server/src/schemas.ts`, so a field added there cannot drift from what is
+// read here without the compiler saying so.
+import type { NuraPriceWire } from '../api';
+
 import { BRIDGE_TOKENS, EXPLORER_URL, RPC_URL } from './content/site';
 
 /**
@@ -300,6 +306,71 @@ export const bridgeTvl = cachedReader(async (): Promise<Tvl> =>
         }));
 
     return { usd: parts.reduce((sum, part) => sum + part.usd, 0), parts };
+});
+
+export interface NuraPrice
+{
+    /** USD per NURA. */
+    usd: number;
+    /** When the SWAP answered - which may be minutes before this reply. See below. */
+    at: Date;
+}
+
+/**
+ * Our own server, so a bare path - every other url in this file is absolute because every
+ * other source is somebody else's. `PRICE_URL` above is CoinGecko's, and prices the BRIDGED
+ * assets behind TVL; this one is the coin itself. Two different questions, two constants.
+ */
+const RELAY_URL = '/api/market/price';
+
+/**
+ * What one NURA is worth, by way of this site's own server.
+ *
+ * The ONE figure on this page that is not read from its source directly, and the detour is
+ * forced rather than chosen: swap.nurachain.net sends no `Access-Control-Allow-Origin` and
+ * an explicit `cross-origin-resource-policy: same-origin`, so the fetch this file would
+ * otherwise make is refused before it leaves the browser - the same wall `totalTransactions`
+ * is still stuck behind. `server/src/market/price.ts` reads the swap and relays one number.
+ *
+ * Same one-minute memo as its neighbours, over a server memoising for the same minute: one
+ * request per reader per minute to our own origin, and one request per minute to the swap
+ * however many readers there are.
+ *
+ * That server also keeps answering with its last good reading for a quarter of an hour after
+ * the swap goes quiet, which is why `at` is on the wire and is carried through here rather
+ * than being replaced with "now": the caller is the only one that can decide whether a
+ * reading that old is worth showing, and it cannot decide without being told.
+ */
+export const nuraPrice = cachedReader(async (): Promise<NuraPrice> =>
+{
+    const response = await fetch(RELAY_URL, { headers: { accept: 'application/json' } });
+
+    // 503 is the ordinary answer when the swap is unreachable, not an exception - it arrives
+    // here as a rejection so the tile shows an em-dash rather than rendering a missing price.
+    if (!response.ok)
+    {
+        throw new Error(`The price relay answered ${ response.status }`);
+    }
+
+    const body = await response.json() as Partial<NuraPriceWire>;
+
+    // Validated even though our own server declares the shape: this is a network reply like
+    // any other, and the one thing worse than a blank tile is a confident wrong price.
+    if (typeof body.usd !== 'number' || !Number.isFinite(body.usd) || body.usd <= 0)
+    {
+        throw new Error('The price relay returned no usable price');
+    }
+
+    const at = new Date(body.at ?? '');
+
+    // An Invalid Date would fail every comparison the caller makes against it silently -
+    // `NaN > anything` is false - so a broken timestamp would quietly read as "fresh".
+    if (Number.isNaN(at.getTime()))
+    {
+        throw new Error('The price relay returned an unreadable timestamp');
+    }
+
+    return { usd: body.usd, at };
 });
 
 /**

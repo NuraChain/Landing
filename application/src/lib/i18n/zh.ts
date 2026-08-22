@@ -73,9 +73,14 @@ export const zh: Strings =
     network:
     {
         title: '网络活动',
-        subtitle: '实时读取自 Nura RPC 与区块浏览器，缓存一分钟。',
+        subtitle: '实时读取自 Nura RPC、区块浏览器与 Swap，缓存一分钟。',
         blockHeight: '区块高度',
         transactions: '交易总数',
+        price: 'NURA 价格',
+        priceNote: '关于此价格',
+        priceThin: '报价来自 Nura Swap 的流动性池。该池规模很小，单笔交易即可大幅改变这一数字——这是市场报价，并非交易所上币。',
+        priceSource: '来源',
+        priceAsOf: '最后读取',
         tvl: '总锁仓价值',
         holder: '持有地址',
         breakdown: '该数字的构成',

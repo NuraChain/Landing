@@ -10,6 +10,7 @@ import { buildApp } from '../../src/app.ts';
 import { ADMIN_HEADER } from '../../src/admin/guard.ts';
 import { SessionStore } from '../../src/admin/sessions.ts';
 import { BlogStore, type PostFields, type TranslationFields } from '../../src/blog/store.ts';
+import type { PriceGateway } from '../../src/market/price.ts';
 
 /** A key of the shape the generator produces, and long enough to pass the strength floor. */
 export const TEST_KEY = 'ABCD-EFGH-JKLM-NPQR';
@@ -32,7 +33,22 @@ export interface HarnessOptions
     /** Null models a deployment with no key: the dashboard is disabled, not unlocked. */
     adminKey?: string | null;
     secure?: boolean;
+
+    /**
+     * The price source. Defaults to one that refuses, NOT to the live swap.
+     *
+     * Every other spec builds a harness without thinking about the market, and the default has
+     * to be safe for those: an app that fell through to `createPriceGateway()` would put a real
+     * request to swap.nurachain.net one `get('/api/market/price')` away, and the suite's whole
+     * premise is that a red build is a real change rather than somebody else's outage.
+     */
+    market?: PriceGateway;
 }
+
+/** The default gateway: reachable, and always down. */
+const offlineMarket: PriceGateway = {
+    read: () => Promise.reject(new Error('No price source in this test.'))
+};
 
 const opened: Array<{ close: () => void }> = [];
 
@@ -60,7 +76,14 @@ export function harness(options: HarnessOptions = {}): Harness
     opened.push(store, sessions);
 
     const adminKey = options.adminKey === undefined ? TEST_KEY : options.adminKey;
-    const app = buildApp({ store, sessions, adminKey, secure: options.secure ?? false, dev: false });
+    const app = buildApp({
+        store,
+        sessions,
+        adminKey,
+        secure: options.secure ?? false,
+        dev: false,
+        market: options.market ?? offlineMarket
+    });
 
     const get = (path: string): Promise<Response> => app.handle(new Request(`http://local${ path }`));
 

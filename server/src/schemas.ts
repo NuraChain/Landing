@@ -236,3 +236,19 @@ export const pageQuery = object({
 export const readQuery = object({
     locale: enumOf(POST_LOCALES).optional()
 });
+
+/**
+ * What one NURA is worth in USD, and when that was read.
+ *
+ * `at` is not decoration. The figure is served from a server-side memo that keeps answering
+ * from its last good reading while the swap is unreachable, so a caller needs to be able to
+ * see how old the number it just received actually is. A response carrying no timestamp
+ * would make a fifteen-minute-old price indistinguishable from a fresh one.
+ */
+export const nuraPrice = object({
+    /** USD per NURA. Positive and finite; the reader rejects anything else upstream sends. */
+    usd: number(),
+    /** ISO 8601, stamped when the swap answered - NOT when this response was written. */
+    at: string()
+});
+export type NuraPrice = Infer<typeof nuraPrice>;

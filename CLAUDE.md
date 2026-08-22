@@ -48,12 +48,35 @@ schemas.ts     every wire shape, declared once; the browser's types are inferred
 app.ts         createApi/buildApp - features, guards, and the kit's page mount
 blog/store.ts  sqlite: posts + post_translations, migrated by PRAGMA user_version
 blog/present.ts the fallback policy - which translation a given reader is served
+market/price.ts the ONE outbound call this half makes - see below
 admin/         key.ts (timing-safe compare), sessions.ts, guard.ts
 main.ts        config, connections, the listening process
 ```
 
+**The price relay is the only thing this server fetches.** Every other live figure is read
+straight from the browser, because the RPC allows it. `swap.nurachain.net` does not: it sends
+no `Access-Control-Allow-Origin` and an explicit `cross-origin-resource-policy: same-origin`,
+so `GET /api/market/price` exists to read the swap's WNURA quote server-side and relay one
+number. It memoises for the same minute the browser does, keeps answering with its last good
+reading for fifteen minutes after the swap goes quiet, and answers 503 when it has nothing -
+never an empty 200, because the tile distinguishes "asked and got nothing" from "still asking".
+The gateway is injectable (`ApiDeps.market`) and the suite's harness defaults it to one that
+always refuses, so no spec can reach the network by forgetting to stub it.
+
 A new chain field starts in `server/src/schemas.ts`. The browser's type is inferred from that
 declaration, so the shape is decided in exactly one place and cannot drift.
+
+**`TRUST_PROXY` must be on wherever anything sits in front of this process.** `createHandler`
+in `app.ts` wraps the app in the edges production actually serves - request id, security
+headers, and one rate limiter at 200 requests a minute. That limiter keys on the client
+address, and without the flag the address is the TCP peer, which behind nginx or a tunnel is
+the same proxy for every visitor alive: one global bucket, spent by whoever arrives first,
+everyone after them refused until the window rolls. It presents as "the site sometimes does not
+load" and never reproduces for the person checking. The limiter wraps the WHOLE app rather
+than `/api`, so a cold page load spends a dozen of the budget on its own assets - which is why
+`/assets` is served immutable and why the pipeline is exported rather than inlined in
+`main.ts`: `tests/edge-pipeline.spec.ts` drives the composed handler, and every other spec
+drives `app.handle`, where these edges do not exist.
 
 There is **no** Storybook, no component library, no CSS-in-JS and no state
 manager. Do not add one to solve a problem the existing pieces already solve.
@@ -281,6 +304,11 @@ Measure before changing; an optimisation with no before/after number is a guess.
   already showing.
 - The server caches nothing the browser needs to re-cache. Repeated node reads are memoised
   server-side; do not add a second layer in the browser without a measurement.
+- Vite hashes asset filenames, so `/assets` is served `immutable` for a year from `app.ts` -
+  registered BEFORE `mountPages`, whose `/*path` fallback would otherwise match first and
+  apply the kit's revalidate-always default. Everything at the root (`index.html`, the
+  favicons, `robots.txt`) keeps that default: those names are stable across deploys, so
+  pinning them would strand a returning reader on the previous build.
 - Fonts are self-hosted with per-script `unicode-range` subsets, so a Latin
   visitor never downloads the Arabic file.
 - Images carry intrinsic `width`/`height` so they cannot shift layout.

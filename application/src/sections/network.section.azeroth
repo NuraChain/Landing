@@ -1,11 +1,10 @@
 import { For, Show } from 'azerothjs';
 
-import { ArrowLeftRight, Blocks, CircleAlert, ExternalLink, Lock } from 'lucide';
+import { ArrowLeftRight, Blocks, CircleAlert, CircleDollarSign, ExternalLink, Lock } from 'lucide';
 
-import { BRIDGE_HOLDER, BRIDGE_HOLDER_BSC_URL, EXPLORER_URL } from '../lib/content/site';
-import { blockHeight, bridgeTvl, totalTransactions } from '../lib/network';
-import { onReady, reveal, revealItems } from '../lib/motion';
-import type { Tvl } from '../lib/network';
+import { BRIDGE_HOLDER, BRIDGE_HOLDER_BSC_URL, EXPLORER_URL, SWAP_URL } from '../lib/content/site';
+import { blockHeight, bridgeTvl, nuraPrice, totalTransactions } from '../lib/network';
+import type { NuraPrice, Tvl } from '../lib/network';
 
 import Card from '../components/ui/card.component.azeroth';
 import SectionHeading from '../components/layout/section-heading.component.azeroth';
@@ -18,19 +17,19 @@ import { useLocale } from '../stores/locale';
  * What the chain is doing right now, as opposed to what it is configured to be (the chain
  * card below) or what it promises (tokenomics above).
  *
- * Only two figures, because only two are real. Price and TVL have no source: no exchange
- * lists the coin and DefiLlama tracks no Nura chain, and the one "NURA" on CoinGecko is an
- * unrelated project called Nura Labs. A tile showing THAT number would be worse than no
- * tile - somebody reads a price off a project's own site and believes it.
- *
  * Each tile tracks its own source, because they fail apart: height and TVL come from the
- * RPC and resolve today, while the transaction total comes from the explorer and cannot
- * resolve in any browser until it sends CORS headers. Sharing one loading flag would let
- * the blocked tile hide the working ones.
+ * RPC and resolve today; the transaction total comes from the explorer and cannot resolve
+ * in any browser until it sends CORS headers; the price comes from our own server relaying
+ * the swap. Sharing one loading flag would let a blocked tile hide the working ones.
  *
- * Price is still absent as a tile of its own, and deliberately: TVL prices BRIDGED assets,
- * whose markets exist. The coin itself trades nowhere, so a NURA price would have to be
- * invented.
+ * A note on the price tile, because this file used to argue against having one. The
+ * objection was that the coin traded nowhere, so any price would have to be invented, and
+ * that a fabricated figure on a project's own site is worse than no figure at all. That
+ * objection has been ANSWERED rather than dropped: Nura Swap now runs an AMM pool holding
+ * the coin, so there is a real quote from a real market, and it is the same number the swap
+ * shows its own users. What has not gone away is how thin that market is - see the note the
+ * tile carries, which exists so nobody reads a $700 pool as a valuation. The unrelated
+ * "NURA" on CoinGecko is still Nura Labs, and is still not this coin.
  */
 export default component NetworkSection()
 {
@@ -47,6 +46,10 @@ export default component NetworkSection()
     state tvl = null as Tvl | null;
     state tvlFailed = false;
     state showParts = false;
+
+    state price = null as NuraPrice | null;
+    state priceFailed = false;
+    state showPriceNote = false;
 
     const number = (value: number): string => new Intl.NumberFormat(locale()).format(value);
 
@@ -67,6 +70,26 @@ export default component NetworkSection()
      */
     const amount = (value: number): string =>
         new Intl.NumberFormat(locale(), { maximumFractionDigits: 6 }).format(value);
+
+    /**
+     * A price, which needs a different rule from either of the two above.
+     *
+     * `money` cannot do this job: NURA trades far below a cent, and two fraction digits
+     * render every possible price of it as "$0.00". Significant digits instead, so a
+     * sub-cent figure keeps its meaning - but ONLY below a dollar, because significant
+     * digits applied to $1,234.50 round it to "$1,235" and eat the cents that `money`
+     * exists to keep. One rule each side of the boundary, and the boundary is where the
+     * two disagree.
+     */
+    const usd = (value: number): string => new Intl.NumberFormat(locale(), {
+        style: 'currency',
+        currency: 'USD',
+        ...(value < 1 ? { maximumSignificantDigits: 4 } : { maximumFractionDigits: 2 })
+    }).format(value);
+
+    /** Clock time, for the "last read" line. The date is never in question - it is today. */
+    const clock = (value: Date): string =>
+        new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' }).format(value);
 
     /**
      * An em-dash once a read has failed, an ellipsis while the first one is still out. The
@@ -140,6 +163,23 @@ export default component NetworkSection()
                         tvlFailed = true;
                     }
                 });
+
+            nuraPrice()
+                .then((value) =>
+                {
+                    if (live)
+                    {
+                        price = value;
+                        priceFailed = false;
+                    }
+                })
+                .catch(() =>
+                {
+                    if (live)
+                    {
+                        priceFailed = true;
+                    }
+                });
         };
 
         load();
@@ -153,12 +193,16 @@ export default component NetworkSection()
         }
     }
 
-    // Escape closes the breakdown, the same contract the drawer, the language modal and the
-    // tokenomics notes all keep. It matters more here than it did under hover: a panel that
-    // only opens on click is a panel that stays open until something closes it.
+    // Escape closes whichever panel is open, the same contract the drawer, the language modal
+    // and the tokenomics notes all keep. It matters more here than it did under hover: a panel
+    // that only opens on click is a panel that stays open until something closes it.
+    //
+    // One listener for both panels rather than one each. Two would race on a shared key: with
+    // both open, whichever bound last would still only close its own, and the other would need
+    // a second Escape to go - which is not what a reader pressing it means.
     effect
     {
-        if (!showParts)
+        if (!showParts && !showPriceNote)
         {
             return;
         }
@@ -168,6 +212,7 @@ export default component NetworkSection()
             if (event.key === 'Escape')
             {
                 showParts = false;
+                showPriceNote = false;
             }
         };
 
@@ -198,9 +243,87 @@ export default component NetworkSection()
         <div class="mx-auto max-w-4xl">
             <SectionHeading index="01" title={ t().network.title } subtitle={ t().network.subtitle } />
 
-            <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <Card shape="square">
-                    <p class="flex items-center gap-2 font-label text-[11px] uppercase tracking-[0.14em] text-faint">
+            { /* Four across on a wide screen, two-by-two below it. Not three-and-an-orphan:
+                 the tiles are peers reading four separate sources, and a row of one reads as
+                 an afterthought rather than as the fourth of four. */ }
+            <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                { /* The figure a visitor came for, so it leads. Also the only tile whose
+                     source is a MARKET rather than a ledger - hence the note, which is not
+                     optional garnish: the pool behind this quote holds a few hundred dollars,
+                     and a number that small moves on a single trade. Stating the price
+                     without stating that would be the same failure as inventing one. */ }
+                <Card class="relative">
+                    <p class="flex items-center gap-2 text-sm text-muted">
+                        { icon(CircleDollarSign, 'size-4 shrink-0') }
+                        { t().network.price }
+
+                        <IconButton
+                            label={ t().network.priceNote }
+                            size="sm"
+                            tone="faint"
+                            pad
+                            expanded={ showPriceNote }
+                            class="ms-auto"
+                            onClick={ () => showPriceNote = !showPriceNote }
+                        >
+                            { icon(CircleAlert, 'size-4') }
+                        </IconButton>
+                    </p>
+                    <p class="mt-1 font-mono text-2xl font-semibold text-ink sm:text-3xl lg:text-2xl">
+                        { () => figure(price === null ? null : price.usd, priceFailed, usd) }
+                    </p>
+
+                    { /* Same construction as the TVL breakdown below: in the DOM once loaded
+                         so the caveat reaches a screen reader whichever way the panel sits,
+                         absolute so opening it cannot shove its neighbours, and inert while
+                         closed so an invisible box never eats a click. */ }
+                    <Show when={ () => price !== null }>
+                        <div
+                            class={ () => 'absolute inset-x-0 top-full z-20 pt-2 '
+                                + (showPriceNote ? '' : 'pointer-events-none') }
+                        >
+                            <div
+                                class={ () => 'rounded-xl border border-line bg-elevated p-3 shadow-2xl'
+                                    + ' transition-opacity duration-150 '
+                                    + (showPriceNote ? 'opacity-100' : 'opacity-0') }
+                            >
+                                <p class="text-xs leading-relaxed text-muted">{ t().network.priceThin }</p>
+
+                                <div class="mt-2 space-y-1 border-t border-line pt-2">
+                                    { /* Makes the figure checkable rather than asserted, the
+                                         same way the TVL breakdown links its holder: this is
+                                         the page the number was read from. */ }
+                                    <a
+                                        href={ SWAP_URL }
+                                        target="_blank"
+                                        rel="noreferrer noopener"
+                                        class="flex items-center justify-between gap-4 text-xs text-muted transition-colors hover:text-ink"
+                                    >
+                                        <span>{ t().network.priceSource }</span>
+                                        <span class="flex items-center gap-1" dir="ltr">
+                                            Nura Swap
+                                            { icon(ExternalLink, 'size-3 shrink-0') }
+                                        </span>
+                                    </a>
+
+                                    { /* The server keeps answering with its last good reading
+                                         for a quarter of an hour after the swap goes quiet, so
+                                         "now" is not a safe assumption to let a reader make.
+                                         This is the only place that age is visible. */ }
+                                    <p class="flex items-center justify-between gap-4 text-xs text-muted">
+                                        <span>{ t().network.priceAsOf }</span>
+                                        <span class="font-mono">
+                                            { () => price === null ? '' : clock(price.at) }
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </Show>
+                </Card>
+
+                <Card>
+                    <p class="flex items-center gap-2 text-sm text-muted">
                         { icon(Blocks, 'size-4 shrink-0') }
                         { t().network.blockHeight }
                     </p>
@@ -323,7 +446,8 @@ export default component NetworkSection()
                  because the figure on screen is still the one this section promised. */ }
             <Show when={ () => (heightFailed && height === null)
                 || (totalFailed && total === null)
-                || (tvlFailed && tvl === null) }>
+                || (tvlFailed && tvl === null)
+                || (priceFailed && price === null) }>
                 <p class="mt-3 text-sm text-faint">{ t().network.unavailable }</p>
             </Show>
         </div>

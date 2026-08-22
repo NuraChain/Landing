@@ -73,9 +73,14 @@ export const en: Strings =
     network:
     {
         title: 'Network activity',
-        subtitle: 'Read live from the Nura RPC and explorer, cached for one minute.',
+        subtitle: 'Read live from the Nura RPC, explorer and swap, cached for one minute.',
         blockHeight: 'Block height',
         transactions: 'Total transactions',
+        price: 'NURA price',
+        priceNote: 'About this price',
+        priceThin: 'Quoted by the Nura Swap pool. That pool is small, so a single trade can move this figure sharply — it is a market quote, not an exchange listing.',
+        priceSource: 'Source',
+        priceAsOf: 'Last read',
         tvl: 'Total value locked',
         holder: 'Held by',
         breakdown: 'What makes up this figure',

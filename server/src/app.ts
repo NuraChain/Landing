@@ -1,4 +1,7 @@
-import { App, ConflictError, NotFoundError, json, text, type ErrorObserver, type RequestObserver } from '@azerothjs/http';
+import { join } from 'node:path';
+
+import { App, ConflictError, HttpError, NotFoundError, json, pipeline, rateLimit, requestId, securityHeaders, text, type ErrorObserver, type RequestObserver, type WebHandler } from '@azerothjs/http';
+import { staticFiles } from '@azerothjs/http/node';
 import { feature, manifestOf, register, reply } from '@azerothjs/http/api';
 import { mountPages, type KitOptions, type PageRenderer } from '@azerothjs/kit';
 import { array } from '@azerothjs/schema';
@@ -8,11 +11,13 @@ import { matchesKey } from './admin/key.ts';
 import { SESSION_TTL_SECONDS, type SessionStore } from './admin/sessions.ts';
 import { pageCount, toCards, toDetail, toEditor, toRecord } from './blog/present.ts';
 import type { BlogStore } from './blog/store.ts';
+import { createPriceGateway, type PriceGateway } from './market/price.ts';
 import { injectMeta, isMissingPost, metaFor } from './seo/pages.ts';
 import { buildSitemap } from './seo/sitemap.ts';
 import {
     adminKeyInput,
     createPostInput,
+    nuraPrice,
     pageQuery,
     postDetail,
     postEditor,
@@ -71,6 +76,15 @@ export interface ApiDeps
 
     /** Behind a reverse proxy this must be on, or every client shares one rate bucket. */
     trustProxy?: boolean;
+
+    /**
+     * Where the NURA price comes from. Defaults to the live swap.
+     *
+     * Injected by the suite, which is what keeps the promise made in CLAUDE.md: no spec binds
+     * a port or reaches the network, so a red build is always a real change rather than the
+     * swap having a bad afternoon.
+     */
+    market?: PriceGateway;
 }
 
 /**
@@ -87,6 +101,7 @@ export interface ApiDeps
 export function createApi(deps: ApiDeps)
 {
     const { store, sessions } = deps;
+    const market = deps.market ?? createPriceGateway();
     const guards = adminGuards({
         sessions,
         secure: deps.secure,
@@ -144,6 +159,43 @@ export function createApi(deps: ApiDeps)
                 }
 
                 return detail;
+            })
+        })),
+
+        /**
+         * What the chain's own coin is worth, relayed from the swap.
+         *
+         * Unguarded and read-only, like the blog: it states a public fact and changes nothing.
+         *
+         * This is the ONLY figure on the site the browser cannot fetch for itself - see the
+         * header of `market/price.ts` for why the swap's API is unreachable cross-origin. It
+         * is deliberately the whole feature: a proxy for one number, not a market data
+         * service. Pools, volume and the token list all stay where they already live.
+         */
+        market: feature('/market', (routes) => ({
+            price: routes.get('/price', { output: nuraPrice }, async () =>
+            {
+                try
+                {
+                    return await market.read();
+                }
+                catch
+                {
+                    /*
+                     * 503 rather than an empty 200, so the browser's reader rejects and the
+                     * tile can say "we asked and got nothing" instead of rendering a null as
+                     * a price. `expose` because the message is about a third party being
+                     * down, not about this process - there is nothing here to leak.
+                     *
+                     * The upstream error is not chained on purpose: it would put the swap's
+                     * status line into a public response body, and the caller can do exactly
+                     * nothing differently for a 500 there versus a timeout.
+                     */
+                    throw new HttpError(503, 'The swap did not answer.', {
+                        code: 'price-unavailable',
+                        expose: true
+                    });
+                }
             })
         })),
 
@@ -408,6 +460,27 @@ export function buildApp(options: AppOptions): App
     // Mounted LAST so nothing can shadow /api: the kit's asset fallback matches everything.
     if (options.pages !== undefined)
     {
+        /*
+         * Vite writes CONTENT-HASHED names into /assets, so the bytes behind one of those urls
+         * can never change - a new build is a new name. The kit serves them on its default
+         * `max-age=0, must-revalidate` all the same, which asks the browser to check every
+         * script, stylesheet and font again on every single page view.
+         *
+         * Two costs, and the second is the one that bit: a round trip per asset per visit, and
+         * a request per asset for the rate limiter to count. Pinning them for a year takes a
+         * returning reader's page view from a dozen metered requests to zero.
+         *
+         * Registered BEFORE mountPages for the same reason /sitemap.xml is - the kit's /*path
+         * fallback matches everything, and the first match wins.
+         *
+         * Only /assets is pinned. index.html, the favicons and robots.txt live at the root
+         * under names that stay the same across deploys, so they must keep revalidating or a
+         * deploy would never reach anybody holding a cached copy.
+         */
+        app.get('/assets/*path', staticFiles(join(options.pages.clientDir, 'assets'), {
+            cacheControl: 'public, max-age=31536000, immutable'
+        }));
+
         mountPages(app, {
             ...options.pages,
             renderer: withMeta(options.pages.renderer, options.store, siteUrl),
@@ -467,4 +540,49 @@ function withMeta(renderer: PageRenderer | undefined, store: BlogStore, siteUrl:
 
         return { ...result, html: injectMeta(result.html, meta) };
     };
+}
+
+/**
+ * How much one client may ask for in a window.
+ *
+ * Generous per address on purpose: the limiter counts ASSETS as well as api calls, because it
+ * wraps the whole app, and a cold page load is a dozen requests before the reader has done
+ * anything. The number only means what it says once {@link createHandler} is keyed on the real
+ * client - see the note there.
+ */
+export const RATE_LIMIT = { limit: 200, windowMs: 60_000 } as const;
+
+export interface HandlerOptions
+{
+    /**
+     * On behind a reverse proxy.
+     *
+     * This is the whole reason this function exists rather than the pipeline being inlined in
+     * main.ts, where the flag was read, handed to the admin guard, and then NOT handed to the
+     * limiter. `clientIp` falls back to the TCP peer without it, and behind a proxy the TCP
+     * peer is the proxy for every visitor alive: one shared bucket, spent by whoever happened
+     * to arrive first, and a site that "sometimes does not load" for everybody after them.
+     *
+     * Off by default, and off is the safe default rather than the convenient one: a server
+     * reachable directly must not believe an `x-forwarded-for` its caller wrote itself.
+     */
+    trustProxy?: boolean;
+}
+
+/**
+ * The app wrapped in the edges every request crosses on its way in.
+ *
+ * Exported so the suite can drive the composed handler rather than the bare app: the guards
+ * that live out here - the limiter above all - are invisible to a spec that calls
+ * `app.handle` directly, which is how the trust boundary came to be wrong without a test
+ * noticing.
+ */
+export function createHandler(app: App, options: HandlerOptions = {}): WebHandler
+{
+    return pipeline(
+        app,
+        requestId(),
+        securityHeaders(),
+        rateLimit({ ...RATE_LIMIT, trustProxy: options.trustProxy === true })
+    );
 }

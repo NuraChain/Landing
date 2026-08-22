@@ -110,6 +110,20 @@ export interface Strings
         subtitle: string;
         blockHeight: string;
         transactions: string;
+        /** The coin's own price, quoted by the swap's pool. Not to be confused with `tvl`. */
+        price: string;
+        /** Accessible name for the button that opens the price note. */
+        priceNote: string;
+        /**
+         * The caveat the price note leads with: the pool behind the quote is small enough
+         * that one trade moves it. Not a disclaimer to be trimmed for length - it is the
+         * reason showing the figure at all is defensible.
+         */
+        priceThin: string;
+        /** Labels the link to the swap in the price note: where the figure was read. */
+        priceSource: string;
+        /** Labels the time in the price note. The server may serve a reading minutes old. */
+        priceAsOf: string;
         /** Value bridged onto Nura, in USD. Bridged assets - never the coin's own price. */
         tvl: string;
         /** Labels the explorer link in the TVL breakdown: whose balance these amounts are. */
