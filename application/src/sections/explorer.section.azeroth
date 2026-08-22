@@ -30,7 +30,7 @@ export default component ExplorerSection()
         }
     }
 
-    <section id="explorer" class="border-t border-line px-5 py-16 sm:py-20">
+    <section id="explorer" class="px-5 pb-16 sm:pb-20">
         <div class="mx-auto max-w-4xl">
             <div data-sh class="overflow-hidden border border-line-strong bg-surface">
                 <div class="p-6 sm:p-10">

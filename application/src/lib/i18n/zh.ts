@@ -236,7 +236,7 @@ export const zh: Strings =
 
     footer:
     {
-        tagline: '为 Nura Chain 打造的自主保管钱包。',
+        tagline: '开放、安全、可靠且去中心化的区块链。',
         product: '产品',
         resources: '资源',
         builtWith: '构建于',

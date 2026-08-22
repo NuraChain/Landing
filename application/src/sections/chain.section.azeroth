@@ -32,7 +32,7 @@ export default component ChainSection()
         }
     }
 
-    <section id="chain" class="border-t border-line px-5 py-16 sm:py-20">
+    <section id="chain" class="border-t border-line px-5 pt-16 pb-6 sm:pt-20 sm:pb-8">
         <div class="mx-auto max-w-4xl">
             <SectionHeading index="04" title={ t().chain.title } subtitle={ t().chain.subtitle } />
 

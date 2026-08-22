@@ -236,7 +236,7 @@ export const ru: Strings =
 
     footer:
     {
-        tagline: 'Кошелёк для самостоятельного хранения в сети Nura Chain.',
+        tagline: 'Открытый, безопасный, защищённый и децентрализованный блокчейн.',
         product: 'Продукт',
         resources: 'Ресурсы',
         builtWith: 'Сделано на',

@@ -236,7 +236,7 @@ export const tr: Strings =
 
     footer:
     {
-        tagline: 'Nura Chain için öz saklamalı bir cüzdan.',
+        tagline: 'Açık, güvenli, emniyetli ve merkeziyetsiz bir blok zinciri.',
         product: 'Ürün',
         resources: 'Kaynaklar',
         builtWith: 'Şununla yapıldı:',

@@ -403,12 +403,21 @@ export default component HeroSection()
         cleanup { release(); }
     }
 
-    <section id="hero" class="hero-scanline blueprint relative overflow-hidden">
+    { /* Pulled up under the header and padded back down by the same 80px, so the scanline
+         and the blueprint grid reach the TOP of the viewport rather than starting below the
+         bar. The header rail is transparent and its card is inset by `px-4`/`mt-4`, so
+         what shows around and above the card is this section's background.
+
+         -mt-20 must equal the rail's occupied height: `mt-4` (16px) plus the card (64px).
+         pt-20 puts the content back where -mt-20 took it from, so the status strip still
+         starts immediately below the card rather than behind it. Change the header's
+         margin or the card's height and both numbers here move with it. */ }
+    <section id="hero" class="hero-scanline blueprint relative -mt-40 overflow-hidden pt-60">
         { /* Crosshair lines: decorative, written from JS, hidden until --ch is set. */ }
         <div id="hero-cross-x" class="hero-cross-x" aria-hidden="true"></div>
         <div id="hero-cross-y" class="hero-cross-y" aria-hidden="true"></div>
 
-        <div id="hero-inner" class="relative mx-auto max-w-4xl px-5 pb-16 pt-16 sm:pb-20 sm:pt-24">
+        <div id="hero-inner" class="relative mx-auto max-w-4xl px-5 pb-16 sm:pb-20">
             <div id="hero-status" class="flex flex-wrap items-center gap-x-6 gap-y-1 border border-line-strong px-3 py-2 font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
                 <span>
                     NURA://MAINNET

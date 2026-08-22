@@ -236,7 +236,7 @@ export const pt: Strings =
 
     footer:
     {
-        tagline: 'Uma carteira de autocustódia para a Nura Chain.',
+        tagline: 'Uma blockchain aberta, segura, protegida e descentralizada.',
         product: 'Produto',
         resources: 'Recursos',
         builtWith: 'Feito com',

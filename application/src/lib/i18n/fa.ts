@@ -236,7 +236,7 @@ export const fa: Strings =
 
     footer:
     {
-        tagline: 'کیف‌پول نگهداری شخصی برای زنجیره نورا.',
+        tagline: 'یک بلاک‌چین باز، ایمن، امن و غیرمتمرکز.',
         product: 'محصول',
         resources: 'منابع',
         builtWith: 'ساخته‌شده با',

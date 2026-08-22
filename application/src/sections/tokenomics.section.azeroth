@@ -134,8 +134,8 @@ export default component TokenomicsSection()
                 class="mt-3 flex h-11 w-full gap-[2px] overflow-hidden"
                 role="img"
                 aria-label={ () => ALLOCATIONS
-                    .map((a) => `${ t().tokenomics.allocations[a.key] } ${ percent(a.percent) } `
-                        + `(${ amount(a.percent) } ${ NATIVE_TOKEN_SYMBOL })`)
+                    .map((a) => `${ t().tokenomics.allocations[a.key] } ${ amount(a.percent) } ${ NATIVE_TOKEN_SYMBOL } `
+                        + `(${ percent(a.percent) })`)
                     .join(', ') }
             >
                 <For each={ () => [...ALLOCATIONS] } key={ (slice) => slice.key } let={ slice } index={ index }>
@@ -143,7 +143,7 @@ export default component TokenomicsSection()
                         class="h-full transition-opacity duration-200"
                         style={ () => `flex: ${ slice.percent }; background: ${ HUES[index % HUES.length] };`
                             + (active === null || active === slice.key ? '' : 'opacity: 0.35;') }
-                        title={ () => `${ t().tokenomics.allocations[slice.key] }: ${ percent(slice.percent) } · ${ amount(slice.percent) } ${ NATIVE_TOKEN_SYMBOL }` }
+                        title={ () => `${ t().tokenomics.allocations[slice.key] }: ${ amount(slice.percent) } ${ NATIVE_TOKEN_SYMBOL } · ${ percent(slice.percent) }` }
                         onMouseEnter={ () => active = slice.key }
                         onMouseLeave={ () => active = null }
                     ></div>
@@ -172,14 +172,25 @@ export default component TokenomicsSection()
                             <span class="min-w-0 flex-1 truncate text-sm text-ink">
                                 { () => t().tokenomics.allocations[slice.key] }
                             </span>
-                            <span class="shrink-0 font-mono text-sm text-muted">{ () => percent(slice.percent) }</span>
+                            { /* The TOKEN AMOUNT leads, and the percent is the one that waits for
+                                 a hover. It used to be the other way round. A share is a policy
+                                 and reads as one - "25%" of a supply a reader has to remember is
+                                 a sum they end up doing in their head - where the count is the
+                                 figure they came for and can check against the chain.
 
-                            { /* The token amount, revealed on hover: 25% is only a share,
-                                 and the thing a reader actually wants off that number is
-                                 how many tokens it is. Fades in beside the percent so the
-                                 row reads in one glance. */ }
-                            <span class="shrink-0 font-mono text-xs text-faint opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                                 Both spans hold their box whatever the opacity, so the row does
+                                 not reflow on hover and the column stays straight down the list. */ }
+                            { /* `data-amount` / `data-share`: the two cells are both mono and both
+                                 in this row, so a test picking "the first .font-mono" would read
+                                 whichever happens to come first and silently change meaning when
+                                 they are reordered - which is exactly what happened when they
+                                 were. Named, they cannot be confused for each other. */ }
+                            <span data-amount class="shrink-0 font-mono text-sm text-muted">
                                 { () => `${ amount(slice.percent) } ${ NATIVE_TOKEN_SYMBOL }` }
+                            </span>
+
+                            <span data-share class="shrink-0 font-mono text-xs text-faint opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                                { () => percent(slice.percent) }
                             </span>
 
                             <Show when={ () => noteFor(slice.key) !== undefined }>

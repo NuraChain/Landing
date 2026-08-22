@@ -155,7 +155,14 @@ export default component Home()
 
              Off the page entirely while ROADMAP is empty, rather than rendering an empty
              section - a bordered strip with a heading and nothing under it is worse than no
-             section at all. */ }
+             section at all.
+
+             ITS INDEX IS "05", AND SO IS THE COMMUNITY SECTION'S. That is not a mistake
+             while this is hidden - the numbers count what a reader actually sees, and the
+             visible run today is 01-05 with community last. Putting a milestone in ROADMAP
+             makes this section appear and the two collide: bump community to "06" in the
+             same commit. The explorer between them carries no number at all - it is a card
+             with its own heading rather than a numbered section. */ }
         <Show when={ () => ROADMAP.length > 0 }>
             <RoadmapSection />
         </Show>

@@ -236,7 +236,7 @@ export const ar: Strings =
 
     footer:
     {
-        tagline: 'محفظة حفظ ذاتي لسلسلة نورا.',
+        tagline: 'بلوكشين مفتوحة وآمنة ومحمية ولامركزية.',
         product: 'المنتج',
         resources: 'الموارد',
         builtWith: 'صُنع باستخدام',

@@ -4,6 +4,7 @@ import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { renderTest, cleanup, fire } from '@azerothjs/testing';
 
 import App from '../src/App.azeroth';
+import { SUPPLY } from '../src/lib/content/site';
 import { resetNetworkStats } from '../src/lib/network';
 import { useLocale } from '../src/stores/locale';
 
@@ -147,11 +148,22 @@ describe('App', () =>
         // Read the percentages back off the rendered rows rather than re-importing
         // ALLOCATIONS: a table that sums to 90 would render a full bar and look fine, so
         // the sum is only worth asserting where a visitor actually reads it.
+        //
+        // `[data-share]` and not `.font-mono`: the row carries TWO mono cells, the share and
+        // the token count, and this assertion once read whichever came first. Swapping their
+        // order turned it into a sum of millions that still "passed" the shape of the test.
         const total = rows
-            .map((row) => Number.parseFloat(row.querySelector('.font-mono')!.textContent!))
+            .map((row) => Number.parseFloat(row.querySelector('[data-share]')!.textContent!))
             .reduce((sum, value) => sum + value, 0);
 
         expect(total).toBe(100);
+
+        // The count beside it is the same split against the real supply, so it sums to it.
+        const supply = rows
+            .map((row) => Number.parseFloat(row.querySelector('[data-amount]')!.textContent!.replace(/[^0-9.]/g, '')))
+            .reduce((sum, value) => sum + value, 0);
+
+        expect(supply).toBe(SUPPLY.total);
     });
 
     it('opens one allocation note at a time and closes it again', () =>

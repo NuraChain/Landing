@@ -498,19 +498,3 @@
         min-width: 44px;
     }
 }
-
-/* Honoured globally rather than per animation, so a component added later cannot forget
-   it. Motion is suppressed, not merely shortened: a 0.01ms transition still fires its
-   events, which keeps scroll-linked reveals from stranding content invisible. */
-@media (prefers-reduced-motion: reduce)
-{
-    *,
-    *::before,
-    *::after
-    {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-    }
-}

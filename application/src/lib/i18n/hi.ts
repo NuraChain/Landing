@@ -236,7 +236,7 @@ export const hi: Strings =
 
     footer:
     {
-        tagline: 'नूरा चेन के लिए एक सेल्फ़-कस्टडी वॉलेट।',
+        tagline: 'एक ओपन, सुरक्षित, संरक्षित और विकेंद्रीकृत ब्लॉकचेन।',
         product: 'प्रोडक्ट',
         resources: 'संसाधन',
         builtWith: 'इससे बना:',

@@ -92,9 +92,24 @@ export default component Header()
     { /* The bar is a floating card, so the surface - border, background, blur - moves to
          the INNER element and the sticky <header> stays a transparent full-width rail. It
          has to: the rail is what holds the sticky position and the side gutters, and an
-         inset rounded box cannot do both jobs at once. `mt-4` matches `top-4` so the gap
-         above the card is the same 16px at rest as it is once stuck - offsetting only the
-         stuck state would make the header jump on the first scroll. */ }
+         inset rounded box cannot do both jobs at once.
+
+         The rail MUST carry a `top`, and that is not a style choice: `position: sticky`
+         with `top: auto` never engages, so a rail without one is static and the header
+         scrolls away with the page. It reads as "the header stopped being sticky" and
+         there is nothing in the class list saying why.
+
+         TWO NUMBERS, AND THEY MUST AGREE: `mt-4` is where the card rests, `top-4` is
+         where it sticks. Any difference between them is a jump the instant you scroll, by
+         exactly that difference. `top` is also not optional - `position: sticky` with
+         `top: auto` never engages at all, so the rail goes static and the header scrolls
+         away with the page, with nothing in the class list to say why.
+
+         The rail still OCCUPIES its 80px (16 margin + 64 card) in the flow. The hero
+         cancels that with a matching negative margin so its background can run to the top
+         of the viewport behind this card - see the note on #hero. A page without that
+         cancellation simply starts below the header, which is what every other route
+         wants. */ }
     <header class="sticky top-4 z-50 mt-4 px-4">
         { /* The card carries a surface at BOTH scroll positions. It used to go fully
              transparent at rest, which was fine when the bar was full-bleed and its edges

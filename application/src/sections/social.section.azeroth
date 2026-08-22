@@ -34,7 +34,7 @@ export default component SocialSection()
 
     <section id="social" class="border-t border-line px-5 py-16 sm:py-20">
         <div class="mx-auto max-w-4xl">
-            <SectionHeading index="07" title={ t().social.title } subtitle={ t().social.subtitle } />
+            <SectionHeading index="05" title={ t().social.title } subtitle={ t().social.subtitle } />
 
             <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <For each={ () => [...SOCIALS] } key={ (social) => social.id } let={ social }>
