@@ -1,12 +1,12 @@
 import { pathToFileURL } from 'node:url';
 
-import { pipeline, requestId, securityHeaders, rateLimit, logRequests, loadConfig, flag, num, oneOf, str } from '@azerothjs/http';
+import { logRequests, loadConfig, flag, num, oneOf, str } from '@azerothjs/http';
 import { serve, handleShutdownSignals } from '@azerothjs/http/node';
 import type { PageRenderer, PageRoute } from '@azerothjs/kit';
 import { createLogger, teeSink, terminalSink } from '@azerothjs/logger';
 import { fileSink } from '@azerothjs/logger/node';
 
-import { buildApp, DEFAULT_SITE_URL } from './app.ts';
+import { buildApp, createHandler, DEFAULT_SITE_URL } from './app.ts';
 import { loadAdminKey } from './admin/key.ts';
 import { SessionStore } from './admin/sessions.ts';
 import { BlogStore } from './blog/store.ts';
@@ -89,12 +89,19 @@ const app = buildApp({
         : { routes: ssr.routes, clientDir: config.clientDir, renderer: ssr.renderPage }
 });
 
-const handler = pipeline(
-    app,
-    requestId(),
-    securityHeaders(),
-    rateLimit({ limit: 200, windowMs: 60_000 })
-);
+/*
+ * The edges, and the trust boundary they are keyed on.
+ *
+ * `trustProxy` is passed HERE and not only to the admin guard, which is where it used to
+ * stop. The limiter keys on the client address, and without the flag that address is the TCP
+ * peer - behind a reverse proxy, the proxy. Every visitor on the internet then shared one
+ * bucket of 200 requests a minute, and since the limiter wraps the whole app rather than just
+ * /api, a single cold page load spends a dozen of them on its own script, stylesheet, fonts
+ * and icons. The site went down for whoever asked next, for the rest of the minute, and came
+ * back on its own - which is exactly what "it sometimes does not load" looks like from
+ * outside.
+ */
+const handler = createHandler(app, { trustProxy: config.trustProxy });
 
 const served = await serve(handler, { port: config.port });
 handleShutdownSignals(served);

@@ -1,4 +1,7 @@
-import { App, ConflictError, HttpError, NotFoundError, json, text, type ErrorObserver, type RequestObserver } from '@azerothjs/http';
+import { join } from 'node:path';
+
+import { App, ConflictError, HttpError, NotFoundError, json, pipeline, rateLimit, requestId, securityHeaders, text, type ErrorObserver, type RequestObserver, type WebHandler } from '@azerothjs/http';
+import { staticFiles } from '@azerothjs/http/node';
 import { feature, manifestOf, register, reply } from '@azerothjs/http/api';
 import { mountPages, type KitOptions, type PageRenderer } from '@azerothjs/kit';
 import { array } from '@azerothjs/schema';
@@ -457,6 +460,27 @@ export function buildApp(options: AppOptions): App
     // Mounted LAST so nothing can shadow /api: the kit's asset fallback matches everything.
     if (options.pages !== undefined)
     {
+        /*
+         * Vite writes CONTENT-HASHED names into /assets, so the bytes behind one of those urls
+         * can never change - a new build is a new name. The kit serves them on its default
+         * `max-age=0, must-revalidate` all the same, which asks the browser to check every
+         * script, stylesheet and font again on every single page view.
+         *
+         * Two costs, and the second is the one that bit: a round trip per asset per visit, and
+         * a request per asset for the rate limiter to count. Pinning them for a year takes a
+         * returning reader's page view from a dozen metered requests to zero.
+         *
+         * Registered BEFORE mountPages for the same reason /sitemap.xml is - the kit's /*path
+         * fallback matches everything, and the first match wins.
+         *
+         * Only /assets is pinned. index.html, the favicons and robots.txt live at the root
+         * under names that stay the same across deploys, so they must keep revalidating or a
+         * deploy would never reach anybody holding a cached copy.
+         */
+        app.get('/assets/*path', staticFiles(join(options.pages.clientDir, 'assets'), {
+            cacheControl: 'public, max-age=31536000, immutable'
+        }));
+
         mountPages(app, {
             ...options.pages,
             renderer: withMeta(options.pages.renderer, options.store, siteUrl),
@@ -516,4 +540,49 @@ function withMeta(renderer: PageRenderer | undefined, store: BlogStore, siteUrl:
 
         return { ...result, html: injectMeta(result.html, meta) };
     };
+}
+
+/**
+ * How much one client may ask for in a window.
+ *
+ * Generous per address on purpose: the limiter counts ASSETS as well as api calls, because it
+ * wraps the whole app, and a cold page load is a dozen requests before the reader has done
+ * anything. The number only means what it says once {@link createHandler} is keyed on the real
+ * client - see the note there.
+ */
+export const RATE_LIMIT = { limit: 200, windowMs: 60_000 } as const;
+
+export interface HandlerOptions
+{
+    /**
+     * On behind a reverse proxy.
+     *
+     * This is the whole reason this function exists rather than the pipeline being inlined in
+     * main.ts, where the flag was read, handed to the admin guard, and then NOT handed to the
+     * limiter. `clientIp` falls back to the TCP peer without it, and behind a proxy the TCP
+     * peer is the proxy for every visitor alive: one shared bucket, spent by whoever happened
+     * to arrive first, and a site that "sometimes does not load" for everybody after them.
+     *
+     * Off by default, and off is the safe default rather than the convenient one: a server
+     * reachable directly must not believe an `x-forwarded-for` its caller wrote itself.
+     */
+    trustProxy?: boolean;
+}
+
+/**
+ * The app wrapped in the edges every request crosses on its way in.
+ *
+ * Exported so the suite can drive the composed handler rather than the bare app: the guards
+ * that live out here - the limiter above all - are invisible to a spec that calls
+ * `app.handle` directly, which is how the trust boundary came to be wrong without a test
+ * noticing.
+ */
+export function createHandler(app: App, options: HandlerOptions = {}): WebHandler
+{
+    return pipeline(
+        app,
+        requestId(),
+        securityHeaders(),
+        rateLimit({ ...RATE_LIMIT, trustProxy: options.trustProxy === true })
+    );
 }
