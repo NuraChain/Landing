@@ -3,6 +3,7 @@ import { For, Show } from 'azerothjs';
 import { ArrowLeftRight, Blocks, CircleAlert, CircleDollarSign, ExternalLink, Lock } from 'lucide';
 
 import { BRIDGE_HOLDER, BRIDGE_HOLDER_BSC_URL, EXPLORER_URL, SWAP_URL } from '../lib/content/site';
+import { onReady, reveal, revealItems } from '../lib/motion';
 import { blockHeight, bridgeTvl, nuraPrice, totalTransactions } from '../lib/network';
 import type { NuraPrice, Tvl } from '../lib/network';
 
