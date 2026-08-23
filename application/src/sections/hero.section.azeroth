@@ -114,6 +114,75 @@ export default component HeroSection()
             const playing: { pause: () => void }[] = [];
             const detach: (() => void)[] = [];
 
+            /*
+             * Crosshair + coordinate readout.
+             *
+             * OUTSIDE the motion gate, and that is the fix rather than an oversight. This used
+             * to sit inside it, so a reader with `prefers-reduced-motion` set got a hero whose
+             * corner permanently read `X 0000 · Y 0000` - the listeners were never attached, so
+             * the numbers on screen were the markup's own placeholder and never moved.
+             *
+             * Nothing here animates. The lines and the figures track the pointer 1:1, with no
+             * easing, no duration and no travel of their own: it is a readout of where the
+             * cursor already is, which is direct manipulation rather than the autonomous
+             * movement the preference exists to stop. The MAGNET below is the opposite - it
+             * eases and springs on its own - and stays gated.
+             *
+             * Fine pointers only: there is no cursor to report on a touch screen.
+             */
+            if (matchMedia('(pointer: fine)').matches)
+            {
+                const crossX = document.getElementById('hero-cross-x');
+                const crossY = document.getElementById('hero-cross-y');
+                const coords = document.getElementById('hero-coords');
+
+                if (crossX !== null && crossY !== null && coords !== null)
+                {
+                    const onMove = (event: MouseEvent): void =>
+                    {
+                        const rect = section.getBoundingClientRect();
+                        const x = Math.round(event.clientX - rect.left);
+                        const y = Math.round(event.clientY - rect.top);
+
+                        crossY.style.transform = `translateX(${ x }px)`;
+                        crossX.style.transform = `translateY(${ y }px)`;
+                        coords.textContent = `X ${ String(x).padStart(4, '0') } · Y ${ String(y).padStart(4, '0') }`;
+                    };
+
+                    const onEnter = (): void => { section.style.setProperty('--ch', '1'); };
+                    const onLeave = (): void => { section.style.setProperty('--ch', '0'); };
+
+                    section.addEventListener('mousemove', onMove, { passive: true });
+                    section.addEventListener('mouseenter', onEnter);
+                    section.addEventListener('mouseleave', onLeave);
+
+                    detach.push(() =>
+                    {
+                        section.removeEventListener('mousemove', onMove);
+                        section.removeEventListener('mouseenter', onEnter);
+                        section.removeEventListener('mouseleave', onLeave);
+                    });
+                }
+            }
+
+            /*
+             * Says when the entrance is over, for anything measuring the settled page.
+             *
+             * `npm run qa:visual` runs axe the moment <main> exists, and axe judges the page
+             * it is handed: a control whose ANCESTOR is mid-fade composites to a blended
+             * colour, and the primary CTA was reported at 3.12:1 against tokens that measure
+             * 8.77:1. Waiting on "no animation is running" did not fix it, because at narrow
+             * widths the check landed before the timeline had started. This is the only
+             * signal that cannot race - the page itself saying it has finished.
+             */
+            const settled = (): void => { section.dataset.entrance = 'done'; };
+
+            if (!motionOk())
+            {
+                // Nothing to wait for: content is already in its final state.
+                settled();
+            }
+
             if (motionOk())
             {
                 // Re-sync the text first: on a language switch this effect re-runs, and the
@@ -131,7 +200,7 @@ export default component HeroSection()
                     word.style.willChange = 'transform';
                 });
 
-                playing.push(createTimeline({ defaults: { ease: 'outQuart' } })
+                playing.push(createTimeline({ defaults: { ease: 'outQuart' }, onComplete: settled })
                     .add('#hero-status', { opacity: [0, 1], duration: 320 })
                     .add(words, { translateY: ['105%', '0%'], duration: 760 }, stagger(70))
                     .add('#hero-sub', { opacity: [0, 1], translateY: [14, 0], duration: 520 }, '-=380')
@@ -185,7 +254,8 @@ export default component HeroSection()
 
                         roll(chainId, CHAIN_ID, (v) => String(v));
                         roll(blockTime, 3, (v) => `${ v }s`);
-                        roll(supply, SUPPLY.total, (v) => `${ number(v) } ${ NATIVE_TOKEN_SYMBOL }`);
+                        // The unit lives in a sibling span, so this formats the numeral only.
+                        roll(supply, SUPPLY.total, (v) => number(v));
                     }, '-=360')
                     .call(() =>
                     {
@@ -193,41 +263,8 @@ export default component HeroSection()
                         words.forEach((word) => { word.style.willChange = 'auto'; });
                     }));
 
-                // Crosshair + coordinate readout: decorative, and only meaningful where
-                // a cursor exists, so the listeners are fine-pointer only.
                 if (matchMedia('(pointer: fine)').matches)
                 {
-                    const crossX = document.getElementById('hero-cross-x');
-                    const crossY = document.getElementById('hero-cross-y');
-                    const coords = document.getElementById('hero-coords');
-
-                    if (crossX !== null && crossY !== null && coords !== null)
-                    {
-                        const onMove = (event: MouseEvent): void =>
-                        {
-                            const rect = section.getBoundingClientRect();
-                            const x = Math.round(event.clientX - rect.left);
-                            const y = Math.round(event.clientY - rect.top);
-
-                            crossY.style.transform = `translateX(${ x }px)`;
-                            crossX.style.transform = `translateY(${ y }px)`;
-                            coords.textContent = `X ${ String(x).padStart(4, '0') } · Y ${ String(y).padStart(4, '0') }`;
-                        };
-
-                        const onEnter = (): void => { section.style.setProperty('--ch', '1'); };
-                        const onLeave = (): void => { section.style.setProperty('--ch', '0'); };
-
-                        section.addEventListener('mousemove', onMove, { passive: true });
-                        section.addEventListener('mouseenter', onEnter);
-                        section.addEventListener('mouseleave', onLeave);
-
-                        detach.push(() =>
-                        {
-                            section.removeEventListener('mousemove', onMove);
-                            section.removeEventListener('mouseenter', onEnter);
-                            section.removeEventListener('mouseleave', onLeave);
-                        });
-                    }
 
                     // The primary CTA is magnetic: it leans toward the cursor a few
                     // pixels and springs back on leave. 18% of the offset keeps it a
@@ -418,7 +455,18 @@ export default component HeroSection()
         <div id="hero-cross-y" class="hero-cross-y" aria-hidden="true"></div>
 
         <div id="hero-inner" class="relative mx-auto max-w-4xl px-5 pb-16 sm:pb-20">
-            <div id="hero-status" class="flex flex-wrap items-center gap-x-6 gap-y-1 border border-line-strong px-3 py-2 font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
+            { /* `dir="ltr"` PINS this strip, so NURA://MAINNET stays at the left edge and the
+                 height stays at the right in Persian and Arabic as well as in English. It is
+                 the rule the notes already state for Latin and numeric runs - a scheme-like
+                 identifier, an RPC dot and a block number are values, not prose, and a reader
+                 looks for them in the same place whichever way the rest of the page runs.
+
+                 On the CONTAINER rather than on a bdi inside it, which the notes warn against
+                 for a block carrying text-start: this row carries no alignment of its own, it
+                 distributes with `ms-auto`, and that is exactly what has to flip with the pin.
+                 The one translated label inside keeps its own script - bidi resolves an RTL
+                 run inside an LTR line on its own. */ }
+            <div id="hero-status" dir="ltr" class="flex flex-wrap items-center gap-x-6 gap-y-1 border border-line-strong px-3 py-2 font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
                 <span>
                     NURA://MAINNET
                     <span class="caret-blink text-accent" aria-hidden="true">▮</span>
@@ -464,19 +512,53 @@ export default component HeroSection()
 
             { /* The spec grid: real constants only, from site.ts. gap-px over bg-line is
                  the hairline-grid trick - direction-neutral, so no divide-* utilities. */ }
-            <dl id="hero-spec" class="mt-12 grid grid-cols-1 gap-px border border-line bg-line sm:grid-cols-3">
-                <div class="bg-surface px-4 py-3">
-                    <dt class="font-mono text-[10px] uppercase tracking-[0.2em] text-faint">{ t().chain.chainId }</dt>
-                    <dd id="hero-spec-id" class="mt-1 font-mono text-lg font-semibold text-ink" dir="ltr">{ CHAIN_ID }</dd>
+            { /* The spec row, drawn as an engineering DIMENSION rather than as three cards.
+                 The cards were the generic answer - a small label over a value in a bordered
+                 cell, the shape every dashboard uses - and they boxed the blueprint grid out
+                 of its own hero. This is the vernacular already on the page: the terminal
+                 prompt above, the CAD crosshair and its X/Y readout, the ruled tape below.
+
+                 A datum rule across the top, an extension tick down the start edge of each
+                 field, and the value hung off it with no container at all. The grid shows
+                 through, which is the point - it is the drawing these numbers are dimensions
+                 on. `start-0` and `ps-4` rather than left and padding-left, so the ticks stay
+                 on the reading edge in Persian and Arabic.
+
+                 The figures step up to the second-largest type in the hero after the h1:
+                 these are what a developer came to copy, and they were set smaller than the
+                 body text above them. `tabular-nums` so the columns hold their rhythm while
+                 countUp rolls them. */ }
+            <dl id="hero-spec" class="mt-12 grid grid-cols-1 gap-x-14 gap-y-7 border-t border-line-strong pt-6 sm:grid-cols-none sm:auto-cols-max sm:grid-flow-col sm:justify-start">
+                <div class="relative ps-4">
+                    { /* The extension line: one hairline in the accent, the only saturated
+                         mark in the group - everything else is ink, faint and line. */ }
+                    <span class="absolute inset-y-0 start-0 w-px bg-accent" aria-hidden="true"></span>
+                    <dt class="font-label text-[10px] font-medium uppercase tracking-[0.2em] text-faint">{ t().chain.chainId }</dt>
+                    <dd class="mt-2 font-mono text-2xl font-semibold leading-none tabular-nums text-ink sm:text-3xl">
+                        <span id="hero-spec-id" dir="ltr">{ CHAIN_ID }</span>
+                    </dd>
                 </div>
-                <div class="bg-surface px-4 py-3">
-                    <dt class="font-mono text-[10px] uppercase tracking-[0.2em] text-faint">{ t().chain.blockTime }</dt>
-                    <dd id="hero-spec-time" class="mt-1 font-mono text-lg font-semibold text-ink" dir="ltr">{ BLOCK_TIME }</dd>
+                <div class="relative ps-4">
+                    { /* The extension line: one hairline in the accent, the only saturated
+                         mark in the group - everything else is ink, faint and line. */ }
+                    <span class="absolute inset-y-0 start-0 w-px bg-accent" aria-hidden="true"></span>
+                    <dt class="font-label text-[10px] font-medium uppercase tracking-[0.2em] text-faint">{ t().chain.blockTime }</dt>
+                    <dd class="mt-2 font-mono text-2xl font-semibold leading-none tabular-nums text-ink sm:text-3xl">
+                        <span id="hero-spec-time" dir="ltr">{ BLOCK_TIME }</span>
+                    </dd>
                 </div>
-                <div class="bg-surface px-4 py-3">
-                    <dt class="font-mono text-[10px] uppercase tracking-[0.2em] text-faint">{ t().tokenomics.totalSupply }</dt>
-                    <dd id="hero-spec-supply" class="mt-1 font-mono text-lg font-semibold text-ink">
-                        { () => `${ number(SUPPLY.total) } ${ NATIVE_TOKEN_SYMBOL }` }
+                <div class="relative ps-4">
+                    { /* The extension line: one hairline in the accent, the only saturated
+                         mark in the group - everything else is ink, faint and line. */ }
+                    <span class="absolute inset-y-0 start-0 w-px bg-accent" aria-hidden="true"></span>
+                    <dt class="font-label text-[10px] font-medium uppercase tracking-[0.2em] text-faint">{ t().tokenomics.totalSupply }</dt>
+                    { /* The ticker is a SIBLING of the number, not inside it: countUp writes
+                         `textContent`, so a unit nested in the same element would be wiped on
+                         the first frame of the roll. It also sits at label size and faint, so
+                         the numeral carries the cell. */ }
+                    <dd class="mt-2 flex items-baseline gap-2 font-mono text-2xl font-semibold leading-none tabular-nums text-ink sm:text-3xl">
+                        <span id="hero-spec-supply">{ () => number(SUPPLY.total) }</span>
+                        <span class="font-label text-[10px] uppercase tracking-[0.2em] text-faint">{ NATIVE_TOKEN_SYMBOL }</span>
                     </dd>
                 </div>
             </dl>
