@@ -58,7 +58,10 @@ export default component Home()
              deciding whether to install a wallet should meet the proof first. */ }
         <NetworkSection />
 
-        <section id="wallet" class="border-t border-line px-5 py-20">
+        { /* `pb-12` rather than a matching `py-20`: the last thing in here is a quiet text
+             link to the releases page, not a block of content, and eighty pixels under a
+             single line of 14px text read as the section having lost its footing. */ }
+        <section id="wallet" class="border-t border-line px-5 pt-20 pb-12">
             { /* `max-w-4xl`, the same measure as every other section. It was 5xl, which
                  put this one block 64px wider on each side than the sections above and
                  below it - not obviously wrong on its own, but scrolling past it the left
@@ -86,7 +89,7 @@ export default component Home()
                 </div>
 
                 <div class="mt-10 border border-line bg-surface p-6">
-                    <p class="font-label text-[11px] font-medium uppercase tracking-[0.16em] text-faint">{ t().wallet.platforms }</p>
+                    <p class="font-label text-[18px] font-medium uppercase tracking-[0.16em]">{ t().wallet.platforms }</p>
 
                     { /* Every platform on one footing. This used to promote whichever OS a
                          user-agent sniff guessed into a big accent button with the other five

@@ -143,7 +143,7 @@ export default component TokenomicsSection()
                         class="h-full transition-opacity duration-200"
                         style={ () => `flex: ${ slice.percent }; background: ${ HUES[index % HUES.length] };`
                             + (active === null || active === slice.key ? '' : 'opacity: 0.35;') }
-                        title={ () => `${ t().tokenomics.allocations[slice.key] }: ${ amount(slice.percent) } ${ NATIVE_TOKEN_SYMBOL } · ${ percent(slice.percent) }` }
+                        title={ () => `${ t().tokenomics.allocations[slice.key] }: ${ amount(slice.percent) } · ${ percent(slice.percent) }` }
                         onMouseEnter={ () => active = slice.key }
                         onMouseLeave={ () => active = null }
                     ></div>
@@ -180,16 +180,27 @@ export default component TokenomicsSection()
 
                                  Both spans hold their box whatever the opacity, so the row does
                                  not reflow on hover and the column stays straight down the list. */ }
-                            { /* `data-amount` / `data-share`: the two cells are both mono and both
-                                 in this row, so a test picking "the first .font-mono" would read
-                                 whichever happens to come first and silently change meaning when
-                                 they are reordered - which is exactly what happened when they
-                                 were. Named, they cannot be confused for each other. */ }
+                            { /* BOTH figures are on screen at rest. The share used to wait for a
+                                 hover, which put half the table behind a gesture a touch screen
+                                 does not have and a keyboard never makes - the six rows read as
+                                 six counts with no sense of proportion between them until a
+                                 mouse went near one.
+
+                                 `data-amount` / `data-share`: both cells are mono and both are in
+                                 this row, so a test picking "the first .font-mono" reads whichever
+                                 happens to come first and changes meaning silently when they are
+                                 reordered - which is exactly what happened. Named, they cannot be
+                                 confused for each other. */ }
+                            { /* The count alone. Every figure in this column is denominated in the
+                                 same coin and the supply above states it, so repeating the ticker
+                                 six times made the word the thing the eye tracked down the column
+                                 instead of the numbers. It survives in the chart's aria-label
+                                 below, where there is no supply figure overhead to carry it. */ }
                             <span data-amount class="shrink-0 font-mono text-sm text-muted">
-                                { () => `${ amount(slice.percent) } ${ NATIVE_TOKEN_SYMBOL }` }
+                                { () => amount(slice.percent) }
                             </span>
 
-                            <span data-share class="shrink-0 font-mono text-xs text-faint opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                            <span data-share class="shrink-0 font-mono text-xs tabular-nums text-faint">
                                 { () => percent(slice.percent) }
                             </span>
 

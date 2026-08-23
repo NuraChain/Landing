@@ -247,14 +247,28 @@ export default component NetworkSection()
             { /* Four across on a wide screen, two-by-two below it. Not three-and-an-orphan:
                  the tiles are peers reading four separate sources, and a row of one reads as
                  an afterthought rather than as the fourth of four. */ }
+            { /* Four tiles that read as four of a kind. They had drifted into two pairs in
+                 three separate ways: the first two were ROUNDED where the last two were
+                 square, the first two were labelled in sentence case at `text-sm text-muted`
+                 where the last two used the uppercase label face, and the price figure was a
+                 size smaller than its neighbours from `lg` up. Square and uppercase now,
+                 which is what the chain table, the explorer card and the blog already use.
+
+                 The FIGURES share a baseline because each tile is a column and its number
+                 carries `mt-auto`, not because the labels were given a magic min-height. A
+                 floor only holds until a label wraps past it, and how many lines "total value
+                 locked" takes depends on the column width - so it held at one breakpoint and
+                 broke at the next. The grid already stretches a row's tiles to one height;
+                 pushing the number to the bottom of that height is what makes the row scan
+                 horizontally at every width. */ }
             <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 { /* The figure a visitor came for, so it leads. Also the only tile whose
                      source is a MARKET rather than a ledger - hence the note, which is not
                      optional garnish: the pool behind this quote holds a few hundred dollars,
                      and a number that small moves on a single trade. Stating the price
                      without stating that would be the same failure as inventing one. */ }
-                <Card class="relative">
-                    <p class="flex items-center gap-2 text-sm text-muted">
+                <Card shape="square" class="relative flex flex-col">
+                    <p class="flex items-start gap-2 font-label text-[13px] uppercase tracking-[0.14em] text-faint">
                         { icon(CircleDollarSign, 'size-4 shrink-0') }
                         { t().network.price }
 
@@ -270,7 +284,7 @@ export default component NetworkSection()
                             { icon(CircleAlert, 'size-4') }
                         </IconButton>
                     </p>
-                    <p class="mt-1 font-mono text-2xl font-semibold text-ink sm:text-3xl lg:text-2xl">
+                    <p class="mt-auto pt-1 font-mono text-2xl font-semibold text-ink sm:text-3xl">
                         { () => figure(price === null ? null : price.usd, priceFailed, usd) }
                     </p>
 
@@ -323,22 +337,22 @@ export default component NetworkSection()
                     </Show>
                 </Card>
 
-                <Card>
-                    <p class="flex items-center gap-2 text-sm text-muted">
+                <Card shape="square" class="flex flex-col">
+                    <p class="flex items-start gap-2 font-label text-[13px] uppercase tracking-[0.14em] text-faint">
                         { icon(Blocks, 'size-4 shrink-0') }
                         { t().network.blockHeight }
                     </p>
-                    <p class="mt-1 font-mono text-2xl font-semibold text-ink sm:text-3xl">
+                    <p class="mt-auto pt-1 font-mono text-2xl font-semibold text-ink sm:text-3xl">
                         { () => figure(height, heightFailed) }
                     </p>
                 </Card>
 
-                <Card shape="square">
-                    <p class="flex items-center gap-2 font-label text-[11px] uppercase tracking-[0.14em] text-faint">
+                <Card shape="square" class="flex flex-col">
+                    <p class="flex items-start gap-2 font-label text-[13px] uppercase tracking-[0.14em] text-faint">
                         { icon(ArrowLeftRight, 'size-4 shrink-0') }
                         { t().network.transactions }
                     </p>
-                    <p class="mt-1 font-mono text-2xl font-semibold text-ink sm:text-3xl">
+                    <p class="mt-auto pt-1 font-mono text-2xl font-semibold text-ink sm:text-3xl">
                         { () => figure(total, totalFailed) }
                     </p>
                 </Card>
@@ -347,8 +361,8 @@ export default component NetworkSection()
                      breakdown: "$0.00" is a fact about two balances, and a reader who
                      wants to know which asset is empty should not have to open a block
                      explorer to find out. */ }
-                <Card shape="square" class="relative">
-                    <p class="flex items-center gap-2 font-label text-[11px] uppercase tracking-[0.14em] text-faint">
+                <Card shape="square" class="relative flex flex-col">
+                    <p class="flex items-start gap-2 font-label text-[13px] uppercase tracking-[0.14em] text-faint">
                         { icon(Lock, 'size-4 shrink-0') }
                         { t().network.tvl }
 
@@ -376,7 +390,7 @@ export default component NetworkSection()
                             { icon(CircleAlert, 'size-4') }
                         </IconButton>
                     </p>
-                    <p class="mt-1 font-mono text-2xl font-semibold text-ink sm:text-3xl">
+                    <p class="mt-auto pt-1 font-mono text-2xl font-semibold text-ink sm:text-3xl">
                         { () => figure(tvl === null ? null : tvl.usd, tvlFailed, money) }
                     </p>
 
