@@ -8,7 +8,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { BlogContent, type LoadedPost } from '../src/blog/content.ts';
-import { injectMeta, isMissingPost, metaFor, excerpt } from '../src/seo/pages.ts';
+import { injectMeta, isMissingPost, metaFor, excerpt, postFor } from '../src/seo/pages.ts';
 import { buildSitemap } from '../src/seo/sitemap.ts';
 import { harness, post, translation } from './support/fixtures.ts';
 
@@ -50,6 +50,21 @@ describe('which pages get a head of their own', () =>
         // title rather than being described as an article that does not exist.
         expect(metaFor('/blog/draft-only', { store, siteUrl: SITE })).toBeNull();
         expect(metaFor('/blog/never-written', { store, siteUrl: SITE })).toBeNull();
+    });
+
+    it('treats an undecodable slug as a miss instead of throwing', () =>
+    {
+        // `decodeURIComponent('%')` - or any truncated escape - throws a URIError. Unguarded,
+        // a mistyped address like /blog/% turned into a 500 from inside the renderer rather
+        // than the 404 the soft-404 guard exists to produce.
+        const store = storeWith(post({ slug: 'real' }));
+
+        for (const path of ['/blog/%', '/blog/%E0%A4', '/blog/%zz'])
+        {
+            expect(metaFor(path, { store, siteUrl: SITE }), path).toBeNull();
+            expect(isMissingPost(path, { store, siteUrl: SITE }), path).toBe(true);
+            expect(postFor(path, { store, siteUrl: SITE }), path).toBeNull();
+        }
     });
 
     it('describes the index whatever the filter and page are', () =>

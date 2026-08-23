@@ -65,6 +65,18 @@ export default component HeroSection()
         ).flat();
     };
 
+    /**
+     * The whole rendered track: TWO identical halves, so wrapping at half its width is
+     * seamless - a half narrower than the screen would run off its own content and show
+     * empty track. One loop renders both halves; the second copy's keys carry the `d-`
+     * prefix because `<For>` keys must be unique across the whole row.
+     */
+    const tickerTrack = (): { key: string; label: string; value: string }[] =>
+    [
+        ...tickerLoop(),
+        ...tickerLoop().map((item) => ({ ...item, key: `d-${ item.key }` }))
+    ];
+
     effect
     {
         // A reactive read stays INSIDE the effect body so this effect re-runs on a language
@@ -440,15 +452,18 @@ export default component HeroSection()
         cleanup { release(); }
     }
 
-    { /* Pulled up under the header and padded back down by the same 80px, so the scanline
-         and the blueprint grid reach the TOP of the viewport rather than starting below the
-         bar. The header rail is transparent and its card is inset by `px-4`/`mt-4`, so
-         what shows around and above the card is this section's background.
+    { /* Pulled up under the header and padded back down, so the scanline and the blueprint
+         grid reach the TOP of the viewport rather than starting below the bar. The header
+         rail is transparent and its card is inset by `px-4`/`mt-4`, so what shows around
+         and above the card is this section's background.
 
-         -mt-20 must equal the rail's occupied height: `mt-4` (16px) plus the card (64px).
-         pt-20 puts the content back where -mt-20 took it from, so the status strip still
-         starts immediately below the card rather than behind it. Change the header's
-         margin or the card's height and both numbers here move with it. */ }
+         The rail occupies 80px of flow (`mt-4` + the 64px card), so `-mt-40` lifts this
+         section's top to 80px ABOVE the viewport top - far enough that the grid reads as
+         starting at the very first pixel even while the page is scrolled to 0. `pt-60`
+         then sets the CONTENT 80px below where the rail ends, so the status strip clears
+         the floating card by the same gutter the card carries at the screen edges.
+         Change the header's margin or the card's height and both numbers here move with
+         it. */ }
     <section id="hero" class="hero-scanline blueprint relative -mt-40 overflow-hidden pt-60">
         { /* Crosshair lines: decorative, written from JS, hidden until --ch is set. */ }
         <div id="hero-cross-x" class="hero-cross-x" aria-hidden="true"></div>
@@ -569,19 +584,12 @@ export default component HeroSection()
         </div>
 
         { /* The ticker tape. Decorative: every fact on it also lives in a real section
-             below, so the whole band is aria-hidden and the track is duplicated purely to
-             make the -50% wrap seamless. Latin direction is deliberate - these are values
-             and identifiers, and the tape runs one way regardless of locale. */ }
+              below, so the whole band is aria-hidden and the track is duplicated purely to
+              make the -50% wrap seamless. Latin direction is deliberate - these are values
+              and identifiers, and the tape runs one way regardless of locale. */ }
         <div id="ticker-band" class="marquee relative border-t border-line py-2.5" dir="ltr" aria-hidden="true">
             <div id="ticker-track" class="marquee-track inline-flex whitespace-nowrap">
-                <For each={ () => tickerLoop() } key={ (item) => item.key } let={ item }>
-                    <span class="inline-flex items-baseline gap-2 px-7 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
-                        <span>{ item.label }</span>
-                        <b class="font-semibold text-ink">{ item.value }</b>
-                        <i class="not-italic text-accent">◆</i>
-                    </span>
-                </For>
-                <For each={ () => tickerLoop() } key={ (item) => `d-${ item.key }` } let={ item }>
+                <For each={ () => tickerTrack() } key={ (item) => item.key } let={ item }>
                     <span class="inline-flex items-baseline gap-2 px-7 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
                         <span>{ item.label }</span>
                         <b class="font-semibold text-ink">{ item.value }</b>

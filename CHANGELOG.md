@@ -5,6 +5,39 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **A malformed blog address answered 500 instead of 404.** `/blog/%` - or any url whose
+  slug carries a truncated percent-escape - threw a `URIError` from inside
+  `decodeURIComponent`, taking the SSR render down with it. The slug lookup is now
+  guarded, and an undecodable slug counts as the missing post it is: the soft-404 guard
+  answers it with the same honest 404 as any other dead address.
+- **Closed panels in the network section kept their links in the tab order.** The price
+  note and TVL breakdown stay in the DOM while collapsed (a screen reader can read them,
+  by design), but Tab could land on an invisible link - a focus ring that disappears.
+  Their links now sit out of the tab order while closed (`tabindex="-1"`) and return when
+  opened; both toggles also name their panel via `aria-controls`, matching the tokenomics
+  disclosures.
+
+### Removed
+
+- **The `admin` string section from every locale table** (52 keys × ten languages). The
+  dashboard it served was deleted in 1.6.0, but the copy stayed behind in the wire shape
+  every visitor downloads. Also gone with it: the `Input` and `Field` components and the
+  shared control classes they were written for - all dashboard-only, none referenced by
+  shipped markup.
+- **The unused `@azerothjs/schema` dependency** in the application workspace. Schemas live
+  in the server half; the browser imports types only.
+
+### Changed
+
+- README rewritten to match reality: it still documented the sqlite index, the `/admin`
+  dashboard and the long-gone `admin:key` script.
+- `.idea/` untracked (the folder was already gitignored; the files predated the ignore).
+- postcss's transitive `nanoid` bumped past a high-severity advisory (lockfile only).
+
 ## [1.6.0] - 2026-08-23
 
 ### Added

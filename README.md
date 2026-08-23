@@ -1,13 +1,13 @@
 # Nura Landing Page
 
 The marketing site for **Nura Wallet**: a self custody wallet for the Nura network.
-Ten languages, two of them right to left, three themes, live chain and TVL figures read in
+Ten languages, two of them right to left, two themes, live chain and TVL figures read in
 the browser, and a download path for every platform.
 
-It also carries a **blog** in all ten languages and a **dashboard** to write it from.
+It also carries a **blog** in all ten languages, published as files in this repository.
 
 [![Built with AzerothJS](https://img.shields.io/badge/built%20with-AzerothJS-2ad4b8)](https://github.com/AzerothJS/AzerothJS)
-[![Node](https://img.shields.io/badge/node-%3E%3D20-5fb3e8)](https://nodejs.org)
+[![Node](https://img.shields.io/badge/node-%3E%3D22-5fb3e8)](https://nodejs.org)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 ## Layout
@@ -17,7 +17,7 @@ Two npm workspaces:
 | Workspace | What it holds |
 | --- | --- |
 | `application/` | the site: components, sections, pages, the design system, the i18n tables |
-| `server/` | the HTTP API, the sqlite index, and the process that serves the built bundles |
+| `server/` | the HTTP API, the blog content, and the process that serves the built bundles |
 
 `server/src/schemas.ts` declares every wire shape once; the browser infers its types from
 that file, so a field is defined in exactly one place.
@@ -35,25 +35,16 @@ npm run dev        # both halves, with hot reload
 | `npm run check` | typecheck and lint, both workspaces, in one pass |
 | `npm run build` | client bundle, SSR bundle |
 | `npm start` | run the built site (honours `PORT`) |
-| `npm run admin:key` | generate a dashboard key |
 
-## The blog and the dashboard
+## The blog
 
-Posts live in sqlite. A post carries any subset of the ten languages and names one of them
-as its fallback, so a reader whose language is missing still gets the post — told plainly
-that it is not in their language, with the languages it does have offered beside it.
+An article is a directory under `server/content/blog/<slug>/`: one `.md` per language plus
+an `article.ts` carrying the typed head - title and summary per locale, tags, dates, status,
+and the fallback language. A reader whose language is missing still gets the post - told
+plainly that it is not in their language, with the languages it does have offered beside it.
 
-The dashboard is at **`/admin`**, reached by typing the path: nothing on the site links to
-it. Sign in with a key:
-
-```bash
-npm run admin:key            # prints e.g. ABCD-EFGH-JKLM-NPQR
-```
-
-Put it in `server/.env` as `ADMIN_KEY`. In production the server **refuses to start**
-without one; in development it starts with the dashboard disabled rather than unlocked. The
-key is compared in constant time against a SHA-256 digest and exchanged for an httpOnly
-`__Host-` cookie; only session digests are stored, never a token.
+Publishing is a commit: the content is read off disk once at boot, and there is no database
+and no dashboard to maintain.
 
 ## Tests
 
@@ -84,8 +75,8 @@ Slices, for driving one area without remembering file names:
 ### How the suite is built
 
 * **No network, and no ports.** The three upstreams (Nura RPC, Nura explorer, CoinGecko) are
-  stubbed at `fetch` in every spec that touches them, and the server suite runs against an
-  in-memory sqlite database with a stubbed chain gateway — nothing listens, nothing dials
+  stubbed at `fetch` in every spec that touches them, and the server suite builds its blog
+  from posts declared inline with a stubbed chain gateway — nothing listens, nothing dials
   out. A red build always means a real change and never a third party having a bad minute.
   No secrets or credentials are involved anywhere.
 * **Deterministic.** No sleeps and no wall clock: TTLs and confirmation timers run on
@@ -115,9 +106,10 @@ Slices, for driving one area without remembering file names:
 | `markdown.spec.ts` | the post-body subset, heading levels, and a hostile-payload sweep |
 | `blog-locales.spec.ts` | the post languages and the site languages staying in step |
 
-The server half carries its own suite: the store and its migrations, the fallback policy,
-the public blog API, and the admin routes — sign-in, the same-origin guard, rate limiting,
-and every write route refusing an unauthenticated caller.
+The server half carries its own suite: the blog content loader, the fallback policy, the
+public API over the composed edge pipeline — request id, security headers and the rate
+limiter included — the price relay's memo and stale-while-failing grace window, and the SEO
+head each server-rendered page is served with.
 
 ## CI
 

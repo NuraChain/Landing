@@ -1,5 +1,6 @@
 // CLIENT-SAFE: the application imports this file, so it may import only the schema package.
-// One declaration validates the admin's form AND the server boundary, and types the browser.
+// One declaration validates the server boundary AND types the browser, so the shape is
+// decided in exactly one place and cannot drift.
 import { array, boolean, enumOf, number, object, string, type Infer } from '@azerothjs/schema';
 
 /**

@@ -9,7 +9,6 @@ import Card from '../src/components/ui/card.component.azeroth';
 import IconButton from '../src/components/ui/icon-button.component.azeroth';
 import Badge from '../src/components/ui/badge.component.azeroth';
 import EmptyState from '../src/components/ui/empty-state.component.azeroth';
-import Input from '../src/components/ui/input.component.azeroth';
 import Skeleton from '../src/components/ui/skeleton.component.azeroth';
 import { useToasts } from '../src/stores/toasts';
 import CopyField from '../src/components/chain/copy-field.component.azeroth';
@@ -97,9 +96,6 @@ describe('Button', () =>
         expect(submit.container.querySelector('button')?.getAttribute('type')).toBe('submit');
     });
 });
-
-/** A handler the test does not care about; the repo's brace style rejects `() => {}`. */
-const noop = (): void => undefined;
 
 describe('Skeleton', () =>
 {
@@ -306,58 +302,6 @@ describe('IconButton', () =>
         fire(container.querySelector('button')!, 'click');
 
         expect(onClick).not.toHaveBeenCalled();
-    });
-});
-
-describe('Input', () =>
-{
-    it('reports the value rather than the event, so call sites do not touch the DOM', () =>
-    {
-        const seen: string[] = [];
-        const { container } = renderTest(() => Input({ value: '', onInput: (next) => seen.push(next) }));
-        const field = container.querySelector('input')!;
-
-        field.value = 'nura';
-        fire(field, 'input');
-
-        expect(seen).toEqual(['nura']);
-    });
-
-    it('renders a textarea when multiline, and still reports a string', () =>
-    {
-        const seen: string[] = [];
-        const { container } = renderTest(() =>
-            Input({ value: '', multiline: true, onInput: (next) => seen.push(next) }));
-        const field = container.querySelector('textarea')!;
-
-        expect(field).not.toBeNull();
-
-        field.value = '## heading';
-        fire(field, 'input');
-
-        expect(seen).toEqual(['## heading']);
-    });
-
-    it('carries the direction and language of the VALUE, not of the page', () =>
-    {
-        // The editor writes ten languages through one set of fields: a Persian tab has to put
-        // the caret on the right while the slug beside it stays left-to-right.
-        const { container } = renderTest(() =>
-            Input({ value: '', onInput: noop, dir: 'rtl', lang: 'fa' }));
-        const field = container.querySelector('input')!;
-
-        expect(field.getAttribute('dir')).toBe('rtl');
-        expect(field.getAttribute('lang')).toBe('fa');
-    });
-
-    it('takes the mono face for machine-shaped values, and appends a caller class', () =>
-    {
-        const { container } = renderTest(() =>
-            Input({ value: '', onInput: noop, face: 'mono', class: 'text-center' }));
-        const className = container.querySelector('input')!.className;
-
-        expect(className).toContain('font-mono');
-        expect(className).toContain('text-center');
     });
 });
 

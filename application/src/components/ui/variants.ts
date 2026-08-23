@@ -10,8 +10,8 @@
  * compile error until every table has an entry for it, which is the point - a tone that
  * exists in one table and not another is a control that renders untinted in one place.
  *
- * The values are token names, never a hex. Landing carries three complete themes
- * (`dark`, `light`, `contrast`) and a literal colour would be right in at most one of them.
+ * The values are token names, never a hex. Landing carries two complete themes (`dark` and
+ * `light`), and a literal colour would be right in at most one of them.
  */
 
 /** What a label or a control MEANS. Four, because Landing has four token colours to say it with. */

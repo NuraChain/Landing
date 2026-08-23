@@ -16,7 +16,7 @@ import type { BlogContent } from '../blog/content.ts';
  */
 const CHUNK = 500;
 
-/** The static routes worth crawling. `/admin` is absent for the reason robots.txt disallows it. */
+/** The static routes worth crawling. There is no private surface left to keep out of it. */
 const STATIC: ReadonlyArray<{ path: string; priority: string; frequency: string }> = [
     { path: '/', priority: '1.0', frequency: 'weekly' },
     { path: '/about', priority: '0.6', frequency: 'monthly' },

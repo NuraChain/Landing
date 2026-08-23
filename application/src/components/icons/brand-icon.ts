@@ -1,7 +1,7 @@
 import { siDiscord, siGithub, siInstagram, siTelegram, siX, siYoutube } from 'simple-icons';
 import type { SimpleIcon } from 'simple-icons';
 
-import { svgMark } from './svg-mark';
+import { svgMark } from './icon';
 import type { SocialId } from '../../lib/content/site';
 
 /**

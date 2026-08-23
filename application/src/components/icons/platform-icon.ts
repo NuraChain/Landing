@@ -1,7 +1,7 @@
 import { siAndroid, siApple, siLinux } from 'simple-icons';
 import type { SimpleIcon } from 'simple-icons';
 
-import { svgMark } from './svg-mark';
+import { svgMark } from './icon';
 import type { PlatformId } from '../../lib/content/site';
 
 /**

@@ -9,7 +9,7 @@
  */
 import { toDetail } from '../blog/present.ts';
 import type { BlogContent } from '../blog/content.ts';
-import type { PostDetail, PostLocale } from '../schemas.ts';
+import type { PostDetail } from '../schemas.ts';
 
 import { directionOf, renderMeta, type PageMeta } from './meta.ts';
 
@@ -86,6 +86,34 @@ const pathOf = (url: string, siteUrl: string): string =>
     new URL(url, siteUrl).pathname.replace(/\/+$/, '') || '/';
 
 /**
+ * One post address. Shared by every lookup below so they cannot disagree.
+ *
+ * The WHATWG url parser leaves a lone `%` exactly where it is - `/blog/%` keeps its bare
+ * percent through `new URL(...)` - so what this captures can still fail to decode.
+ */
+const postPathOf = (url: string, siteUrl: string): string | null =>
+    POST_PATH.exec(pathOf(url, siteUrl))?.[1] ?? null;
+
+/**
+ * Decodes a captured slug, or null when the escape sequence is malformed.
+ *
+ * `decodeURIComponent('%')` - any truncated escape - throws a URIError, and unguarded a
+ * mistyped address would turn into a 500 thrown from inside the renderer rather than the
+ * miss the callers below already know how to answer.
+ */
+const decodeSlug = (raw: string): string | null =>
+{
+    try
+    {
+        return decodeURIComponent(raw);
+    }
+    catch
+    {
+        return null;
+    }
+};
+
+/**
  * The meta for one url, or null when this module has nothing to say about it.
  *
  * Null is the important arm: it means "leave the shell exactly as it was", which is what any
@@ -127,14 +155,9 @@ export function metaFor(url: string, deps: SeoDeps): PageMeta | null
         };
     }
 
-    const match = POST_PATH.exec(path);
-
-    if (match === null)
-    {
-        return null;
-    }
-
-    const stored = store.bySlug(decodeURIComponent(match[1] ?? ''));
+    const match = postPathOf(url, siteUrl);
+    const slug = match === null ? null : decodeSlug(match);
+    const stored = slug === null ? null : store.bySlug(slug);
 
     // A slug nobody has published renders the app's own not-found state, and that page has
     // nothing to describe - the shell's default title is the right thing to leave in place.
@@ -207,8 +230,6 @@ export function metaFor(url: string, deps: SeoDeps): PageMeta | null
     };
 }
 
-// Each pattern eats the line's own indentation and its trailing newline, so removing a tag
-// removes the whole line rather than leaving a blank one behind in served markup.
 /**
  * Whether this url is a post address that resolves to nothing.
  *
@@ -222,17 +243,25 @@ export function metaFor(url: string, deps: SeoDeps): PageMeta | null
  */
 export function isMissingPost(url: string, deps: SeoDeps): boolean
 {
-    const match = POST_PATH.exec(pathOf(url, deps.siteUrl));
+    const match = postPathOf(url, deps.siteUrl);
 
     if (match === null)
     {
         return false;
     }
 
-    return deps.store.bySlug(decodeURIComponent(match[1] ?? '')) === null;
+    const slug = decodeSlug(match);
+
+    // An undecodable slug resolves to nothing by construction - that IS a missing post,
+    // not a non-post address.
+    return slug === null ? true : deps.store.bySlug(slug) === null;
 }
 
 const TITLE = /[ \t]*<title>[\s\S]*?<\/title>[ \t]*\r?\n?/i;
+/*
+ * Each pattern above eats the line's own indentation and its trailing newline, so removing a
+ * tag removes the whole line rather than leaving a blank one behind in served markup.
+ */
 const DESCRIPTION = /[ \t]*<meta\s+name="description"[^>]*>[ \t]*\r?\n?/i;
 const HTML_OPEN = /<html\b[^>]*>/i;
 
@@ -264,9 +293,6 @@ export function injectMeta(html: string, meta: PageMeta): string
         .replace('</head>', () => `    ${ head }\n    </head>`);
 }
 
-/** Every locale the site ships, for the sitemap's own use. Kept as the schema's list. */
-export type { PostLocale };
-
 /**
  * The post one url serves, in the language it was authored in - or null for anything else.
  *
@@ -278,14 +304,15 @@ export type { PostLocale };
  */
 export function postFor(url: string, deps: SeoDeps): PostDetail | null
 {
-    const match = POST_PATH.exec(pathOf(url, deps.siteUrl));
+    const match = postPathOf(url, deps.siteUrl);
+    const slug = match === null ? null : decodeSlug(match);
 
-    if (match === null)
+    if (slug === null)
     {
         return null;
     }
 
-    const stored = deps.store.bySlug(decodeURIComponent(match[1] ?? ''));
+    const stored = deps.store.bySlug(slug);
 
     return stored === null ? null : toDetail(stored, stored.post.defaultLocale);
 }

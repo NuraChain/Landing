@@ -278,6 +278,7 @@ export default component NetworkSection()
                             tone="faint"
                             pad
                             expanded={ showPriceNote }
+                            controls="network-price-note"
                             class="ms-auto"
                             onClick={ () => showPriceNote = !showPriceNote }
                         >
@@ -289,11 +290,15 @@ export default component NetworkSection()
                     </p>
 
                     { /* Same construction as the TVL breakdown below: in the DOM once loaded
-                         so the caveat reaches a screen reader whichever way the panel sits,
-                         absolute so opening it cannot shove its neighbours, and inert while
-                         closed so an invisible box never eats a click. */ }
+                          so the caveat reaches a screen reader whichever way the panel sits,
+                          absolute so opening it cannot shove its neighbours. While closed it
+                          is click-through AND out of the tab order - `tabindex="-1"` on its
+                          links, because an invisible control that accepts focus is a focus
+                          ring that disappears (WCAG 2.4.7), and Tab landing nowhere visible
+                          reads as the keyboard having broken. */ }
                     <Show when={ () => price !== null }>
                         <div
+                            id="network-price-note"
                             class={ () => 'absolute inset-x-0 top-full z-20 pt-2 '
                                 + (showPriceNote ? '' : 'pointer-events-none') }
                         >
@@ -312,6 +317,7 @@ export default component NetworkSection()
                                         href={ SWAP_URL }
                                         target="_blank"
                                         rel="noreferrer noopener"
+                                        tabindex={ () => showPriceNote ? undefined : -1 }
                                         class="flex items-center justify-between gap-4 text-xs text-muted transition-colors hover:text-ink"
                                     >
                                         <span>{ t().network.priceSource }</span>
@@ -384,6 +390,7 @@ export default component NetworkSection()
                             tone="faint"
                             pad
                             expanded={ showParts }
+                            controls="network-tvl-parts"
                             class="ms-auto"
                             onClick={ () => showParts = !showParts }
                         >
@@ -395,12 +402,13 @@ export default component NetworkSection()
                     </p>
 
                     { /* Stays in the DOM once loaded and hides with opacity rather than
-                         `Show`, so the amounts reach a screen reader whether or not the
-                         panel is open. Absolute, so opening it cannot shove the
-                         neighbouring tiles around, and `pointer-events-none` while closed
-                         so an invisible box never swallows a click meant for the page. */ }
+                          `Show`, so the amounts reach a screen reader whether or not the
+                          panel is open. Absolute, so opening it cannot shove the
+                          neighbouring tiles around. While closed it is click-through AND out
+                          of the tab order - same reasoning as the price note above. */ }
                     <Show when={ () => tvl !== null }>
                         <div
+                            id="network-tvl-parts"
                             class={ () => 'absolute inset-x-0 top-full z-20 pt-2 '
                                 + (showParts ? '' : 'pointer-events-none') }
                         >
@@ -429,6 +437,7 @@ export default component NetworkSection()
                                         href={ `${ EXPLORER_URL }/address/${ BRIDGE_HOLDER }` }
                                         target="_blank"
                                         rel="noreferrer noopener"
+                                        tabindex={ () => showParts ? undefined : -1 }
                                         class="flex items-center justify-between gap-4 text-xs text-muted transition-colors hover:text-ink"
                                     >
                                         <span>{ t().network.holder }</span>
@@ -442,6 +451,7 @@ export default component NetworkSection()
                                         href={ BRIDGE_HOLDER_BSC_URL }
                                         target="_blank"
                                         rel="noreferrer noopener"
+                                        tabindex={ () => showParts ? undefined : -1 }
                                         class="flex items-center justify-between gap-4 text-xs text-muted transition-colors hover:text-ink"
                                     >
                                         <span dir="ltr">BNB · BscScan</span>

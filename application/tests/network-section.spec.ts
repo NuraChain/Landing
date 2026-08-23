@@ -320,6 +320,35 @@ describe('NetworkSection TVL breakdown', () =>
         expect(container.textContent).toContain('500');
     });
 
+    // The amounts stay in the DOM whether or not the panel is open, so a screen reader
+    // reaches them; the panel hides with opacity rather than by unmounting. What closed
+    // must mean for the KEYBOARD is the opposite of "reachable": a link that takes focus
+    // while invisible is a focus ring that disappears.
+    it('keeps the collapsed breakdown out of the tab order', async () =>
+    {
+        withBalances();
+
+        const { container } = renderTest(() => NetworkSection({}));
+
+        await vi.waitFor(() => expect(container.textContent).toContain('USDT'));
+
+        const links = () => [...container.querySelectorAll<HTMLElement>('#network-tvl-parts a')];
+
+        expect(links().length).toBeGreaterThan(0);
+
+        for (const link of links())
+        {
+            expect(link.getAttribute('tabindex'), 'while collapsed').toBe('-1');
+        }
+
+        fire(toggle(container), 'click');
+
+        for (const link of links())
+        {
+            expect(link.hasAttribute('tabindex'), 'while open').toBe(false);
+        }
+    });
+
     it('pins the holder address LTR so bidi cannot reorder it', async () =>
     {
         withBalances();
@@ -442,6 +471,30 @@ describe('NetworkSection price note', () =>
         await vi.waitFor(() => expect(container.textContent).toContain(en.network.priceThin));
 
         expect(toggle(container).getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('wires the disclosure to its panel and out of the tab order while collapsed', async () =>
+    {
+        routeFetch({});
+
+        const { container } = renderTest(() => NetworkSection({}));
+
+        await vi.waitFor(() => expect(container.textContent).toContain(en.network.priceThin));
+
+        const button = toggle(container);
+
+        // aria-controls names the region the button opens, so the relationship survives
+        // without proximity - same contract the tokenomics notes keep.
+        expect(button.getAttribute('aria-controls')).toBe('network-price-note');
+        expect(container.querySelector('#network-price-note')).not.toBeNull();
+
+        const link = container.querySelector<HTMLElement>('#network-price-note a')!;
+
+        expect(link.getAttribute('tabindex')).toBe('-1');
+
+        fire(button, 'click');
+
+        expect(link.hasAttribute('tabindex')).toBe(false);
     });
 });
 

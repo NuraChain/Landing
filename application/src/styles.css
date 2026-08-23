@@ -19,10 +19,11 @@
    package ships per-script unicode-range subsets, so nothing unused downloads. */
 @import '@fontsource-variable/space-grotesk';
 
-/* Themes are explicit, not inferred. `light-dark()` can only express two, and this site
-   ships three, so every token is declared per `[data-theme]` and the attribute is set
-   before first paint by the script in index.html. `color-scheme` still rides along so
-   native controls, scrollbars and form widgets follow the theme too. */
+/* Themes are explicit, not inferred. `light-dark()` can only express two palettes and
+   this site needs its own pair anyway, so every token is declared per `[data-theme]`
+   (`dark` and `light`) and the attribute is set before first paint by the script in
+   index.html. `color-scheme` still rides along so native controls, scrollbars and form
+   widgets follow the theme too. */
 
 :root,
 :root[data-theme='dark']
@@ -397,11 +398,9 @@
     animation: caret 1.1s steps(1) infinite;
 }
 
-/* One keyframe, direction supplied by a custom property, so the drawer enters from the
-   right in English and the left in Persian without a second animation to keep in step. */
-/* A toast arrives from the edge it sits on. The drawer's keyframe would slide it in from
-   the SIDE, which reads as a panel rather than a notice - and would borrow
-   `--drawer-from`, a custom property only the drawer sets. */
+/* A toast arrives from the edge it sits on, rising a little as it fades in. The drawer's
+   keyframe would slide it in from the SIDE, which reads as a panel rather than a notice -
+   and would borrow `--drawer-from`, a custom property only the drawer sets. */
 @keyframes toast
 {
     from
@@ -411,6 +410,9 @@
     }
 }
 
+/* The drawer enters from its own inline-end edge - one keyframe with the direction
+   supplied by a custom property, so it comes from the right in English and the left in
+   Persian without a second animation to keep in step. */
 @keyframes drawer
 {
     from
