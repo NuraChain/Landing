@@ -162,6 +162,67 @@ const run = async () =>
                 await page.goto(URL_UNDER_TEST, { waitUntil: 'networkidle', timeout: 60000 });
                 await page.waitForSelector('main', { timeout: 30000 });
 
+                /*
+                 * Let the entrance settle before measuring anything.
+                 *
+                 * axe judges the page it is HANDED. The hero plays a one-shot timeline on load
+                 * and its controls fade in, and an element caught at opacity 0.4 has a blended
+                 * colour - so axe reported a serious `color-contrast` failure against the
+                 * primary CTA in all three RTL scenarios and none of the LTR ones. The pair it
+                 * flagged measures 8.77:1. What differed was timing: Persian waits on the Arabic
+                 * font subset, which pushed the sample earlier into the fade. A gate that fails
+                 * on when the screenshot was taken is a gate nobody trusts.
+                 *
+                 * Waits for the PAGE TO SAY SO - `#hero[data-entrance="done"]`, set by the hero
+                 * when its timeline completes and immediately when reduced motion skips it.
+                 *
+                 * Two weaker versions came first and both raced. "No animation is running"
+                 * resolved at narrow widths before the timeline had started; "every entrance
+                 * target is opaque" resolved before they had been set to zero. Anything the
+                 * harness can OBSERVE about the animation can be observed too early. Only the
+                 * page knows when it is finished.
+                 *
+                 * It also sidesteps the ticker tape, which loops forever by design and would
+                 * hold a blanket wait open until the timeout on every scenario.
+                 */
+                await page.waitForFunction(() => document.querySelector('#hero') === null
+                    || document.querySelector('#hero[data-entrance="done"]') !== null,
+                null, { timeout: 8000 })
+                    .catch(() => { /* No signal within the window; measure what is on screen. */ });
+
+                /*
+                 * Walk the page before measuring it.
+                 *
+                 * Every section below the hero reveals on an IntersectionObserver, so it sits
+                 * at opacity 0 until it has been scrolled past once. Playwright's `fullPage`
+                 * screenshot does NOT scroll - it stitches from the top - so the artifacts
+                 * were a hero, a footer, and several thousand pixels of black between them,
+                 * and axe was auditing those two pieces while reporting a clean page. The
+                 * instruction in the notes is to look at the screenshots; this is what makes
+                 * there be something to look at.
+                 *
+                 * Back to the top afterwards so the capture starts where a reader would.
+                 */
+                try
+                {
+                    const height = await page.evaluate(() => document.body.scrollHeight);
+                    const step = Math.round((viewport.height ?? 900) * 0.8);
+
+                    for (let y = 0; y < height; y += step)
+                    {
+                        await page.evaluate((to) => { window.scrollTo(0, to); }, y);
+                        await page.waitForTimeout(120);
+                    }
+
+                    await page.evaluate(() => { window.scrollTo(0, 0); });
+                    await page.waitForTimeout(400);
+                }
+                catch
+                {
+                    // One short call per step rather than one long one, so a reload mid-walk
+                    // costs a step instead of the whole run. Measure what is on screen.
+                }
+
                 const layout = await layoutProblems(page);
 
                 if (layout.dir !== direction.dir)
