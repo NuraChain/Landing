@@ -1,7 +1,7 @@
 # Nura Landing — working notes
 
 Marketing site for Nura Wallet, with a blog behind it. Ten languages,
-two right-to-left, three themes, live chain figures read in the browser.
+two right-to-left, two themes, live chain figures read in the browser.
 
 **Two npm workspaces.** `application/` is the site; `server/` is the HTTP API, the blog content
 and the process that serves the built bundles. Paths below are relative to whichever
@@ -155,7 +155,7 @@ Twitter, JSON-LD - and `seo/article.ts` renders the markdown into the same docum
 ## Design system
 
 All tokens live at the top of `src/styles.css`, declared per `[data-theme]` for
-**three** themes: `dark`, `light`, `contrast`. Tailwind reads them through
+**two** themes: `dark` and `light`. Tailwind reads them through
 `@theme inline`.
 
 - Colour: `--bg`, `--surface`, `--elevated`, `--ink`, `--muted`, `--faint`,
@@ -182,7 +182,7 @@ All tokens live at the top of `src/styles.css`, declared per `[data-theme]` for
 
 Rules:
 
-1. **Never put a raw hex in a component.** Add a token, to all three themes.
+1. **Never put a raw hex in a component.** Add a token, to both themes.
 2. A new colour must be **contrast-measured**, not eyeballed. Floor is WCAG AA:
    4.5:1 normal text, 3:1 large text and non-text indicators.
    `--faint` shipped at 3.56:1 and was raised to clear 4.5:1 on every surface —
@@ -263,6 +263,74 @@ Load the **`accessibility-audit`** skill for review work.
   at the end of `document.body` — without it, Tab from the trigger walks the entire page
   underneath the scrim before reaching the panel covering it. The trap wraps at both ends.
 - `prefers-reduced-motion` is honoured globally in `styles.css`.
+
+## Motion
+
+Anime.js v4, behind `lib/motion.ts`. Everything animated routes through that module so two
+rules cannot be forgotten by a section written later - see its header.
+
+**The framework pattern.** Anime.js documents `createScope` for component frameworks
+(`animejs.com/documentation/getting-started/using-with-react`), and the React example
+translates to AzerothJS one line at a time:
+
+| React | here |
+| --- | --- |
+| `useRef` + `ref={root}` | `onReady('hero', (section) => ...)` - effects run before the node attaches, so the helper waits for it |
+| `useEffect(() => {...}, [])` | an `effect` block |
+| `return () => scope.revert()` | the effect's `cleanup` block |
+| `scope.current.methods.x()` | a closure captured in the effect |
+
+```ts
+effect
+{
+    const release = onReady('hero', (section) =>
+    {
+        const scope = createScope({ root: section }).add(() =>
+        {
+            animate('.thing', { opacity: [0, 1] });
+
+            // Returned from the constructor: run by revert(), for anything anime.js
+            // did not create itself - a listener, a class, a raf loop.
+            return () => section.classList.remove('running');
+        });
+
+        return () => scope.revert();
+    });
+
+    cleanup { release(); }
+}
+```
+
+`revert()` undoes every anime.js object declared inside the scope AND runs that returned
+cleanup, which is the whole reason to reach for it: the alternative is the hand-rolled
+`playing` and `detach` arrays `hero.section.azeroth` currently keeps, one push per animation,
+where a forgotten push is a leak nothing reports. A scope per section is the shape to move
+toward; the hero has not been converted yet.
+
+`createScope` also takes `mediaQueries`, and `{ reducedMotion: '(prefers-reduced-motion)' }`
+is a first-class entry with the state on `self.matches.reducedMotion`. It is a real
+alternative to `motionOk()` and it is reactive, which `motionOk()` is not - the hand-rolled
+gate is read once when the effect runs, so a visitor toggling the OS setting mid-visit keeps
+whatever they loaded with until a reload.
+
+**`utils` stays out of this file.** It is a namespace re-export (`export * as utils`) and
+Vite's dependency pre-bundling has handed back `undefined` for such bindings at runtime.
+Plain style writes and `document.querySelector` cost nothing and cannot. This is why the
+scope example above does not use the scoped `utils.$()` the docs show.
+
+**What `prefers-reduced-motion` suppresses, and what it must not.** Every JS entry point in
+`lib/motion.ts` gates on `motionOk()`, and so do `smooth-scroll.ts` and the hero's own
+choreography. Two things deliberately do NOT:
+
+- `theme-transition.ts` cross-fades instead of sweeping. The preference is about MOVEMENT;
+  a layer changing opacity in place is not movement, and snapping a whole page between
+  palettes in one frame is the harshest version of the change handed to the readers who
+  asked for the gentlest.
+- The hero's crosshair and `X/Y` readout track the pointer 1:1 with no easing and no travel
+  of their own. That is direct manipulation, not autonomous motion. It used to sit inside
+  the gate, which left those readers a hero permanently reading `X 0000 · Y 0000`.
+
+The distinction is worth holding: suppress what moves on its own, keep what follows a hand.
 
 ## Visual QA workflow
 
