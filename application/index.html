@@ -24,7 +24,7 @@
             {
                 try
                 {
-                    var themes = ['dark', 'light', 'contrast'];
+                    var themes = ['dark', 'light'];
                     var saved = localStorage.getItem('nura.theme');
                     var theme = themes.indexOf(saved) === -1
                         ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')

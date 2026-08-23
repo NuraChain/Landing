@@ -25,8 +25,7 @@ export const ar: Strings =
     {
         label: 'المظهر',
         dark: 'داكن',
-        light: 'فاتح',
-        contrast: 'تباين عالٍ'
+        light: 'فاتح'
     },
 
     hero:

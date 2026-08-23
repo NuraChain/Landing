@@ -25,8 +25,7 @@ export const en: Strings =
     {
         label: 'Theme',
         dark: 'Dark',
-        light: 'Light',
-        contrast: 'High contrast'
+        light: 'Light'
     },
 
     hero:

@@ -1,6 +1,6 @@
 import { For, Link, Show } from 'azerothjs';
 
-import { Check, Contrast, Languages, Menu, Moon, Sun, X } from 'lucide';
+import { Check, Languages, Menu, Moon, Sun, X } from 'lucide';
 
 import { LOCALES, nativeName, useLocale } from '../../stores/locale';
 import { captureOverlay } from '../../lib/overlay';
@@ -21,7 +21,7 @@ type SectionId = 'wallet' | 'tokenomics' | 'chain' | 'explorer' | 'social';
 // fails to assign and collapses the row parameter to `unknown`.
 const SECTIONS: SectionId[] = ['wallet', 'tokenomics', 'chain', 'explorer', 'social'];
 
-const GLYPH: Record<Theme, typeof Moon> = { dark: Moon, light: Sun, contrast: Contrast };
+const GLYPH: Record<Theme, typeof Moon> = { dark: Moon, light: Sun };
 
 /**
  * Sticky header that condenses once the page scrolls.

@@ -25,8 +25,7 @@ export const tr: Strings =
     {
         label: 'Tema',
         dark: 'Koyu',
-        light: 'Açık',
-        contrast: 'Yüksek kontrast'
+        light: 'Açık'
     },
 
     hero:

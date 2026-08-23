@@ -25,8 +25,7 @@ export const fa: Strings =
     {
         label: 'پوسته',
         dark: 'تیره',
-        light: 'روشن',
-        contrast: 'کنتراست بالا'
+        light: 'روشن'
     },
 
     hero:

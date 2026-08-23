@@ -25,8 +25,7 @@ export const hi: Strings =
     {
         label: 'थीम',
         dark: 'डार्क',
-        light: 'लाइट',
-        contrast: 'हाई कॉन्ट्रास्ट'
+        light: 'लाइट'
     },
 
     hero:

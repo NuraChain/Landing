@@ -25,8 +25,7 @@ export const ru: Strings =
     {
         label: 'Тема',
         dark: 'Тёмная',
-        light: 'Светлая',
-        contrast: 'Высокая контрастность'
+        light: 'Светлая'
     },
 
     hero:

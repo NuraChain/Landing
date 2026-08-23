@@ -1,8 +1,8 @@
 import { createEffect, createSignal, createStore, onCleanup } from 'azerothjs';
 
-export type Theme = 'dark' | 'light' | 'contrast';
+export type Theme = 'dark' | 'light';
 
-export const THEMES: readonly Theme[] = ['dark', 'light', 'contrast'];
+export const THEMES: readonly Theme[] = ['dark', 'light'];
 
 /**
  * Shared with the pre-paint script inlined in `index.html`. Both must agree on the key and

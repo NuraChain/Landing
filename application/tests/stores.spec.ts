@@ -114,10 +114,11 @@ describe('theme store: resolution at startup', () =>
 
     it('restores a previously chosen theme over the OS preference', async () =>
     {
+        // The OS asks for light; the visitor asked for dark last time and that stands.
         stubMatchMedia(true);
-        stubStorage().set('nura.theme', 'contrast');
+        stubStorage().set('nura.theme', 'dark');
 
-        expect((await freshTheme()).theme()).toBe('contrast');
+        expect((await freshTheme()).theme()).toBe('dark');
     });
 
     // A stored value can be anything: a stale key from an older release, or a user editing
@@ -142,7 +143,7 @@ describe('theme store: resolution at startup', () =>
 
 describe('theme store: choosing and cycling', () =>
 {
-    it('cycles dark to light to contrast and back', async () =>
+    it('cycles dark to light and back', async () =>
     {
         stubMatchMedia(false);
         stubStorage();
@@ -150,13 +151,13 @@ describe('theme store: choosing and cycling', () =>
         const { theme, cycle } = await freshTheme();
         const seen: Theme[] = [theme()];
 
-        for (let step = 0; step < 3; step += 1)
+        for (let step = 0; step < 2; step += 1)
         {
             cycle();
             seen.push(theme());
         }
 
-        expect(seen).toEqual(['dark', 'light', 'contrast', 'dark']);
+        expect(seen).toEqual(['dark', 'light', 'dark']);
     });
 
     it('persists the chosen theme', async () =>
@@ -166,9 +167,9 @@ describe('theme store: choosing and cycling', () =>
         const data = stubStorage();
         const { choose } = await freshTheme();
 
-        choose('contrast');
+        choose('light');
 
-        expect(data.get('nura.theme')).toBe('contrast');
+        expect(data.get('nura.theme')).toBe('light');
     });
 
     // The theme must still apply for this visit; only the memory of it is lost.

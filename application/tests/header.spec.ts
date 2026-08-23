@@ -274,9 +274,7 @@ describe('theme control', () =>
         fire(button, 'click');
         expect(useTheme().theme()).toBe('light');
 
-        fire(button, 'click');
-        expect(useTheme().theme()).toBe('contrast');
-
+        // Two themes, so the second click is already the wrap.
         fire(button, 'click');
         expect(useTheme().theme()).toBe('dark');
     });

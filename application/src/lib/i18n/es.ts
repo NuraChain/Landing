@@ -25,8 +25,7 @@ export const es: Strings =
     {
         label: 'Tema',
         dark: 'Oscuro',
-        light: 'Claro',
-        contrast: 'Alto contraste'
+        light: 'Claro'
     },
 
     hero:

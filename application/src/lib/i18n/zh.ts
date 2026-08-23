@@ -25,8 +25,7 @@ export const zh: Strings =
     {
         label: '主题',
         dark: '深色',
-        light: '浅色',
-        contrast: '高对比度'
+        light: '浅色'
     },
 
     hero:

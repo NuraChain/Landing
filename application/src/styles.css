@@ -109,49 +109,6 @@
     --brand-linux: #9a7700;
 }
 
-/* Not "dark but more". Contrast mode drops the decorative layers entirely: solid
-   backgrounds, full-strength borders, no glow, because the visual noise is exactly what
-   makes a low-vision reader lose the edge of a control. */
-:root[data-theme='contrast']
-{
-    color-scheme: dark;
-
-    --bg: #000000;
-    --surface: #000000;
-    --elevated: #12151a;
-    --ink: #ffffff;
-    --muted: #e2e8f0;
-    --faint: #cbd5e1;
-    --line: #ffffff;
-    --line-strong: #ffffff;
-
-    --accent: #4ff0d2;
-    --accent-hover: #7bf7e0;
-    --accent-ink: #000000;
-    --accent-soft: color-mix(in srgb, var(--accent) 22%, transparent);
-
-    --warm: #ffc94d;
-    --danger: #ff8fa8;
-
-    --glow: none;
-    --shadow: none;
-
-    /* Full strength, not a tint. A low-contrast thumb is exactly the affordance this
-       theme's readers cannot find. */
-    --scroll-thumb: #ffffff;
-    --scroll-thumb-hover: var(--accent);
-
-    /* Brightest step of each hue, on pure black. The dark theme's values would technically
-       pass here, but this theme exists for readers who need headroom rather than the
-       minimum, so every mark is pushed up: nothing below 8:1. */
-    --brand-ios: #f5f5f7;
-    --brand-macos: #f5f5f7;
-    --brand-android: #3ddc84;
-    --brand-apk: #3ddc84;
-    --brand-windows: #4cc2ff;
-    --brand-linux: #fcc624;
-}
-
 /* The mono stack sits behind a variable of its own because `@theme inline` INLINES the
    literal value of `--font-mono` straight into the `.font-mono` utility - so redefining
    `--font-mono` further down the cascade changes nothing, the utility never reads it back.
@@ -261,8 +218,8 @@
 
     /* The standard property first, since Firefox and current Chromium both honour it and
        it is the one that will outlive the vendor prefix. `--scroll-thumb` is a theme token
-       rather than a fixed grey so the contrast theme can raise it to a full-strength edge
-       instead of the subtle one that suits dark. */
+       rather than a fixed grey, so each theme sets a thumb that reads against its own
+       surface instead of one grey suiting neither. */
     html
     {
         scrollbar-width: thin;
@@ -318,7 +275,7 @@
     }
 
     /* The blueprint column grid behind the brutalist hero. It reads --line, so it follows
-       every theme; the contrast theme strips it below, the same way --glow becomes none. */
+       every theme. */
     .blueprint
     {
         background-image: repeating-linear-gradient(
@@ -413,13 +370,6 @@
     {
         will-change: transform;
     }
-}
-
-/* The contrast theme drops decorative layers entirely: solid backgrounds, full-strength
-   borders, no glow. The blueprint grid is decoration, so it goes too. */
-:root[data-theme='contrast'] .blueprint
-{
-    background-image: none;
 }
 
 /* The circular theme reveal (lib/theme-transition.ts): the browser snapshots both

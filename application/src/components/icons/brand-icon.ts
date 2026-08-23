@@ -25,7 +25,7 @@ const MARK: Record<SocialId, SimpleIcon> =
 
 /**
  * Renders with `currentColor` rather than the brand hex, so a mark stays legible on all
- * three themes. The contrast theme in particular needs full-strength ink; GitHub's own
+ * both themes. Dark in particular needs full-strength ink; GitHub's own
  * near-black would vanish into that background.
  */
 export const brandIcon = (id: SocialId, className = 'size-[18px]'): SVGElement | null =>

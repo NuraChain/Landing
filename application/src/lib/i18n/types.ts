@@ -39,7 +39,6 @@ export interface Strings
         label: string;
         dark: string;
         light: string;
-        contrast: string;
     };
 
     hero:
