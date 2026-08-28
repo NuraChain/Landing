@@ -36,6 +36,11 @@ beforeEach(() =>
 {
     useLocale().choose('en');
     delete (window as { ethereum?: unknown }).ethereum;
+    delete (window as { trustwallet?: unknown }).trustwallet;
+    delete (window as { trustWallet?: unknown }).trustWallet;
+    delete (window as { nurawallet?: unknown }).nurawallet;
+    delete (window as { nuraWallet?: unknown }).nuraWallet;
+    delete (window as { nura?: unknown }).nura;
     location.hash = '';
     vi.useFakeTimers();
 });
@@ -45,6 +50,11 @@ afterEach(() =>
     vi.useRealTimers();
     cleanup();
     delete (window as { ethereum?: unknown }).ethereum;
+    delete (window as { trustwallet?: unknown }).trustwallet;
+    delete (window as { trustWallet?: unknown }).trustWallet;
+    delete (window as { nurawallet?: unknown }).nurawallet;
+    delete (window as { nuraWallet?: unknown }).nuraWallet;
+    delete (window as { nura?: unknown }).nura;
     location.hash = '';
     localStorage.clear();
     vi.restoreAllMocks();
@@ -140,7 +150,7 @@ describe('AddChainButton state machine', () =>
         await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
     });
 
-    it('sends the EIP-3085 request exactly once per accepted click', async () =>
+    it('sends the EIP-1193 switch request exactly once per accepted click', async () =>
     {
         const request = vi.fn().mockResolvedValue(null);
 
@@ -151,7 +161,30 @@ describe('AddChainButton state machine', () =>
         fire(container.querySelector('button')!, 'click');
         await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(1));
 
-        expect(request.mock.calls[0][0]).toMatchObject({ method: 'wallet_addEthereumChain' });
+        expect(request.mock.calls[0][0]).toMatchObject({ method: 'wallet_switchEthereumChain' });
+    });
+
+    it('adds the chain when switch reports unknown chain (4902)', async () =>
+    {
+        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
+        {
+            if (method === 'wallet_switchEthereumChain')
+            {
+                throw Object.assign(new Error('Unknown chain'), { code: 4902 });
+            }
+
+            return null;
+        });
+
+        withProvider(request);
+
+        const { container } = renderTest(() => AddChainButton({}));
+
+        fire(container.querySelector('button')!, 'click');
+        await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+        expect(request.mock.calls[0][0]).toMatchObject({ method: 'wallet_switchEthereumChain' });
+        expect(request.mock.calls[1][0]).toMatchObject({ method: 'wallet_addEthereumChain' });
+        await vi.waitFor(() => expect(label(container)).toBe(en.addChain.done));
     });
 
     it('renders its label in the active locale', async () =>

@@ -19,11 +19,21 @@ const withProvider = (request: Request): void =>
 beforeEach(() =>
 {
     delete (window as { ethereum?: unknown }).ethereum;
+    delete (window as { trustwallet?: unknown }).trustwallet;
+    delete (window as { trustWallet?: unknown }).trustWallet;
+    delete (window as { nurawallet?: unknown }).nurawallet;
+    delete (window as { nuraWallet?: unknown }).nuraWallet;
+    delete (window as { nura?: unknown }).nura;
 });
 
 afterEach(() =>
 {
     delete (window as { ethereum?: unknown }).ethereum;
+    delete (window as { trustwallet?: unknown }).trustwallet;
+    delete (window as { trustWallet?: unknown }).trustWallet;
+    delete (window as { nurawallet?: unknown }).nurawallet;
+    delete (window as { nuraWallet?: unknown }).nuraWallet;
+    delete (window as { nura?: unknown }).nura;
     vi.restoreAllMocks();
 });
 
@@ -41,7 +51,7 @@ describe('addChainToWallet', () =>
         await expect(addChainToWallet()).resolves.toBe('added');
     });
 
-    it('sends exactly one wallet_addEthereumChain request with the chain params', async () =>
+    it('switches to the chain when it is already known (no add needed)', async () =>
     {
         const request = vi.fn().mockResolvedValue(null);
 
@@ -51,9 +61,55 @@ describe('addChainToWallet', () =>
 
         expect(request).toHaveBeenCalledTimes(1);
         expect(request).toHaveBeenCalledWith({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x3fc' }]
+        });
+    });
+
+    it('adds the chain when the wallet does not know it (4902 → add)', async () =>
+    {
+        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
+        {
+            if (method === 'wallet_switchEthereumChain')
+            {
+                throw Object.assign(new Error('Unknown chain'), { code: 4902 });
+            }
+
+            return null;
+        });
+
+        withProvider(request);
+
+        await expect(addChainToWallet()).resolves.toBe('added');
+
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(request.mock.calls[0][0]).toEqual({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x3fc' }]
+        });
+        expect(request.mock.calls[1][0]).toEqual({
             method: 'wallet_addEthereumChain',
             params: [ADD_CHAIN_PARAMS]
         });
+    });
+
+    it('falls back to add when switch is not supported (-32601)', async () =>
+    {
+        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
+        {
+            if (method === 'wallet_switchEthereumChain')
+            {
+                throw Object.assign(new Error('Method not found'), { code: -32601 });
+            }
+
+            return null;
+        });
+
+        withProvider(request);
+
+        await expect(addChainToWallet()).resolves.toBe('added');
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(request.mock.calls[1][0].method).toBe('wallet_addEthereumChain');
     });
 
     // The visitor declining the MetaMask prompt is code 4001. It is not an error condition
@@ -108,6 +164,70 @@ describe('addChainToWallet', () =>
         const results = await Promise.all([addChainToWallet(), addChainToWallet(), addChainToWallet()]);
 
         expect(results).toEqual(['failed', 'failed', 'failed']);
+    });
+
+    it('uses a provider from window.ethereum.providers when multiple wallets are present', async () =>
+    {
+        const request = vi.fn().mockResolvedValue(null);
+        const secondary = vi.fn().mockResolvedValue(null);
+        (window as unknown as { ethereum: unknown }).ethereum = {
+            request,
+            providers: [{ request: secondary } as unknown as { request: Request }, { request } as unknown as { request: Request }]
+        };
+
+        await expect(addChainToWallet()).resolves.toBe('added');
+        // Should try a provider from the array - either the array entry or the proxy.
+        expect(request.mock.calls.length + secondary.mock.calls.length).toBeGreaterThan(0);
+    });
+
+    it('supports Trust Wallet via window.trustwallet.ethereum', async () =>
+    {
+        const request = vi.fn().mockResolvedValue(null);
+        (window as unknown as { trustwallet: unknown }).trustwallet = { ethereum: { request } };
+
+        await expect(addChainToWallet()).resolves.toBe('added');
+        expect(request).toHaveBeenCalledWith(expect.objectContaining({ method: 'wallet_switchEthereumChain' }));
+    });
+
+    it('supports Nura Wallet via window.nurawallet', async () =>
+    {
+        const request = vi.fn().mockResolvedValue(null);
+        (window as unknown as { nurawallet: unknown }).nurawallet = { request };
+
+        await expect(addChainToWallet()).resolves.toBe('added');
+        expect(request).toHaveBeenCalledWith(expect.objectContaining({ method: 'wallet_switchEthereumChain' }));
+    });
+
+    it('discovers providers via EIP-6963 when window.ethereum is absent', async () =>
+    {
+        const request = vi.fn().mockResolvedValue(null);
+        const provider = { request };
+
+        // Announce after the module dispatches eip6963:requestProvider
+        window.addEventListener('eip6963:requestProvider', () =>
+        {
+            window.dispatchEvent(
+                new CustomEvent('eip6963:announceProvider', {
+                    detail: { info: { name: 'Fake Wallet', rdns: 'com.example.fake' }, provider }
+                })
+            );
+        }, { once: true });
+
+        await expect(addChainToWallet()).resolves.toBe('added');
+        expect(request).toHaveBeenCalledWith(expect.objectContaining({ method: 'wallet_switchEthereumChain' }));
+    });
+
+    it('does not try a second provider after user rejected (4001)', async () =>
+    {
+        const first = vi.fn().mockRejectedValue(Object.assign(new Error('rejected'), { code: 4001 }));
+        const second = vi.fn().mockResolvedValue(null);
+        (window as unknown as { ethereum: unknown }).ethereum = {
+            request: first,
+            providers: [{ request: first } as unknown as { request: Request }, { request: second } as unknown as { request: Request }]
+        };
+
+        await expect(addChainToWallet()).resolves.toBe('failed');
+        expect(second).not.toHaveBeenCalled();
     });
 });
 
