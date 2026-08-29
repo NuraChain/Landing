@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.6] - 2026-08-29
+
+### Fixed
+
+- **The add-chain button did nothing at all when no wallet was installed.** It answered that
+  case with `location.hash = '#chain'` and nothing else - and assigning a hash the document
+  already carries fires no navigation and moves no scroll. Since the button is rendered
+  inside the chain section as well as in the hero, pressing it there was a literal no-op:
+  no movement, no label change, no message. It now says a wallet was not found and scrolls
+  to the manual values, which were always the intended fallback.
+- **Declining a wallet prompt was reported as a failure.** A `4001` was folded into the same
+  `failed` outcome as a wallet that could not do the job, so somebody who pressed cancel was
+  told "Could not add" - their own decision handed back as a malfunction. Declining is its
+  own outcome now, and the button simply returns to rest.
+- **Every other outcome was near-silent too.** Success, failure and the missing wallet all
+  report through the toast store the shell already mounts, rather than a label that changes
+  for 2.6 seconds and is easy to miss.
+- The hero's word masks carry an explicit height, so a reveal clips to a stated box rather
+  than to whatever line box it inherits.
+
+### Added
+
+- `addChain.noWallet` in all ten locales - the message shown when nothing on the machine can
+  be asked.
+
 ## [1.6.5] - 2026-08-29
 
 ### Added
