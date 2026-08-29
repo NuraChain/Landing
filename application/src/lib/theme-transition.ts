@@ -18,8 +18,13 @@ import { motionOk } from './motion';
  *   the change, handed to the readers who asked for the gentlest. So the motion goes and the
  *   transition stays.
  *
- * The trigger is located by the `.theme-trigger` class the header's toggle carries; if
- * it is somehow absent, the circle starts from the viewport center rather than failing.
+ * The trigger is located by the `.theme-trigger` class the theme toggles carry. There are
+ * TWO of them - the header bar's, and the drawer row that replaces it below `md` - and only
+ * one is rendered at a time, so the first RENDERED match is the one that matters. Taking
+ * `querySelector`'s first match instead would read the hidden bar button on a phone, and
+ * `getBoundingClientRect()` on a `display: none` element is all zeros: the wipe would open
+ * from the top-left corner of the viewport rather than from the control the thumb just hit.
+ * If neither is rendered, the circle starts from the viewport center rather than failing.
  */
 
 /** How long each arm runs. The fade is shorter: there is no distance for the eye to follow. */
@@ -40,7 +45,10 @@ export const withThemeTransition = (apply: () => void): void =>
     // asking twice invites the two halves to disagree if the setting changes mid-transition.
     const sweep = motionOk();
 
-    const trigger = document.querySelector<HTMLElement>('.theme-trigger');
+    // `getClientRects()` is empty for anything `display: none`, which is exactly the test
+    // wanted here - unlike `offsetParent`, it does not also reject a positioned ancestor.
+    const trigger = [...document.querySelectorAll<HTMLElement>('.theme-trigger')]
+        .find((node) => node.getClientRects().length > 0) ?? null;
 
     let cx = window.innerWidth / 2;
     let cy = window.innerHeight / 2;
