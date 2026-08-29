@@ -285,7 +285,7 @@ const attemptForProvider = async (provider: Eip1193Provider): Promise<AttemptRes
     }
 };
 
-export type AddChainResult = 'added' | 'failed' | 'no-provider';
+export type AddChainResult = 'added' | 'rejected' | 'failed' | 'no-provider';
 
 /**
  * Asks the injected wallet to add Nura Chain.
@@ -297,8 +297,8 @@ export type AddChainResult = 'added' | 'failed' | 'no-provider';
  * globals above or announce through EIP-6963.
  *
  * Returns an outcome instead of throwing, because every branch is an expected state the
- * button renders, not an error: `no-provider` is most desktop browsers, and `failed` covers
- * both the visitor declining the prompt and a wallet that rejects the params.
+ * button renders, not an error: `no-provider` is most desktop browsers, `rejected` is the
+ * visitor declining the prompt, and `failed` is a wallet that could not do it.
  */
 export const addChainToWallet = async (): Promise<AddChainResult> =>
 {
@@ -338,7 +338,10 @@ export const addChainToWallet = async (): Promise<AddChainResult> =>
 
         if (result === 'rejected')
         {
-            return 'failed';
+            // Reported as its own outcome rather than folded into `failed`: the visitor was
+            // asked and answered, and telling them their answer did not work is both wrong and
+            // faintly rude. The loop still stops - they said no once.
+            return 'rejected';
         }
 
         // 'failed' - the next wallet may still be able to answer.

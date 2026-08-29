@@ -115,11 +115,14 @@ describe('addChainToWallet', () =>
     // The visitor declining the MetaMask prompt is code 4001. It is not an error condition
     // for this site - the button says so and goes back to idle - but it must not be
     // mistaken for success.
-    it('reports failed when the visitor rejects the prompt', async () =>
+    it('reports rejected, not failed, when the visitor declines the prompt', async () =>
     {
         withProvider(vi.fn().mockRejectedValue(Object.assign(new Error('User rejected the request.'), { code: 4001 })));
 
-        await expect(addChainToWallet()).resolves.toBe('failed');
+        // Its own outcome: the button reports a failure to the reader, and a decision the
+        // reader made is not one. `failed` here put "Could not add" in front of somebody who
+        // had just pressed cancel.
+        await expect(addChainToWallet()).resolves.toBe('rejected');
     });
 
     it('reports failed when the wallet rejects the params', async () =>
@@ -226,7 +229,9 @@ describe('addChainToWallet', () =>
             providers: [{ request: first } as unknown as { request: Request }, { request: second } as unknown as { request: Request }]
         };
 
-        await expect(addChainToWallet()).resolves.toBe('failed');
+        // `rejected`, not `failed`: they were asked and answered. The loop still stops - the
+        // point of the test - because a second wallet prompt after a no is harassment.
+        await expect(addChainToWallet()).resolves.toBe('rejected');
         expect(second).not.toHaveBeenCalled();
     });
 });

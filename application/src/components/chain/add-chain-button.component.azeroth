@@ -2,9 +2,11 @@ import { createSignal } from 'azerothjs';
 
 import { Check, TriangleAlert, Wallet } from 'lucide';
 
+import { motionOk } from '../../lib/motion';
 import { addChainToWallet } from '../../lib/wallet';
 
 import { useLocale } from '../../stores/locale';
+import { useToasts } from '../../stores/toasts';
 
 import Button from '../ui/button.component.azeroth';
 import type { ButtonShape, ButtonSize, ButtonVariant } from '../ui/button.component.azeroth';
@@ -16,17 +18,38 @@ type Status = 'idle' | 'pending' | 'added' | 'failed';
  * The one-click version of the chain reference card: asks the injected wallet to add Nura
  * Chain (EIP-3085) and answers on its own label, the same way CopyField confirms a copy.
  *
- * With no wallet extension present - most desktop browsers - it jumps to #chain instead,
- * because the manual values ARE the fallback and a button that silently does nothing reads
- * as broken.
+ * With no wallet extension present - most desktop browsers - it says so and sends the reader
+ * to the manual values, because those ARE the fallback.
+ *
+ * It used to answer that case with `location.hash = '#chain'` and nothing else, which is how
+ * this button came to be reported as doing nothing at all. Assigning a hash the document
+ * already carries fires no navigation and moves no scroll, and one of the two places this
+ * button is rendered is INSIDE the chain section - so pressing it there was a genuine no-op,
+ * silent in every direction. Every outcome now reports through the toast store.
  */
 export default component AddChainButton(props: { size?: ButtonSize; variant?: ButtonVariant; shape?: ButtonShape })
 {
     const { t } = useLocale();
+    const toasts = useToasts();
 
     const [status, setStatus] = createSignal<Status>('idle');
 
     let timer = 0;
+
+    /**
+     * Send the reader to the values they can copy.
+     *
+     * `scrollIntoView` rather than a hash assignment, for the reason in the header: the hash
+     * may already be the one being set. Honouring `motionOk` here because this IS autonomous
+     * movement - the page travels on its own after a press.
+     */
+    const showChainCard = (): void =>
+    {
+        document.getElementById('chain')?.scrollIntoView({
+            behavior: motionOk() ? 'smooth' : 'auto',
+            block: 'start'
+        });
+    };
 
     const run = async (): Promise<void> =>
     {
@@ -39,15 +62,28 @@ export default component AddChainButton(props: { size?: ButtonSize; variant?: Bu
 
         const result = await addChainToWallet();
 
+        if (result === 'rejected')
+        {
+            // They were asked and said no. Repeating it back as a failure would be telling
+            // somebody their own decision went wrong.
+            setStatus('idle');
+
+            return;
+        }
+
         if (result === 'no-provider')
         {
             setStatus('idle');
-            location.hash = '#chain';
+            toasts.push('error', t().addChain.noWallet);
+            showChainCard();
 
             return;
         }
 
         setStatus(result);
+        toasts.push(result === 'added' ? 'success' : 'error',
+            result === 'added' ? t().addChain.done : t().addChain.failed);
+
         window.clearTimeout(timer);
         timer = window.setTimeout(() => setStatus('idle'), 2600);
     };

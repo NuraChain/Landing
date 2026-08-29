@@ -8,6 +8,7 @@ import { renderTest, cleanup, fire } from '@azerothjs/testing';
 
 import AddChainButton from '../src/components/chain/add-chain-button.component.azeroth';
 import { useLocale } from '../src/stores/locale';
+import { useToasts } from '../src/stores/toasts';
 import { en } from '../src/lib/i18n/en';
 
 type Request = (args: { method: string; params?: unknown[] }) => Promise<unknown>;
@@ -83,30 +84,56 @@ describe('AddChainButton state machine', () =>
         expect(label(container)).toBe(en.addChain.cta);
     });
 
-    it('says so when the wallet rejects, then returns to idle', async () =>
+    it('says nothing at all when the visitor declines the prompt', async () =>
     {
-        withProvider(vi.fn().mockRejectedValue(Object.assign(new Error('rejected'), { code: 4001 })));
+        const request = vi.fn().mockRejectedValue(Object.assign(new Error('rejected'), { code: 4001 }));
+
+        withProvider(request);
 
         const { container } = renderTest(() => AddChainButton({}));
+        const before = useToasts().items().length;
 
         fire(container.querySelector('button')!, 'click');
-        await vi.waitFor(() => expect(label(container)).toBe(en.addChain.failed));
 
-        vi.advanceTimersByTime(2600);
+        // Waited on the REQUEST rather than on the label: the resting label is what this
+        // asserts, so waiting for it would pass before anything had happened at all.
+        await vi.waitFor(() => expect(request).toHaveBeenCalled());
+        await vi.waitFor(() => expect(label(container)).toBe(en.addChain.cta));
 
+        // The reader pressed cancel. Reporting that back as "Could not add" tells somebody
+        // their own decision went wrong, so the button simply returns to its resting label.
         expect(label(container)).toBe(en.addChain.cta);
+        expect(useToasts().items().length).toBe(before);
     });
 
-    // With no extension present - most desktop browsers - the manual values ARE the
-    // fallback, and a button that silently does nothing reads as broken.
-    it('falls back to the manual chain card when no wallet is injected', async () =>
+    /*
+     * With no extension present - most desktop browsers - the manual values ARE the fallback,
+     * and this is the regression guard on the bug that made the whole control look dead.
+     *
+     * It used to answer this case with `location.hash = '#chain'` and nothing else. Assigning
+     * a hash the document already carries fires no navigation and moves no scroll, and this
+     * button is rendered INSIDE the chain section as well as in the hero - so pressing it
+     * there did nothing whatsoever. Both halves are asserted: the reader is told, and the page
+     * actually travels.
+     */
+    it('says there is no wallet and travels to the manual chain card', async () =>
     {
+        const section = document.createElement('section');
+        section.id = 'chain';
+        document.body.append(section);
+
+        const travelled = vi.fn();
+        section.scrollIntoView = travelled;
+
         const { container } = renderTest(() => AddChainButton({}));
 
         fire(container.querySelector('button')!, 'click');
-        await vi.waitFor(() => expect(location.hash).toBe('#chain'));
+        await vi.waitFor(() => expect(travelled).toHaveBeenCalled());
 
+        expect(useToasts().items().some((entry) => entry.message === en.addChain.noWallet)).toBe(true);
         expect(label(container)).toBe(en.addChain.cta);
+
+        section.remove();
     });
 
     // Regression guard on the `status() === 'pending'` early return: without it, an
