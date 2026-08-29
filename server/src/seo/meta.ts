@@ -50,6 +50,12 @@ export interface PageMeta
     image: string | null;
     imageAlt: string;
     type: 'website' | 'article';
+    /**
+     * The `robots` directive, when the page wants one. Omitted for everything that should be
+     * indexed - an absent tag and `index, follow` mean the same thing to a crawler, and the
+     * absent one cannot be got wrong.
+     */
+    robots?: string;
     article?: ArticleMeta;
     jsonLd: unknown[];
 }
@@ -114,6 +120,13 @@ export function renderMeta(meta: PageMeta): string
         tag('property', 'og:site_name', 'Nura Chain'),
         tag('property', 'og:locale', TERRITORY[meta.locale])
     ];
+
+    if (meta.robots !== undefined)
+    {
+        // Second in the document, right after <title>, so a crawler that stops reading the
+        // head early has still seen it.
+        parts.splice(1, 0, tag('name', 'robots', meta.robots));
+    }
 
     /*
      * `og:locale:alternate` is honest here in a way `hreflang` would not be. It says "this same

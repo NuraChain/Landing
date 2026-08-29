@@ -1,8 +1,9 @@
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { App, HttpError, NotFoundError, json, pipeline, rateLimit, requestId, securityHeaders, text, type ErrorObserver, type RequestObserver, type WebHandler } from '@azerothjs/http';
+import { App, HttpError, NotFoundError, html, json, pipeline, rateLimit, requestId, securityHeaders, text, type ErrorObserver, type RequestObserver, type WebHandler } from '@azerothjs/http';
 import { staticFiles } from '@azerothjs/http/node';
-import { feature, manifestOf, register } from '@azerothjs/http/api';
+import { feature, manifestOf, manifestScript, register } from '@azerothjs/http/api';
 import { mountPages, type KitOptions, type PageRenderer } from '@azerothjs/kit';
 import { array } from '@azerothjs/schema';
 
@@ -20,6 +21,16 @@ import {
     readQuery,
     tagCount
 } from './schemas.ts';
+
+/**
+ * The pages this process serves the shell for itself, head included.
+ *
+ * They are `render: 'client'` in `routes.ts` and stay that way - the browser still renders
+ * their bodies. This list is only about which half of the process writes their `<head>`, and
+ * it must match the `'client'` rows in that table: a path here that the table does not carry
+ * would serve a page the client router cannot route.
+ */
+const LANDING_PATHS: readonly string[] = ['/', '/about'];
 
 /** How many posts a blog index page holds when the caller does not say. */
 const DEFAULT_LIMIT = 10;
@@ -237,10 +248,65 @@ export function buildApp(options: AppOptions): App
             cacheControl: 'public, max-age=31536000, immutable'
         }));
 
+        /*
+         * The landing pages, served with a head of their own.
+         *
+         * `/` and `/about` are `render: 'client'`, and the kit calls a renderer only for a
+         * `'server'` route - so `mountPages` hands them the shell verbatim and `withMeta` below
+         * never sees them. That left the site's two most important addresses sharing one title
+         * and one description, with no canonical, no Open Graph and no structured data.
+         *
+         * These two paths are TAKEN OUT of the table handed to `mountPages` rather than
+         * registered ahead of it. `/sitemap.xml` and `/assets` can sit in front of the kit
+         * because the kit never claims those exact patterns - it claims `/*path`, and a more
+         * specific route wins. `/` and `/about` it claims by name, and this router answers a
+         * duplicate pattern with `Route conflict` at startup rather than by preferring one.
+         * Removing them is also the more honest description of what happens: for a `'client'`
+         * route the kit only serves the shell, which is precisely what the handler below does,
+         * with the head filled in.
+         *
+         * This changes the HEAD only. The body is still the shell, so the browser renders these
+         * two pages exactly as it did - none of the client-only work in the stores or the
+         * network section is dragged onto a server, which is the trade routes.ts weighed and
+         * declined.
+         */
+        const clientDir = options.pages.clientDir;
+        const manifest = manifestOf(api);
+
+        /*
+         * The shell, read once and kept. Same order the kit looks in - a built client may ship
+         * `shell.html` beside `index.html` - and the manifest script is spliced in exactly as
+         * `mountPages` would, so hydration on these two paths still costs no round trip.
+         */
+        let shellCache: Promise<string> | null = null;
+
+        const landingShell = (): Promise<string> =>
+        {
+            shellCache ??= readFile(join(clientDir, 'shell.html'), 'utf8')
+                .catch(() => readFile(join(clientDir, 'index.html'), 'utf8'))
+                .then((page) => page.replace('</head>', () => `${ manifestScript(manifest) }</head>`));
+
+            return shellCache;
+        };
+
+        for (const path of LANDING_PATHS)
+        {
+            app.get(path, async () =>
+            {
+                const shell = await landingShell();
+                const meta = metaFor(path, { store: options.store, siteUrl });
+
+                // Null would mean this module has nothing to say about the path, which cannot
+                // happen for these two - but the shell is the right answer if it ever does.
+                return html(meta === null ? shell : injectMeta(shell, meta));
+            });
+        }
+
         mountPages(app, {
             ...options.pages,
+            routes: options.pages.routes.filter((route) => !LANDING_PATHS.includes(route.path)),
             renderer: withMeta(options.pages.renderer, options.store, siteUrl),
-            manifest: manifestOf(api)
+            manifest
         });
     }
 

@@ -1,17 +1,46 @@
 /**
  * Which head each server-rendered page gets, and how it replaces the shell's.
  *
- * Only `/blog` and `/blog/:slug` are handled, and that is the whole intended scope: those are
- * the two routes `routes.ts` pins to `render: 'server'`, so they are the only ones whose HTML
- * this process ever composes. The landing pages are `render: 'client'` - the kit serves them the
- * shell untouched, index.html's own title and description stand, and nothing here can disturb
- * SEO that already works.
+ * Four paths are handled: the two blog routes, which `routes.ts` pins to `render: 'server'`,
+ * and the two landing pages, which stay `render: 'client'`.
+ *
+ * The landing pages are why this module's scope grew. The kit calls a renderer only for a
+ * `'server'` route, so `/` and `/about` were served the shell untouched - which meant they
+ * shared index.html's single title and description, the two fields a search result is built
+ * from, and carried no canonical, no Open Graph and no structured data at all. Two of the
+ * site's most important addresses were each declaring themselves a duplicate of the other.
+ *
+ * Their BODY is still the browser's to render; only the head is written here. See the landing
+ * handler in app.ts, which serves the shell for those two paths before `mountPages` claims
+ * them - the same registration order `/sitemap.xml` and `/assets` already rely on.
  */
 import { toDetail } from '../blog/present.ts';
 import type { BlogContent } from '../blog/content.ts';
 import type { PostDetail } from '../schemas.ts';
 
 import { directionOf, renderMeta, type PageMeta } from './meta.ts';
+
+/**
+ * The home page's copy, and it must stay in step with `index.html`.
+ *
+ * The shell still carries these two strings for every other path and for a reader with no
+ * JavaScript, so a change made here and not there gives one page two descriptions depending
+ * on how it was reached.
+ */
+const HOME_TITLE = 'Nura Chain — an open and decentralized blockchain';
+const HOME_DESCRIPTION
+    = 'Nura Chain is an open and decentralized blockchain. Chain ID, RPC endpoint, block '
+    + 'explorer, tokenomics, and the Nura Wallet for every device.';
+
+/**
+ * The about page's copy.
+ *
+ * Describes what the page will say rather than the scaffold it shows today, because it ships
+ * behind `noindex` either way - and the day real copy lands, the only thing to remove is the
+ * directive.
+ */
+const ABOUT_TITLE = 'About — Nura Chain';
+const ABOUT_DESCRIPTION = 'About Nura Chain: what the network is, who builds it, and how to reach them.';
 
 /** The blog index's own copy. Not a chain fact, so it lives with the markup that states it. */
 const BLOG_TITLE = 'Blog — Nura Chain';
@@ -126,6 +155,64 @@ export function metaFor(url: string, deps: SeoDeps): PageMeta | null
     // The renderer is handed a url that may carry the blog's `?page=` / `?tag=` query. The path
     // is what identifies the page; the query only ever narrows a list.
     const path = pathOf(url, siteUrl);
+
+    if (path === '/')
+    {
+        return {
+            title: HOME_TITLE,
+            description: HOME_DESCRIPTION,
+            // With the trailing slash: it is the address the sitemap lists and the one a bare
+            // origin resolves to, and a canonical that disagrees with the sitemap is a page
+            // arguing with itself.
+            canonical: `${ siteUrl }/`,
+            locale: 'en',
+            alternateLocales: [],
+            image: `${ siteUrl }/icon.png`,
+            imageAlt: 'Nura Chain',
+            type: 'website',
+            jsonLd: [
+                {
+                    '@context': 'https://schema.org',
+                    '@type': 'WebSite',
+                    name: 'Nura Chain',
+                    description: HOME_DESCRIPTION,
+                    url: `${ siteUrl }/`,
+                    publisher: organization(siteUrl)
+                    // No `potentialAction`/SearchAction: there is no search box on this site,
+                    // and describing one that does not exist is a promise a crawler acts on.
+                },
+                { '@context': 'https://schema.org', ...organization(siteUrl) }
+            ]
+        };
+    }
+
+    if (path === '/about')
+    {
+        return {
+            title: ABOUT_TITLE,
+            description: ABOUT_DESCRIPTION,
+            canonical: `${ siteUrl }/about`,
+            locale: 'en',
+            alternateLocales: [],
+            image: null,
+            imageAlt: '',
+            type: 'website',
+            /*
+             * NOINDEX, and it comes off the moment this page says something about Nura Chain.
+             *
+             * The route still renders the AzerothJS starter template - "You navigated here
+             * client-side", a list of `src/routes.ts` and `npm test`, and an outbound link to
+             * the framework's own repository. Indexed under this brand that is worse than
+             * having no about page at all: it competes with the home page for the site's name
+             * and tells whoever lands on it that nobody finished the site.
+             *
+             * `follow` rather than `noindex, nofollow`: the header and footer links on it are
+             * real pages, and there is no reason to strand a crawler that arrives here.
+             */
+            robots: 'noindex, follow',
+            jsonLd: []
+        };
+    }
 
     if (path === '/blog')
     {

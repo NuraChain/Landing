@@ -16,10 +16,16 @@ import type { BlogContent } from '../blog/content.ts';
  */
 const CHUNK = 500;
 
-/** The static routes worth crawling. There is no private surface left to keep out of it. */
+/**
+ * The static routes worth crawling.
+ *
+ * `/about` is deliberately absent while it still renders the starter template: `seo/pages.ts`
+ * serves it `noindex`, and a sitemap is a request TO index. Listing a url and then telling the
+ * crawler to drop it is a contradiction reported as a sitemap error rather than quietly
+ * obeyed. Both come back together the day the page has real copy.
+ */
 const STATIC: ReadonlyArray<{ path: string; priority: string; frequency: string }> = [
     { path: '/', priority: '1.0', frequency: 'weekly' },
-    { path: '/about', priority: '0.6', frequency: 'monthly' },
     { path: '/blog', priority: '0.8', frequency: 'daily' }
 ];
 

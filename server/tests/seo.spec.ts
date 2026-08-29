@@ -31,15 +31,50 @@ describe('which pages get a head of their own', () =>
 {
     it('says nothing about a page it does not own', () =>
     {
-        // The landing pages are render: 'client' and their head is index.html's. A null here is
-        // what leaves it untouched - this is the assertion that stops this module regressing SEO
-        // that already works.
+        // A null leaves the shell's head exactly as it was, and that is the arm that stops this
+        // module blanking a page it does not understand. Assets and favicons are the paths it
+        // genuinely owns nothing about - the landing pages moved out of this list when they
+        // gained heads of their own, asserted below.
         const store = storeWith();
 
-        for (const path of ['/', '/about', '/assets/index-abc123.js', '/favicon-32.png'])
+        for (const path of ['/assets/index-abc123.js', '/favicon-32.png', '/nope'])
         {
             expect(metaFor(path, { store, siteUrl: SITE })).toBeNull();
         }
+    });
+
+    it('gives the home page its own canonical and structured data', () =>
+    {
+        const meta = metaFor('/', { store: storeWith(), siteUrl: SITE });
+
+        // The trailing slash matters: the sitemap lists `${SITE}/`, and a canonical that
+        // disagrees with the sitemap is a page arguing with itself.
+        expect(meta?.canonical).toBe(`${ SITE }/`);
+        expect(meta?.robots).toBeUndefined();
+
+        const types = (meta?.jsonLd ?? []).map((entry) => (entry as { '@type': string })['@type']);
+
+        expect(types).toEqual(['WebSite', 'Organization']);
+    });
+
+    it('gives the about page a head of its own, not a copy of the home page', () =>
+    {
+        const home = metaFor('/', { store: storeWith(), siteUrl: SITE });
+        const about = metaFor('/about', { store: storeWith(), siteUrl: SITE });
+
+        // The defect this fixes: both paths were served the shell, so the site's two most
+        // important addresses each declared themselves a duplicate of the other.
+        expect(about?.title).not.toBe(home?.title);
+        expect(about?.description).not.toBe(home?.description);
+        expect(about?.canonical).toBe(`${ SITE }/about`);
+    });
+
+    it('keeps the about page out of the index while it is still the starter template', () =>
+    {
+        const meta = metaFor('/about', { store: storeWith(), siteUrl: SITE });
+
+        // `follow`, not `nofollow`: the header and footer links on that page are real pages.
+        expect(meta?.robots).toBe('noindex, follow');
     });
 
     it('says nothing about a slug nobody has published', () =>
@@ -237,8 +272,10 @@ describe('the sitemap', () =>
 
         expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
         expect(xml).toContain(`<loc>${ SITE }/</loc>`);
-        expect(xml).toContain(`<loc>${ SITE }/about</loc>`);
         expect(xml).toContain(`<loc>${ SITE }/blog</loc>`);
+        // Absent on purpose while pages.ts serves it `noindex`: a sitemap is a request TO
+        // index, so listing it and then refusing it is a contradiction, not a belt and braces.
+        expect(xml).not.toContain(`<loc>${ SITE }/about</loc>`);
         expect(xml).toContain(`<loc>${ SITE }/blog/live-one</loc>`);
         expect(xml).toContain(`<loc>${ SITE }/blog/live-two</loc>`);
         expect(xml).toContain('</urlset>');
@@ -268,7 +305,8 @@ describe('the sitemap', () =>
         const store = storeWith(...Array.from({ length: 12 }, (_, at) => post({ slug: `post-${ at }` })));
         const xml = buildSitemap(store, SITE);
 
-        expect(xml.match(/<url>/g)).toHaveLength(12 + 3);
+        // 12 posts plus the two static routes - `/` and `/blog`.
+        expect(xml.match(/<url>/g)).toHaveLength(12 + 2);
     });
 
     it('is served as XML from the app', async () =>
