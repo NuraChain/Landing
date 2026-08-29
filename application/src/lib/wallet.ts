@@ -235,6 +235,36 @@ const errorCode = (error: unknown): number | undefined =>
     return outer?.data?.originalError?.code ?? outer?.data?.code ?? outer?.code;
 };
 
+/**
+ * Whether an error is the visitor saying no, rather than the wallet failing.
+ *
+ * 4001 is the EIP-1193 code for it and is what every desktop extension sends. Mobile
+ * in-app browsers frequently do not: the native sheet's dismissal is bridged back into the
+ * page as a plain error carrying a message and no numeric code at all, so a code-only test
+ * reads a cancellation as a fault. That distinction decides two things - whether the reader
+ * is shown a failure they did not cause, and, since the switch now falls through to an add,
+ * whether they are prompted a SECOND time after already declining.
+ *
+ * The message test insists on the word "user" next to the verb, or on a message that is
+ * nothing but the verb. A looser pattern would read "Rejected: invalid chainId" - a real
+ * param fault the reader must be told about - as a decision they made, and silence it.
+ */
+const REJECTED_BY_USER = /\buser\s+(?:has\s+)?(?:rejected|denied|cancell?ed|declined|dismissed)\b|\b(?:rejected|denied|cancell?ed|declined)\s+by\s+(?:the\s+)?user\b/i;
+
+const REJECTED_BARE = /^\s*(?:user\s+)?(?:rejected|denied|cancell?ed|declined)\.?\s*$/i;
+
+const isRejection = (error: unknown): boolean =>
+{
+    if (errorCode(error) === 4001)
+    {
+        return true;
+    }
+
+    const message = (error as { message?: unknown } | null | undefined)?.message;
+
+    return typeof message === 'string' && (REJECTED_BY_USER.test(message) || REJECTED_BARE.test(message));
+};
+
 const addChain = async (provider: Eip1193Provider): Promise<AttemptResult> =>
 {
     try
@@ -245,7 +275,7 @@ const addChain = async (provider: Eip1193Provider): Promise<AttemptResult> =>
     }
     catch (error: unknown)
     {
-        return errorCode(error) === 4001 ? 'rejected' : 'failed';
+        return isRejection(error) ? 'rejected' : 'failed';
     }
 };
 
@@ -264,24 +294,37 @@ const attemptForProvider = async (provider: Eip1193Provider): Promise<AttemptRes
     }
     catch (error: unknown)
     {
-        const code = errorCode(error);
-
-        // 4001 - the visitor declined the prompt. Do not fall through to a second prompt
+        // The visitor declined the prompt. Do not fall through to a second prompt
         // (`wallet_addEthereumChain`) and do not try the next wallet: they said no once.
-        if (code === 4001)
+        if (isRejection(error))
         {
             return 'rejected';
         }
 
-        // 4902 - chain unknown to the wallet. The normal first-visit path: add it, which
-        // most wallets also switch to. -32601 and -32603 are the wallets that expose only
-        // `wallet_addEthereumChain` and answer the switch with "method not found".
-        if (code === 4902 || code === -32601 || code === -32603)
+        // -32002 - a prompt for this very request is already open, either in front of the
+        // reader or left unanswered behind the page. An add sent now queues a second sheet
+        // behind the first instead of helping.
+        if (errorCode(error) === -32002)
         {
-            return addChain(provider);
+            return 'failed';
         }
 
-        return 'failed';
+        /*
+         * Anything else: ADD the chain. This used to be an allowlist - 4902 ("unknown
+         * chain"), -32601 and -32603 - and every wallet outside it got a hard failure
+         * without the request the button is actually named after ever being sent.
+         *
+         * Trust Wallet's in-app browser on a phone is exactly that wallet. It does not
+         * answer an unknown chain with 4902; its native bridge surfaces a generic error,
+         * so the site reported "Could not add" having never once asked to add anything.
+         *
+         * An allowlist is the wrong shape for this. There is no registry of the codes
+         * every wallet on every phone returns, and the cost of the two directions is not
+         * symmetric: a needless add request costs one prompt the reader can dismiss, while
+         * a missing one costs the feature. Switching first stays only as an optimisation -
+         * it spares a redundant prompt for a reader who already has the chain.
+         */
+        return addChain(provider);
     }
 };
 
@@ -291,10 +334,12 @@ export type AddChainResult = 'added' | 'rejected' | 'failed' | 'no-provider';
  * Asks the injected wallet to add Nura Chain.
  *
  * Tries `wallet_switchEthereumChain` first: if the chain is already known the wallet just
- * switches and the button shows `done`. If it is unknown (4902) it falls back to
- * `wallet_addEthereumChain`. That covers the four supported wallets - MetaMask, Trust
- * Wallet, Nura Wallet and Binance - which all speak EIP-1193 and either inject one of the
- * globals above or announce through EIP-6963.
+ * switches and the button shows `done`, with no second prompt. Any answer other than a
+ * refusal by the reader falls through to `wallet_addEthereumChain` - see the note there for
+ * why that is deliberately not conditioned on a list of error codes. That covers the four
+ * supported wallets - MetaMask, Trust Wallet, Nura Wallet and Binance - which all speak
+ * EIP-1193 and either inject one of the globals above or announce through EIP-6963, in an
+ * extension or in a phone's in-app browser.
  *
  * Returns an outcome instead of throwing, because every branch is an expected state the
  * button renders, not an error: `no-provider` is most desktop browsers, `rejected` is the

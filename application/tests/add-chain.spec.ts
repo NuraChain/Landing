@@ -136,6 +136,31 @@ describe('AddChainButton state machine', () =>
         section.remove();
     });
 
+    // The reported bug, at the seam the button actually sits on: Trust Wallet's in-app
+    // browser answers the switch with a generic error, and the add has to follow anyway.
+    it('adds the chain when the switch fails without a recognised error code', async () =>
+    {
+        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
+        {
+            if (method === 'wallet_switchEthereumChain')
+            {
+                throw new Error('Internal error');
+            }
+
+            return null;
+        });
+
+        withProvider(request);
+
+        const { container } = renderTest(() => AddChainButton({}));
+
+        fire(container.querySelector('button')!, 'click');
+        await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+
+        expect(request.mock.calls[1][0]).toMatchObject({ method: 'wallet_addEthereumChain' });
+        await vi.waitFor(() => expect(label(container)).toBe(en.addChain.done));
+    });
+
     // Regression guard on the `status() === 'pending'` early return: without it, an
     // impatient double-click opens a second wallet prompt behind the first.
     it('ignores a second click while a request is still in flight', async () =>

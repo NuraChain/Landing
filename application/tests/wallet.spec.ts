@@ -253,6 +253,136 @@ describe('addChainToWallet', () =>
         expect(second).not.toHaveBeenCalled();
     });
 
+    /*
+     * The bug this suite exists to hold shut, reported from a phone: Trust Wallet's in-app
+     * browser said "Could not add".
+     *
+     * The fallthrough to `wallet_addEthereumChain` used to be gated on an allowlist of error
+     * codes - 4902, -32601, -32603 - and Trust's native bridge does not answer an unknown
+     * chain with any of them. It surfaces a generic error, often with no numeric code at
+     * all, so the site gave up having never once sent the request the button is named after.
+     */
+    it('adds the chain when the switch fails with a generic error carrying no code at all', async () =>
+    {
+        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
+        {
+            if (method === 'wallet_switchEthereumChain')
+            {
+                throw new Error('Internal error');
+            }
+
+            return null;
+        });
+
+        (window as unknown as { ethereum: unknown }).ethereum = { request, isTrust: true };
+
+        await expect(addChainToWallet()).resolves.toBe('added');
+
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(request.mock.calls[1][0]).toEqual({
+            method: 'wallet_addEthereumChain',
+            params: [ADD_CHAIN_PARAMS]
+        });
+    });
+
+    it('adds the chain when the switch fails with an error code nobody has enumerated', async () =>
+    {
+        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
+        {
+            if (method === 'wallet_switchEthereumChain')
+            {
+                throw Object.assign(new Error('Unsupported chain'), { code: -32000 });
+            }
+
+            return null;
+        });
+
+        withProvider(request);
+
+        await expect(addChainToWallet()).resolves.toBe('added');
+        expect(request.mock.calls[1][0].method).toBe('wallet_addEthereumChain');
+    });
+
+    it('adds the chain when the switch rejects with a bare string', async () =>
+    {
+        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
+        {
+            if (method === 'wallet_switchEthereumChain')
+            {
+                throw 'nope';
+            }
+
+            return null;
+        });
+
+        withProvider(request);
+
+        await expect(addChainToWallet()).resolves.toBe('added');
+    });
+
+    /*
+     * The other half of the same change. Broadening the fallthrough means a decline is no
+     * longer recognised by code alone, and mobile wallets bridge a dismissed sheet back as a
+     * message with no code - so without a message test the reader who pressed cancel would
+     * be prompted a second time by the add.
+     */
+    it('reports rejected without a second prompt when the decline arrives as a message only', async () =>
+    {
+        const request = vi.fn().mockRejectedValue(new Error('User rejected the request'));
+
+        withProvider(request);
+
+        await expect(addChainToWallet()).resolves.toBe('rejected');
+        expect(request).toHaveBeenCalledTimes(1);
+    });
+
+    it('recognises a decline phrased the other way round', async () =>
+    {
+        const request = vi.fn().mockRejectedValue(new Error('Request cancelled by user'));
+
+        withProvider(request);
+
+        await expect(addChainToWallet()).resolves.toBe('rejected');
+        expect(request).toHaveBeenCalledTimes(1);
+    });
+
+    it('recognises a decline that is nothing but the word', async () =>
+    {
+        const request = vi.fn().mockRejectedValue(new Error('Cancelled'));
+
+        withProvider(request);
+
+        await expect(addChainToWallet()).resolves.toBe('rejected');
+        expect(request).toHaveBeenCalledTimes(1);
+    });
+
+    /*
+     * The false positive the message test is shaped to avoid. A param fault the reader has
+     * to be TOLD about must not be silenced as a decision they made - `rejected` shows no
+     * toast at all, so mistaking one for the other hides a real failure completely.
+     */
+    it('does not read a rejected parameter as a rejected prompt', async () =>
+    {
+        const request = vi.fn().mockRejectedValue(new Error('Rejected: invalid chainId'));
+
+        withProvider(request);
+
+        await expect(addChainToWallet()).resolves.toBe('failed');
+    });
+
+    // -32002: a prompt for this request is already open. A second one queues behind the
+    // first rather than helping, so this is the one non-decline that does not fall through.
+    it('does not stack a second prompt when one is already pending (-32002)', async () =>
+    {
+        const request = vi.fn().mockRejectedValue(
+            Object.assign(new Error('Already processing eth_requestAccounts'), { code: -32002 })
+        );
+
+        withProvider(request);
+
+        await expect(addChainToWallet()).resolves.toBe('failed');
+        expect(request).toHaveBeenCalledTimes(1);
+    });
 });
 
 /**
