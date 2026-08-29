@@ -286,46 +286,55 @@ export default component Header()
                             { t().blog.all }
                         </Link>
 
-                        <a
-                            href={ () => sectionHref('wallet') }
-                            class="mt-3 flex h-12 items-center justify-center rounded-xl bg-accent font-semibold text-accent-ink"
-                            onClick={ () => jump() }
-                        >
-                        { t().nav.download }
-                        </a>
-
-                        { /* The two controls the bar gives up below `md`. Rows rather than
-                             the bar's icon buttons: there is width for a word here, and a
-                             label a thumb can read beats a glyph it has to guess at. Each
-                             row states its current value on the trailing edge, which is the
-                             same string the bar's tooltip shows on hover. */ }
-                        <div class="mt-3 flex flex-col gap-1 border-t border-line pt-3">
-                            <button
-                                type="button"
-                                class="theme-trigger flex items-center gap-3 rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink"
-                                onClick={ () => withThemeTransition(() => cycle()) }
+                        { /* Everything from here down sits at the FOOT of the drawer, which
+                             is what `mt-auto` buys: the links keep their natural height at
+                             the top and the whole remainder of the panel becomes one gap.
+                             An auto margin rather than `justify-between` on the nav, because
+                             this column also scrolls - auto margins resolve to zero once the
+                             content outgrows the panel, where a distributed `justify-` would
+                             still be trying to spread space that is no longer there. */ }
+                        <div class="mt-auto flex flex-col gap-1 pt-6">
+                            <a
+                                href={ () => sectionHref('wallet') }
+                                class="flex h-12 items-center justify-center rounded-xl bg-accent font-semibold text-accent-ink"
+                                onClick={ () => jump() }
                             >
-                                { () => icon(GLYPH[theme()], 'size-[18px] shrink-0') }
-                                <span class="flex-1 text-start">{ t().theme.label }</span>
-                                <span class="text-sm text-faint">{ () => t().theme[theme()] }</span>
-                            </button>
+                                { t().nav.download }
+                            </a>
 
-                            { /* Opening the dialog CLOSES the drawer, deliberately: two live
-                                 overlays would be two scroll locks, two Escape handlers and
-                                 two focus traps fighting over the same Tab. Closing first
-                                 also means `captureOverlay` reads the hamburger as the
-                                 opener, so focus returns to the control that started the
-                                 journey rather than to a row that no longer exists. */ }
-                            <button
-                                type="button"
-                                aria-haspopup="dialog"
-                                class="flex items-center gap-3 rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink"
-                                onClick={ () => { menuOpen = false; langOpen = true; } }
-                            >
-                                { icon(Languages, 'size-[18px] shrink-0') }
-                                <span class="flex-1 text-start">{ t().nav.language }</span>
-                                <span class="text-sm text-faint">{ nativeName(locale()) }</span>
-                            </button>
+                            { /* The two controls the bar gives up below `md`. Rows rather than
+                                 the bar's icon buttons: there is width for a word here, and a
+                                 label a thumb can read beats a glyph it has to guess at. Each
+                                 row states its current value on the trailing edge, which is the
+                                 same string the bar's tooltip shows on hover. */ }
+                            <div class="mt-3 flex flex-col gap-1 border-t border-line pt-3">
+                                <button
+                                    type="button"
+                                    class="theme-trigger flex items-center gap-3 rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink"
+                                    onClick={ () => withThemeTransition(() => cycle()) }
+                                >
+                                    { () => icon(GLYPH[theme()], 'size-[18px] shrink-0') }
+                                    <span class="flex-1 text-start">{ t().theme.label }</span>
+                                    <span class="text-sm text-faint">{ () => t().theme[theme()] }</span>
+                                </button>
+
+                                { /* Opening the dialog CLOSES the drawer, deliberately: two live
+                                     overlays would be two scroll locks, two Escape handlers and
+                                     two focus traps fighting over the same Tab. Closing first
+                                     also means `captureOverlay` reads the hamburger as the
+                                     opener, so focus returns to the control that started the
+                                     journey rather than to a row that no longer exists. */ }
+                                <button
+                                    type="button"
+                                    aria-haspopup="dialog"
+                                    class="flex items-center gap-3 rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink"
+                                    onClick={ () => { menuOpen = false; langOpen = true; } }
+                                >
+                                    { icon(Languages, 'size-[18px] shrink-0') }
+                                    <span class="flex-1 text-start">{ t().nav.language }</span>
+                                    <span class="text-sm text-faint">{ nativeName(locale()) }</span>
+                                </button>
+                            </div>
                         </div>
                     </nav>
                 </div>
