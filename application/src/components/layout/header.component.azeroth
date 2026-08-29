@@ -85,6 +85,28 @@ export default component Header()
         }
     }
 
+    // The drawer and its scrim are `md:hidden`, so from 48rem up they stop being painted -
+    // but `menuOpen` stayed true, and with it the scroll lock and the focus trap. Rotating a
+    // phone to landscape crosses 48rem: the overlay vanished, the page underneath stayed
+    // frozen, and there was nothing on screen to say why and no Escape key to reach for. The
+    // width here MUST match the `md:` variants below - Tailwind's `md` is 48rem.
+    effect
+    {
+        const wide = matchMedia('(min-width: 48rem)');
+        const sync = (): void =>
+        {
+            if (wide.matches)
+            {
+                menuOpen = false;
+            }
+        };
+
+        sync();
+        wide.addEventListener('change', sync);
+
+        cleanup { wide.removeEventListener('change', sync); }
+    }
+
     const sectionHref = useSectionHref();
 
     const label = (id: SectionId): string => t().nav[id];
@@ -221,7 +243,7 @@ export default component Header()
                      and from the LEFT in Persian. A drawer pinned to `right` would come from
                      the wrong side of an RTL page and read as a mistake. */ }
                     <nav
-                        class="drawer fixed inset-y-0 end-0 z-[61] flex w-[min(19rem,85vw)] flex-col gap-1 border-s border-line bg-surface p-4 shadow-2xl motion-safe:animate-[drawer_220ms_ease-out] md:hidden"
+                        class="drawer fixed inset-y-0 end-0 z-[61] flex w-[min(19rem,85vw)] flex-col gap-1 border-s border-line bg-surface p-4 shadow-2xl overflow-y-auto overscroll-contain motion-safe:animate-[drawer_220ms_ease-out] md:hidden"
                         style="padding-top: max(1rem, env(safe-area-inset-top)); padding-bottom: max(1rem, env(safe-area-inset-bottom));"
                         aria-label={ t().nav.wallet }
                     >
