@@ -20,36 +20,35 @@ import Post from './pages/post.page.azeroth';
  * index.html already settles direction and theme before the first paint.
  *
  * A page written to be rendered ahead of time says so for itself - see the blog below.
+ *
+ * `'client'` is about the BODY only. Both landing pages are still served a head written on the
+ * server - title, description, canonical, Open Graph and JSON-LD, per path - because the kit
+ * hands a `'client'` route the shell verbatim, which had `/` and `/about` sharing index.html's
+ * single title. See the landing handler in `server/src/app.ts`, which owns those two paths for
+ * that reason and serves exactly the same shell the kit would.
  */
 export const routes: PageRoute[] = [
     { path: '/', component: Home, render: 'client' },
     { path: '/about', component: About, render: 'client' },
 
     /*
-     * The blog server-renders the FRAME, not the post. Said plainly because the difference
-     * is easy to assume away: what a crawler receives from these two paths today is the
-     * header, the footer and the word "Loading" - the text arrives on hydration.
+     * These two serve the REAL ARTICLE, head and body, not a loading frame.
      *
-     * Two things in 2.0.0-beta.2 stop it going further, and both are the framework's, not
-     * this page's:
+     * This note used to say the opposite - that a crawler got the header, the footer and the
+     * word "Loading" - and it was true when the kit was doing all of the work. It is not any
+     * more: the kit still leaves `<head>` alone and still splices only `<div id="root">`, so
+     * the server half does both jobs itself. `server/src/seo/pages.ts` writes the head and
+     * `seo/article.ts` renders the markdown into the same document, wired in `app.ts` by the
+     * wrapper around the page renderer. A slug that resolves to nothing is a real 404 rather
+     * than a soft one.
      *
-     *   - the kit splices only `<div id="root">` and the loader handoff into the built
-     *     shell, leaving `<title>` and every meta tag exactly as index.html declared them.
-     *     Route loaders would put the post's text in the HTML, but all ten posts would
-     *     still share one title and one description - the parts a search result and a link
-     *     preview are actually built from;
-     *   - a loader is handed `{ params, query, signal }` and no request headers, and this
-     *     site keeps the reader's language in a store rather than in the URL. So a loader
-     *     could not resolve WHICH translation to render, and would serve every reader the
-     *     default language followed by a swap on hydration.
-     *
-     * The second is the one that decides it. Real per-post SSR wants the locale in the
-     * path - `/fa/blog/...` - which is a routing change for the whole site and not
-     * something to smuggle in behind a blog.
-     *
-     * `'server'` still earns its place: the frame is markup rather than an empty root, so
-     * the first paint is the site instead of a blank page. It just is not SEO, and this
-     * comment is not going to say that it is.
+     * What HAS NOT changed is the locale, and it is the reason there is still one address per
+     * post. The renderer is handed a url and a shell and no request headers, so there is no
+     * reader to resolve a translation against; a post is served in its own `defaultLocale` and
+     * the switcher moves the rest client-side. Ten indexable addresses would want the locale
+     * in the path - `/fa/blog/...` - which is a routing change for the whole site and not
+     * something to smuggle in behind a blog. `seo/sitemap.ts` and `seo/meta.ts` both point
+     * back here for it: no `hreflang`, because there is no other url to name.
      */
     { path: '/blog', component: Blog, render: 'server' },
     { path: '/blog/:slug', component: Post, render: 'server' }
