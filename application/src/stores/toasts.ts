@@ -8,12 +8,19 @@ export interface ToastEntry
     tone: ToastTone;
     /** Already translated. The store holds text, not keys - it has no locale of its own. */
     message: string;
+    /**
+     * A technical second line, shown under the message and NOT translated - an error code
+     * and a wallet's own words read the same in every locale and are meant to be copied.
+     *
+     * A toast carrying one does not self-dismiss; see `push`.
+     */
+    detail?: string;
 }
 
 export interface ToastsApi
 {
     items: Getter<ToastEntry[]>;
-    push: (tone: ToastTone, message: string) => number;
+    push: (tone: ToastTone, message: string, detail?: string) => number;
     dismiss: (id: number) => void;
 }
 
@@ -48,12 +55,27 @@ export const useToasts = createStore((): ToastsApi =>
         setItems(items().filter((entry) => entry.id !== id));
     };
 
-    const push = (tone: ToastTone, message: string): number =>
+    const push = (tone: ToastTone, message: string, detail?: string): number =>
     {
         const id = nextId++;
+        const entry: ToastEntry = detail === undefined
+            ? { id, tone, message }
+            : { id, tone, message, detail };
 
-        setItems([...items().slice(-(MOST - 1)), { id, tone, message }]);
-        setTimeout(() => dismiss(id), LIFETIME_MS);
+        setItems([...items().slice(-(MOST - 1)), entry]);
+
+        /*
+         * A toast carrying a detail stays until it is dismissed.
+         *
+         * The detail exists to be read and then repeated to somebody else - a wallet's error
+         * code, say - and four seconds is not enough to do either, least of all on a phone.
+         * Taking it away on a timer would defeat the only reason it is there. The plain ones
+         * still go on their own, and the stack is capped either way, so nothing accumulates.
+         */
+        if (detail === undefined)
+        {
+            setTimeout(() => dismiss(id), LIFETIME_MS);
+        }
 
         return id;
     };

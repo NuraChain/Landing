@@ -45,7 +45,21 @@ export default component Toasts()
                     { () => icon(MARK[entry.tone].glyph, 'size-[18px]') }
                 </span>
 
-                <span class="flex-1 text-ink">{ entry.message }</span>
+                <div class="flex min-w-0 flex-1 flex-col gap-1">
+                    <span class="text-ink">{ entry.message }</span>
+
+                    { /* The technical line. Same split as CopyField: the outer span keeps the
+                         page direction so the text still starts beside the message, and the
+                         inner `<bdi dir="ltr">` isolates the value's own run - an error code
+                         and a method name reordered by bidi is one somebody cannot search
+                         for. `break-words` because a wallet's message has no spaces to wrap
+                         at and the card is only `max-w-sm`. */ }
+                    <Show when={ () => entry.detail }>
+                        <span class="font-mono text-xs leading-snug break-words text-muted">
+                            <bdi dir="ltr">{ entry.detail }</bdi>
+                        </span>
+                    </Show>
+                </div>
 
                 <IconButton
                     label={ t().toast.dismiss }

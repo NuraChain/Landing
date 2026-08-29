@@ -230,6 +230,27 @@ describe('the toasts store', () =>
         expect(toasts.items()).toHaveLength(0);
     });
 
+    /*
+     * The one toast that must NOT dismiss itself.
+     *
+     * A detail is a wallet error code somebody is meant to read and then repeat to someone
+     * else, and four seconds is not enough to do either, least of all on a phone. Taking it
+     * away on a timer would defeat the only reason it is there.
+     */
+    it('keeps a toast that carries a detail until it is dismissed', () =>
+    {
+        const toasts = useToasts();
+        const id = toasts.push('error', 'Could not add', 'Trust Wallet · wallet_addEthereumChain · 4100');
+
+        vi.advanceTimersByTime(60000);
+
+        expect(toasts.items()).toHaveLength(1);
+        expect(toasts.items()[0].detail).toBe('Trust Wallet · wallet_addEthereumChain · 4100');
+
+        toasts.dismiss(id);
+        expect(toasts.items()).toHaveLength(0);
+    });
+
     it('dismisses the one asked for and leaves the rest', () =>
     {
         const toasts = useToasts();
