@@ -136,6 +136,33 @@ describe('AddChainButton state machine', () =>
         section.remove();
     });
 
+    /*
+     * A wallet that is present and still cannot do it gets the same escape route. This is
+     * the phone case: an in-app browser that refuses EIP-3085 outright leaves the reader
+     * holding the one device that cannot use the button, and "Could not add" on its own is
+     * a dead end. The manual values are the answer, and the page has to travel to them.
+     */
+    it('travels to the manual chain card when the wallet cannot add it either', async () =>
+    {
+        const section = document.createElement('section');
+        section.id = 'chain';
+        document.body.append(section);
+
+        const travelled = vi.fn();
+        section.scrollIntoView = travelled;
+
+        withProvider(vi.fn().mockRejectedValue(Object.assign(new Error('Invalid chainId'), { code: -32602 })));
+
+        const { container } = renderTest(() => AddChainButton({}));
+
+        fire(container.querySelector('button')!, 'click');
+        await vi.waitFor(() => expect(travelled).toHaveBeenCalled());
+
+        expect(useToasts().items().some((entry) => entry.message === en.addChain.failed)).toBe(true);
+
+        section.remove();
+    });
+
     // The reported bug, at the seam the button actually sits on: Trust Wallet's in-app
     // browser answers the switch with a generic error, and the add has to follow anyway.
     it('adds the chain when the switch fails without a recognised error code', async () =>

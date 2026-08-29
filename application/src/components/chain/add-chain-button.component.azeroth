@@ -81,8 +81,20 @@ export default component AddChainButton(props: { size?: ButtonSize; variant?: Bu
         }
 
         setStatus(result);
-        toasts.push(result === 'added' ? 'success' : 'error',
-            result === 'added' ? t().addChain.done : t().addChain.failed);
+
+        if (result === 'added')
+        {
+            toasts.push('success', t().addChain.done);
+        }
+        else
+        {
+            // A wallet that was there and still could not do it - a phone's in-app browser
+            // refusing EIP-3085 outright is the case no amount of error-code handling in
+            // lib/wallet can rescue. Send them to the same manual values `no-provider`
+            // gets: without that this branch is a dead end on the one device in their hand.
+            toasts.push('error', t().addChain.failed);
+            showChainCard();
+        }
 
         window.clearTimeout(timer);
         timer = window.setTimeout(() => setStatus('idle'), 2600);
