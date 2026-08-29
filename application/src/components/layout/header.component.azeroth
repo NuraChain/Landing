@@ -12,7 +12,7 @@ import Tooltip from '../ui/tooltip.component.azeroth';
 import { useTheme } from '../../stores/theme';
 import type { Theme } from '../../stores/theme';
 
-import { flagSrc } from '../icons/flag-icon';
+import { flagSrc, preloadFlags } from '../icons/flag-icon';
 import { icon } from '../icons/icon';
 
 type SectionId = 'wallet' | 'tokenomics' | 'chain' | 'explorer' | 'social';
@@ -75,6 +75,10 @@ export default component Header()
         {
             return;
         }
+
+        // The language row is one tap below the links now, and a thumb gets there faster
+        // than a 79KB flag does. See preloadFlags.
+        preloadFlags();
 
         const release = captureOverlay(() => menuOpen = false, 'nav.drawer');
 
@@ -229,6 +233,7 @@ export default component Header()
                     haspopup="dialog"
                     expanded={ langOpen }
                     onClick={ () => langOpen = true }
+                    onIntent={ () => preloadFlags() }
                 >
                     { icon(Languages, 'size-[18px]') }
                 </IconButton>

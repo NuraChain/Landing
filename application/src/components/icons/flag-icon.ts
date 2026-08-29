@@ -34,3 +34,37 @@ const FLAG: Record<Locale, string> =
 };
 
 export const flagSrc = (locale: Locale): string => FLAG[locale];
+
+/** Set once the warm-up has run, so every approach after the first costs nothing. */
+let warmed = false;
+
+/**
+ * Fetch every flag ahead of the picker that will show them.
+ *
+ * The dialog's rows paint at once and their flags arrive afterwards, so the modal appears to
+ * assemble itself. Four of the ten are the whole cause: Vite inlines an asset under 4KB into
+ * the bundle, so `fr`, `ru`, `tr`, `us`, `cn` and `in` are already in memory - but `es`
+ * (79KB, the full coat of arms), `ir`, `sa` and `br` stay separate files and are not
+ * requested until a row renders them.
+ *
+ * Called on INTENT - the drawer opening, or a pointer or focus reaching the trigger - and
+ * never on load. A visitor who does not go near the picker should not pay 111KB for it,
+ * which is the same bargain the per-script font subsets already make.
+ */
+export const preloadFlags = (): void =>
+{
+    // No document on the server, where the blog routes render this component's neighbours.
+    if (warmed || typeof document === 'undefined')
+    {
+        return;
+    }
+
+    warmed = true;
+
+    for (const src of Object.values(FLAG))
+    {
+        // The request is the point; the element is never mounted and the decode is the
+        // browser's to schedule.
+        new Image().src = src;
+    }
+};

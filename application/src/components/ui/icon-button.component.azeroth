@@ -33,6 +33,13 @@ interface IconButtonProps
     controls?: string;
     class?: string;
     onClick?: () => void;
+    /**
+     * Fired when the control is APPROACHED rather than pressed - a pointer arriving over it,
+     * or focus landing on it. For work the press is about to need and would otherwise start
+     * too late, such as warming a cache. Never a substitute for `onClick`: a pointer that
+     * merely passes over is not a decision.
+     */
+    onIntent?: () => void;
     children?: Child;
 }
 
@@ -62,6 +69,8 @@ export default component IconButton(props: IconButtonProps)
         aria-controls={ () => props.controls }
         disabled={ () => props.disabled === true }
         onClick={ () => props.disabled === true ? undefined : props.onClick?.() }
+        onPointerEnter={ () => props.onIntent?.() }
+        onFocus={ () => props.onIntent?.() }
     >
         { props.children }
     </button>
