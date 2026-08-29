@@ -6,7 +6,7 @@ This page is the plain description. What the network is, the values you need in 
 
 These are the values a wallet or a client library asks for.
 
-- Network name: Nura Mainnet
+- Network name: Nura Chain
 - Chain ID: `1020`, which wallets want as the hex string `0x3fc`
 - RPC endpoint: `https://rpc.nurachain.net`
 - Block explorer: `https://explorer.nurachain.net`

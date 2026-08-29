@@ -4,7 +4,7 @@
 
 六个值，每个钱包会索取其中的一部分：
 
-- 网络名称：Nura Mainnet
+- 网络名称：Nura Chain
 - RPC URL：`https://rpc.nurachain.net`
 - 链 ID：`1020`
 - 货币符号：`NURA`

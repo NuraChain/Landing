@@ -6,7 +6,7 @@ Nura Chain 是一条运行以太坊虚拟机（EVM）的公链。如果你写过
 
 以下是钱包或客户端库会向你索取的参数。
 
-- 网络名称：Nura Mainnet
+- 网络名称：Nura Chain
 - 链 ID：`1020`，钱包通常要求填写十六进制形式 `0x3fc`
 - RPC 端点：`https://rpc.nurachain.net`
 - 区块浏览器：`https://explorer.nurachain.net`

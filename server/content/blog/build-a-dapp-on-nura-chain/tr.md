@@ -19,8 +19,8 @@ import { createPublicClient, defineChain, http } from 'viem';
 
 export const nura = defineChain({
     id: 1020,
-    name: 'Nura Mainnet',
-    nativeCurrency: { name: 'Nura Coin', symbol: 'NURA', decimals: 18 },
+    name: 'Nura Chain',
+    nativeCurrency: { name: 'Nura', symbol: 'NURA', decimals: 18 },
     rpcUrls: { default: { http: ['https://rpc.nurachain.net'] } },
     blockExplorers: {
         default: { name: 'Nura Explorer', url: 'https://explorer.nurachain.net' }
@@ -73,8 +73,8 @@ async function ensureNura(provider) {
                 method: 'wallet_addEthereumChain',
                 params: [{
                     chainId: NURA_HEX,
-                    chainName: 'Nura Mainnet',
-                    nativeCurrency: { name: 'Nura Coin', symbol: 'NURA', decimals: 18 },
+                    chainName: 'Nura Chain',
+                    nativeCurrency: { name: 'Nura', symbol: 'NURA', decimals: 18 },
                     rpcUrls: ['https://rpc.nurachain.net'],
                     blockExplorerUrls: ['https://explorer.nurachain.net']
                 }]

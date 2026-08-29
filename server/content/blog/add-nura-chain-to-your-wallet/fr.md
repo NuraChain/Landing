@@ -4,7 +4,7 @@ Les portefeuilles ne connaissent pas d'avance tous les réseaux. Avant de pouvoi
 
 Six valeurs, chaque portefeuille en demandant un sous-ensemble :
 
-- Nom du réseau : Nura Mainnet
+- Nom du réseau : Nura Chain
 - URL RPC : `https://rpc.nurachain.net`
 - Chain ID : `1020`
 - Symbole de la monnaie : `NURA`

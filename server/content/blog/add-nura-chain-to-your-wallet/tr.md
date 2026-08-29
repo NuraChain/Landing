@@ -4,7 +4,7 @@ Cüzdanlar her ağı önceden bilmez. Nura Chain üzerinde bakiye tutabilmeniz, 
 
 Altı değer; her cüzdan bunların bir bölümünü ister:
 
-- Ağ adı: Nura Mainnet
+- Ağ adı: Nura Chain
 - RPC adresi: `https://rpc.nurachain.net`
 - Zincir kimliği: `1020`
 - Para birimi sembolü: `NURA`

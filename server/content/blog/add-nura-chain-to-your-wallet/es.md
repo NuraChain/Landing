@@ -4,7 +4,7 @@ Las carteras no conocen de antemano todas las redes. Antes de que puedas tener u
 
 Seis valores, y cada cartera pide algún subconjunto de ellos:
 
-- Nombre de la red: Nura Mainnet
+- Nombre de la red: Nura Chain
 - URL del RPC: `https://rpc.nurachain.net`
 - ID de cadena: `1020`
 - Símbolo de la moneda: `NURA`

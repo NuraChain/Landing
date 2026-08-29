@@ -4,7 +4,7 @@ Wallets do not know about every network in advance. Before you can hold a balanc
 
 Six values, and every wallet asks for some subset of them:
 
-- Network name: Nura Mainnet
+- Network name: Nura Chain
 - RPC URL: `https://rpc.nurachain.net`
 - Chain ID: `1020`
 - Currency symbol: `NURA`

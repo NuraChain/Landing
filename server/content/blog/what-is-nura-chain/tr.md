@@ -6,7 +6,7 @@ Bu sayfa doğrudan bir tarif. Ağ nedir, onunla konuşmak için hangi değerlere
 
 Bir cüzdanın ya da istemci kütüphanesinin sizden isteyeceği değerler bunlar.
 
-- Ağ adı: Nura Mainnet
+- Ağ adı: Nura Chain
 - Zincir kimliği: `1020`, cüzdanların onaltılık biçimde `0x3fc` olarak istediği değer
 - RPC uç noktası: `https://rpc.nurachain.net`
 - Blok gezgini: `https://explorer.nurachain.net`

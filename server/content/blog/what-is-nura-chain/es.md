@@ -6,7 +6,7 @@ Esta página es la descripción llana. Qué es la red, qué valores necesitas pa
 
 Estos son los valores que te pedirá una cartera o una librería cliente.
 
-- Nombre de la red: Nura Mainnet
+- Nombre de la red: Nura Chain
 - ID de cadena: `1020`, que las carteras piden en hexadecimal como `0x3fc`
 - Endpoint RPC: `https://rpc.nurachain.net`
 - Explorador de bloques: `https://explorer.nurachain.net`

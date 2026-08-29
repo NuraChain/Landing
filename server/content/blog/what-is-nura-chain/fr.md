@@ -6,7 +6,7 @@ Cette page est la description simple. Ce qu'est le réseau, les valeurs nécessa
 
 Voici les valeurs qu'un portefeuille ou une bibliothèque cliente vous demandera.
 
-- Nom du réseau : Nura Mainnet
+- Nom du réseau : Nura Chain
 - Chain ID : `1020`, que les portefeuilles réclament sous la forme hexadécimale `0x3fc`
 - Point de terminaison RPC : `https://rpc.nurachain.net`
 - Explorateur de blocs : `https://explorer.nurachain.net`
