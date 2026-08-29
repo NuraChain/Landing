@@ -304,7 +304,124 @@ const isUnauthorized = (error: unknown): boolean =>
 /** `unauthorized` is not an outcome the button renders - it is a step the caller can take. */
 type ChainAttempt = AttemptResult | 'unauthorized';
 
-const addChain = async (provider: Eip1193Provider): Promise<ChainAttempt> =>
+/**
+ * What a wallet said when it would not do it.
+ *
+ * Kept as fields rather than one prepared sentence because two readers need it: the person
+ * in front of the toast, who needs the short version, and whoever they send it on to, who
+ * needs the code.
+ */
+export interface AddChainFailure
+{
+    /** The wallet that refused, from its own flags - "wallet" when it claims nothing. */
+    wallet: string;
+    /** The request it refused. */
+    method: string;
+    /** The EIP-1193 / JSON-RPC code, when one was sent. Plenty of wallets send none. */
+    code?: number;
+    /** The wallet's own words, trimmed to something a toast can hold. */
+    message?: string;
+}
+
+type Note = (failure: AddChainFailure) => void;
+
+/** Long enough for any real wallet message, short enough not to fill the screen with one. */
+const MESSAGE_LIMIT = 140;
+
+const messageOf = (error: unknown): string | undefined =>
+{
+    const raw = typeof error === 'string'
+        ? error
+        : (error as { message?: unknown } | null | undefined)?.message;
+
+    if (typeof raw !== 'string')
+    {
+        return undefined;
+    }
+
+    const text = raw.trim();
+
+    if (text === '')
+    {
+        return undefined;
+    }
+
+    return text.length > MESSAGE_LIMIT ? `${ text.slice(0, MESSAGE_LIMIT - 1) }…` : text;
+};
+
+/**
+ * The wallet's own name, for the report.
+ *
+ * The specific flags are read BEFORE `isMetaMask`, and that is not a formality: Trust
+ * Wallet's mobile provider sets `isMetaMask` from its own config, so reading that one first
+ * would file every report from a phone under the wrong wallet - the exact confusion this
+ * report exists to end.
+ */
+const walletName = (provider: Eip1193Provider): string =>
+{
+    const flags = provider as ProviderFlags;
+
+    if (flags.isNura === true || flags.isNuraWallet === true)
+    {
+        return 'Nura Wallet';
+    }
+
+    if (flags.isTrust === true || flags.isTrustWallet === true)
+    {
+        return 'Trust Wallet';
+    }
+
+    if (flags.isBinance === true)
+    {
+        return 'Binance Wallet';
+    }
+
+    if (flags.isMetaMask === true)
+    {
+        return 'MetaMask';
+    }
+
+    return 'wallet';
+};
+
+const failureOf = (provider: Eip1193Provider, method: string, error: unknown): AddChainFailure =>
+{
+    const code = errorCode(error);
+    const message = messageOf(error);
+
+    return {
+        wallet: walletName(provider),
+        method,
+        ...(code === undefined ? {} : { code }),
+        ...(message === undefined ? {} : { message })
+    };
+};
+
+/**
+ * One line for the toast: who refused, what they refused, and why in their own words.
+ *
+ * Untranslated on purpose. A JSON-RPC code and a wallet's error string read the same in
+ * every locale, and this line exists to be copied into a bug report - translating half of it
+ * would only make the half that matters harder to search for.
+ */
+export const describeFailure = (failure: AddChainFailure): string =>
+{
+    const parts: string[] = [failure.wallet, failure.method];
+
+    if (failure.code !== undefined)
+    {
+        parts.push(String(failure.code));
+    }
+
+    if (failure.message !== undefined)
+    {
+        parts.push(failure.message);
+    }
+
+    return parts.join(' · ');
+};
+
+const addChain = async (provider: Eip1193Provider, note: Note): Promise<ChainAttempt> =>
 {
     try
     {
@@ -319,11 +436,13 @@ const addChain = async (provider: Eip1193Provider): Promise<ChainAttempt> =>
             return 'rejected';
         }
 
+        note(failureOf(provider, 'wallet_addEthereumChain', error));
+
         return isUnauthorized(error) ? 'unauthorized' : 'failed';
     }
 };
 
-const switchOrAddChain = async (provider: Eip1193Provider): Promise<ChainAttempt> =>
+const switchOrAddChain = async (provider: Eip1193Provider, note: Note): Promise<ChainAttempt> =>
 {
     try
     {
@@ -335,10 +454,13 @@ const switchOrAddChain = async (provider: Eip1193Provider): Promise<ChainAttempt
     {
         // The visitor declined the prompt. Do not fall through to a second prompt
         // (`wallet_addEthereumChain`) and do not try the next wallet: they said no once.
+        // Not recorded either - an answer is not a fault, and the report is for faults.
         if (isRejection(error))
         {
             return 'rejected';
         }
+
+        note(failureOf(provider, 'wallet_switchEthereumChain', error));
 
         // Not a refusal and not a fault - the wallet wants an introduction first. Reported
         // up rather than handled here, because the retry belongs after the connection.
@@ -366,11 +488,11 @@ const switchOrAddChain = async (provider: Eip1193Provider): Promise<ChainAttempt
          * a missing one costs the feature. Switching first stays only as an optimisation -
          * it spares a redundant prompt for a reader who already has the chain.
          */
-        return addChain(provider);
+        return addChain(provider, note);
     }
 };
 
-const connect = async (provider: Eip1193Provider): Promise<AttemptResult> =>
+const connect = async (provider: Eip1193Provider, note: Note): Promise<AttemptResult> =>
 {
     try
     {
@@ -380,18 +502,29 @@ const connect = async (provider: Eip1193Provider): Promise<AttemptResult> =>
     }
     catch (error: unknown)
     {
-        return isRejection(error) ? 'rejected' : 'failed';
+        if (isRejection(error))
+        {
+            return 'rejected';
+        }
+
+        note(failureOf(provider, 'eth_requestAccounts', error));
+
+        return 'failed';
     }
 };
 
-const attemptForProvider = async (provider: Eip1193Provider): Promise<AttemptResult> =>
+const attemptForProvider = async (provider: Eip1193Provider, note: Note): Promise<AttemptResult> =>
 {
     if (provider === undefined || provider === null || typeof (provider as { request?: unknown }).request !== 'function')
     {
+        // A stub injected before the extension finished loading. It presents as a wallet
+        // that refused, so it has to say what it actually was.
+        note({ wallet: walletName(provider), method: 'request', message: 'provider has no request method' });
+
         return 'failed';
     }
 
-    const first = await switchOrAddChain(provider);
+    const first = await switchOrAddChain(provider, note);
 
     if (first !== 'unauthorized')
     {
@@ -410,14 +543,14 @@ const attemptForProvider = async (provider: Eip1193Provider): Promise<AttemptRes
      * one. That costs the reader on a phone two prompts instead of one, which is the price
      * of the button working there at all.
      */
-    const connected = await connect(provider);
+    const connected = await connect(provider, note);
 
     if (connected !== 'success')
     {
         return connected;
     }
 
-    const second = await switchOrAddChain(provider);
+    const second = await switchOrAddChain(provider, note);
 
     // Still refusing with an account shared: nothing left to try on this provider, and
     // retrying the connection would only loop.
@@ -425,6 +558,21 @@ const attemptForProvider = async (provider: Eip1193Provider): Promise<AttemptRes
 };
 
 export type AddChainResult = 'added' | 'rejected' | 'failed' | 'no-provider';
+
+export interface AddChainReport
+{
+    result: AddChainResult;
+    /**
+     * Every refusal collected on the way, oldest first, across every provider tried.
+     *
+     * A list rather than one field because a single press can produce several: two wallets
+     * installed, or the connect-then-retry above, and only the whole sequence says where it
+     * actually stopped. The button shows the last one and logs the lot.
+     */
+    failures: AddChainFailure[];
+    /** How many providers were found at all. Zero is the `no-provider` outcome. */
+    providers: number;
+}
 
 /**
  * Asks the injected wallet to add Nura Chain.
@@ -441,26 +589,41 @@ export type AddChainResult = 'added' | 'rejected' | 'failed' | 'no-provider';
  * and asked again - see `isUnauthorized`, which is the whole reason the app on a phone
  * behaved differently from the extension of the same name.
  *
- * Returns an outcome instead of throwing, because every branch is an expected state the
+ * Returns a REPORT rather than throwing, because every branch is an expected state the
  * button renders, not an error: `no-provider` is most desktop browsers, `rejected` is the
- * visitor declining the prompt, and `failed` is a wallet that could not do it.
+ * visitor declining the prompt, and `failed` is a wallet that could not do it. The failures
+ * beside the outcome are what make that last one traceable - "Could not add" on its own is
+ * the same sentence whether the parameters were refused, the site was refused, or nothing
+ * was ever asked.
  */
-export const addChainToWallet = async (): Promise<AddChainResult> =>
+export const addChainToWallet = async (): Promise<AddChainReport> =>
 {
+    const failures: AddChainFailure[] = [];
+    const note: Note = (failure) =>
+    {
+        failures.push(failure);
+    };
+
     let providers: Eip1193Provider[];
 
     try
     {
         providers = await getProviders();
     }
-    catch
+    catch (error: unknown)
     {
-        return 'failed';
+        const message = messageOf(error);
+
+        return {
+            result: 'failed',
+            failures: [{ wallet: 'wallet', method: 'discovery', ...(message === undefined ? {} : { message }) }],
+            providers: 0
+        };
     }
 
     if (providers.length === 0)
     {
-        return 'no-provider';
+        return { result: 'no-provider', failures, providers: 0 };
     }
 
     for (const provider of providers)
@@ -469,16 +632,20 @@ export const addChainToWallet = async (): Promise<AddChainResult> =>
 
         try
         {
-            result = await attemptForProvider(provider);
+            result = await attemptForProvider(provider, note);
         }
-        catch
+        catch (error: unknown)
         {
+            // Everything inside already catches its own, so reaching here means the provider
+            // broke in a way it has no vocabulary for. Recorded rather than swallowed: from
+            // the outside it is indistinguishable from an ordinary refusal.
+            note(failureOf(provider, 'request', error));
             result = 'failed';
         }
 
         if (result === 'success')
         {
-            return 'added';
+            return { result: 'added', failures, providers: providers.length };
         }
 
         if (result === 'rejected')
@@ -486,11 +653,11 @@ export const addChainToWallet = async (): Promise<AddChainResult> =>
             // Reported as its own outcome rather than folded into `failed`: the visitor was
             // asked and answered, and telling them their answer did not work is both wrong and
             // faintly rude. The loop still stops - they said no once.
-            return 'rejected';
+            return { result: 'rejected', failures, providers: providers.length };
         }
 
         // 'failed' - the next wallet may still be able to answer.
     }
 
-    return 'failed';
+    return { result: 'failed', failures, providers: providers.length };
 };

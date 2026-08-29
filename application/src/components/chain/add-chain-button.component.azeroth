@@ -3,7 +3,7 @@ import { createSignal } from 'azerothjs';
 import { Check, TriangleAlert, Wallet } from 'lucide';
 
 import { motionOk } from '../../lib/motion';
-import { addChainToWallet } from '../../lib/wallet';
+import { addChainToWallet, describeFailure } from '../../lib/wallet';
 
 import { useLocale } from '../../stores/locale';
 import { useToasts } from '../../stores/toasts';
@@ -60,7 +60,8 @@ export default component AddChainButton(props: { size?: ButtonSize; variant?: Bu
 
         setStatus('pending');
 
-        const result = await addChainToWallet();
+        const report = await addChainToWallet();
+        const result = report.result;
 
         if (result === 'rejected')
         {
@@ -88,11 +89,30 @@ export default component AddChainButton(props: { size?: ButtonSize; variant?: Bu
         }
         else
         {
+            /*
+             * Say WHICH wallet refused WHAT, and in whose words.
+             *
+             * "Could not add" on its own is the same sentence whether the wallet rejected the
+             * parameters, rejected the site, or was never actually asked - so it named the
+             * one thing already obvious from the button not working, and nothing that could
+             * be traced. The last refusal goes on the toast, which is the only channel a
+             * reader holding a phone has.
+             *
+             * The whole sequence goes to the console, because the toast can only carry one
+             * line and a single press can produce several - two wallets installed, or the
+             * connect-then-retry in lib/wallet, where the first refusal and the last say
+             * different things. This is the only console call in the app and it earns its
+             * place: without it a desktop report loses everything but the final line.
+             */
+            const last = report.failures[report.failures.length - 1];
+
+            toasts.push('error', t().addChain.failed, last === undefined ? undefined : describeFailure(last));
+            console.error('[add-chain]', report);
+
             // A wallet that was there and still could not do it - a phone's in-app browser
             // refusing EIP-3085 outright is the case no amount of error-code handling in
             // lib/wallet can rescue. Send them to the same manual values `no-provider`
             // gets: without that this branch is a dead end on the one device in their hand.
-            toasts.push('error', t().addChain.failed);
             showChainCard();
         }
 

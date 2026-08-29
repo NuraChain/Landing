@@ -36,6 +36,17 @@ const label = (container: Element): string => container.querySelector('button')!
 beforeEach(() =>
 {
     useLocale().choose('en');
+
+    // A toast carrying a detail does not self-dismiss, by design - so it outlives the test
+    // that raised it and the next one reads somebody else's failure. Cleared here the way
+    // components.spec clears it, which is what keeps these order-independent.
+    const toasts = useToasts();
+
+    for (const entry of [...toasts.items()])
+    {
+        toasts.dismiss(entry.id);
+    }
+
     delete (window as { ethereum?: unknown }).ethereum;
     delete (window as { trustwallet?: unknown }).trustwallet;
     delete (window as { trustWallet?: unknown }).trustWallet;
@@ -321,6 +332,78 @@ describe('AddChainButton state machine', () =>
         expect(request.mock.calls[0][0]).toMatchObject({ method: 'wallet_switchEthereumChain' });
         expect(request.mock.calls[1][0]).toMatchObject({ method: 'wallet_addEthereumChain' });
         await vi.waitFor(() => expect(label(container)).toBe(en.addChain.done));
+    });
+
+    /*
+     * The reason a failure is traceable at all.
+     *
+     * "Could not add" is the same sentence whether the wallet refused the parameters, refused
+     * the site, or was never asked - so on its own it told a reader nothing they could report
+     * and nobody anything they could act on. The wallet's own refusal now rides along.
+     */
+    it('puts the wallet own refusal on the toast, not just "could not add"', async () =>
+    {
+        const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        withProvider(vi.fn().mockRejectedValue(Object.assign(new Error('Invalid chainId'), { code: -32602 })));
+
+        const { container } = renderTest(() => AddChainButton({}));
+
+        fire(container.querySelector('button')!, 'click');
+        await vi.waitFor(() => expect(useToasts().items().some((entry) => entry.message === en.addChain.failed)).toBe(true));
+
+        const toast = useToasts().items().find((entry) => entry.message === en.addChain.failed)!;
+
+        expect(toast.detail).toBe('wallet · wallet_addEthereumChain · -32602 · Invalid chainId');
+
+        // The toast can only hold the last refusal; the console gets every one of them,
+        // which is the difference between "it failed" and knowing where it stopped.
+        expect(logged).toHaveBeenCalledWith('[add-chain]', expect.objectContaining({
+            result: 'failed',
+            providers: 1
+        }));
+
+        const report = logged.mock.calls[0][1] as { failures: { method: string }[] };
+
+        expect(report.failures.map((failure) => failure.method)).toEqual([
+            'wallet_switchEthereumChain',
+            'wallet_addEthereumChain'
+        ]);
+    });
+
+    it('names the wallet that refused when it identifies itself', async () =>
+    {
+        vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        const request = vi.fn().mockRejectedValue(Object.assign(new Error('provider is not ready'), { code: 4100 }));
+
+        (window as unknown as { ethereum: unknown }).ethereum = { request, isTrust: true };
+
+        const { container } = renderTest(() => AddChainButton({}));
+
+        fire(container.querySelector('button')!, 'click');
+        await vi.waitFor(() => expect(useToasts().items().some((entry) => entry.message === en.addChain.failed)).toBe(true));
+
+        const toast = useToasts().items().find((entry) => entry.message === en.addChain.failed)!;
+
+        // The connection was tried and refused too, so THAT is the last word - which is
+        // exactly the trace somebody needs to see.
+        expect(toast.detail).toContain('Trust Wallet');
+        expect(toast.detail).toContain('4100');
+    });
+
+    // A success has nothing to trace, and a detail would only make the confirmation stay on
+    // screen until somebody dismissed it.
+    it('says nothing technical when it worked', async () =>
+    {
+        withProvider(vi.fn().mockResolvedValue(null));
+
+        const { container } = renderTest(() => AddChainButton({}));
+
+        fire(container.querySelector('button')!, 'click');
+        await vi.waitFor(() => expect(label(container)).toBe(en.addChain.done));
+
+        expect(useToasts().items().find((entry) => entry.message === en.addChain.done)!.detail).toBeUndefined();
     });
 
     it('renders its label in the active locale', async () =>

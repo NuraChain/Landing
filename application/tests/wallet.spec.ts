@@ -6,6 +6,8 @@
 // state the button can render.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
+import type { AddChainResult } from '../src/lib/wallet';
+
 import { ADD_CHAIN_PARAMS, CHAIN_ID, EXPLORER_URL, ICON_URL, NATIVE_TOKEN, NATIVE_TOKEN_SYMBOL, NETWORK_NAME, RPC_URL } from '../src/lib/content/site';
 
 type Request = (args: { method: string; params?: unknown[] }) => Promise<unknown>;
@@ -25,6 +27,10 @@ type Request = (args: { method: string; params?: unknown[] }) => Promise<unknown
  * reads.
  */
 let addChainToWallet: typeof import('../src/lib/wallet').addChainToWallet;
+let describeFailure: typeof import('../src/lib/wallet').describeFailure;
+
+/** The outcome alone, for the many tests that only care which branch was taken. */
+const outcome = async (): Promise<AddChainResult> => (await addChainToWallet()).result;
 
 const withProvider = (request: Request): void =>
 {
@@ -41,7 +47,7 @@ beforeEach(async () =>
     delete (window as { nura?: unknown }).nura;
 
     vi.resetModules();
-    ({ addChainToWallet } = await import('../src/lib/wallet'));
+    ({ addChainToWallet, describeFailure } = await import('../src/lib/wallet'));
 });
 
 afterEach(() =>
@@ -59,14 +65,14 @@ describe('addChainToWallet', () =>
 {
     it('reports no-provider when no wallet is injected', async () =>
     {
-        await expect(addChainToWallet()).resolves.toBe('no-provider');
+        await expect(outcome()).resolves.toBe('no-provider');
     });
 
     it('reports added when the wallet accepts the request', async () =>
     {
         withProvider(vi.fn().mockResolvedValue(null));
 
-        await expect(addChainToWallet()).resolves.toBe('added');
+        await expect(outcome()).resolves.toBe('added');
     });
 
     it('switches to the chain when it is already known (no add needed)', async () =>
@@ -98,7 +104,7 @@ describe('addChainToWallet', () =>
 
         withProvider(request);
 
-        await expect(addChainToWallet()).resolves.toBe('added');
+        await expect(outcome()).resolves.toBe('added');
 
         expect(request).toHaveBeenCalledTimes(2);
         expect(request.mock.calls[0][0]).toEqual({
@@ -125,7 +131,7 @@ describe('addChainToWallet', () =>
 
         withProvider(request);
 
-        await expect(addChainToWallet()).resolves.toBe('added');
+        await expect(outcome()).resolves.toBe('added');
         expect(request).toHaveBeenCalledTimes(2);
         expect(request.mock.calls[1][0].method).toBe('wallet_addEthereumChain');
     });
@@ -140,14 +146,14 @@ describe('addChainToWallet', () =>
         // Its own outcome: the button reports a failure to the reader, and a decision the
         // reader made is not one. `failed` here put "Could not add" in front of somebody who
         // had just pressed cancel.
-        await expect(addChainToWallet()).resolves.toBe('rejected');
+        await expect(outcome()).resolves.toBe('rejected');
     });
 
     it('reports failed when the wallet rejects the params', async () =>
     {
         withProvider(vi.fn().mockRejectedValue(Object.assign(new Error('Invalid chainId'), { code: -32602 })));
 
-        await expect(addChainToWallet()).resolves.toBe('failed');
+        await expect(outcome()).resolves.toBe('failed');
     });
 
     // Wallet extensions are not required to reject with an Error, and a `catch` that
@@ -156,7 +162,7 @@ describe('addChainToWallet', () =>
     {
         withProvider(vi.fn().mockRejectedValue('nope'));
 
-        await expect(addChainToWallet()).resolves.toBe('failed');
+        await expect(outcome()).resolves.toBe('failed');
     });
 
     it('reports failed when the provider throws synchronously', async () =>
@@ -166,7 +172,7 @@ describe('addChainToWallet', () =>
             throw new Error('provider exploded');
         }));
 
-        await expect(addChainToWallet()).resolves.toBe('failed');
+        await expect(outcome()).resolves.toBe('failed');
     });
 
     // A provider object that is present but malformed (no `request`) is a real shape: some
@@ -175,14 +181,14 @@ describe('addChainToWallet', () =>
     {
         (window as { ethereum?: unknown }).ethereum = {};
 
-        await expect(addChainToWallet()).resolves.toBe('failed');
+        await expect(outcome()).resolves.toBe('failed');
     });
 
     it('never resolves to added when the request never settles successfully', async () =>
     {
         withProvider(vi.fn().mockRejectedValue(new Error('timeout')));
 
-        const results = await Promise.all([addChainToWallet(), addChainToWallet(), addChainToWallet()]);
+        const results = await Promise.all([outcome(), outcome(), outcome()]);
 
         expect(results).toEqual(['failed', 'failed', 'failed']);
     });
@@ -196,7 +202,7 @@ describe('addChainToWallet', () =>
             providers: [{ request: secondary } as unknown as { request: Request }, { request } as unknown as { request: Request }]
         };
 
-        await expect(addChainToWallet()).resolves.toBe('added');
+        await expect(outcome()).resolves.toBe('added');
         // Should try a provider from the array - either the array entry or the proxy.
         expect(request.mock.calls.length + secondary.mock.calls.length).toBeGreaterThan(0);
     });
@@ -206,7 +212,7 @@ describe('addChainToWallet', () =>
         const request = vi.fn().mockResolvedValue(null);
         (window as unknown as { trustwallet: unknown }).trustwallet = { ethereum: { request } };
 
-        await expect(addChainToWallet()).resolves.toBe('added');
+        await expect(outcome()).resolves.toBe('added');
         expect(request).toHaveBeenCalledWith(expect.objectContaining({ method: 'wallet_switchEthereumChain' }));
     });
 
@@ -215,7 +221,7 @@ describe('addChainToWallet', () =>
         const request = vi.fn().mockResolvedValue(null);
         (window as unknown as { nurawallet: unknown }).nurawallet = { request };
 
-        await expect(addChainToWallet()).resolves.toBe('added');
+        await expect(outcome()).resolves.toBe('added');
         expect(request).toHaveBeenCalledWith(expect.objectContaining({ method: 'wallet_switchEthereumChain' }));
     });
 
@@ -234,7 +240,7 @@ describe('addChainToWallet', () =>
             );
         }, { once: true });
 
-        await expect(addChainToWallet()).resolves.toBe('added');
+        await expect(outcome()).resolves.toBe('added');
         expect(request).toHaveBeenCalledWith(expect.objectContaining({ method: 'wallet_switchEthereumChain' }));
     });
 
@@ -249,7 +255,7 @@ describe('addChainToWallet', () =>
 
         // `rejected`, not `failed`: they were asked and answered. The loop still stops - the
         // point of the test - because a second wallet prompt after a no is harassment.
-        await expect(addChainToWallet()).resolves.toBe('rejected');
+        await expect(outcome()).resolves.toBe('rejected');
         expect(second).not.toHaveBeenCalled();
     });
 
@@ -276,7 +282,7 @@ describe('addChainToWallet', () =>
 
         (window as unknown as { ethereum: unknown }).ethereum = { request, isTrust: true };
 
-        await expect(addChainToWallet()).resolves.toBe('added');
+        await expect(outcome()).resolves.toBe('added');
 
         expect(request).toHaveBeenCalledTimes(2);
         expect(request.mock.calls[1][0]).toEqual({
@@ -299,7 +305,7 @@ describe('addChainToWallet', () =>
 
         withProvider(request);
 
-        await expect(addChainToWallet()).resolves.toBe('added');
+        await expect(outcome()).resolves.toBe('added');
         expect(request.mock.calls[1][0].method).toBe('wallet_addEthereumChain');
     });
 
@@ -317,7 +323,7 @@ describe('addChainToWallet', () =>
 
         withProvider(request);
 
-        await expect(addChainToWallet()).resolves.toBe('added');
+        await expect(outcome()).resolves.toBe('added');
     });
 
     /*
@@ -332,7 +338,7 @@ describe('addChainToWallet', () =>
 
         withProvider(request);
 
-        await expect(addChainToWallet()).resolves.toBe('rejected');
+        await expect(outcome()).resolves.toBe('rejected');
         expect(request).toHaveBeenCalledTimes(1);
     });
 
@@ -342,7 +348,7 @@ describe('addChainToWallet', () =>
 
         withProvider(request);
 
-        await expect(addChainToWallet()).resolves.toBe('rejected');
+        await expect(outcome()).resolves.toBe('rejected');
         expect(request).toHaveBeenCalledTimes(1);
     });
 
@@ -352,7 +358,7 @@ describe('addChainToWallet', () =>
 
         withProvider(request);
 
-        await expect(addChainToWallet()).resolves.toBe('rejected');
+        await expect(outcome()).resolves.toBe('rejected');
         expect(request).toHaveBeenCalledTimes(1);
     });
 
@@ -367,7 +373,7 @@ describe('addChainToWallet', () =>
 
         withProvider(request);
 
-        await expect(addChainToWallet()).resolves.toBe('failed');
+        await expect(outcome()).resolves.toBe('failed');
     });
 
     // -32002: a prompt for this request is already open. A second one queues behind the
@@ -380,7 +386,7 @@ describe('addChainToWallet', () =>
 
         withProvider(request);
 
-        await expect(addChainToWallet()).resolves.toBe('failed');
+        await expect(outcome()).resolves.toBe('failed');
         expect(request).toHaveBeenCalledTimes(1);
     });
 
@@ -438,7 +444,7 @@ describe('addChainToWallet', () =>
 
         (window as unknown as { ethereum: unknown }).ethereum = { request, isTrust: true };
 
-        await expect(addChainToWallet()).resolves.toBe('added');
+        await expect(outcome()).resolves.toBe('added');
 
         // The order IS the fix. Without the connection in the middle the two chain calls are
         // refused before the wallet sees either of them.
@@ -477,7 +483,7 @@ describe('addChainToWallet', () =>
 
         (window as unknown as { ethereum: unknown }).ethereum = { request: gated };
 
-        await expect(addChainToWallet()).resolves.toBe('added');
+        await expect(outcome()).resolves.toBe('added');
         expect(gated.mock.calls.map((call) => call[0].method)).toContain('eth_requestAccounts');
     });
 
@@ -497,7 +503,7 @@ describe('addChainToWallet', () =>
 
         // Declining the CONNECTION is still declining. It must not come back as a failure,
         // and nothing further may be asked of the wallet.
-        await expect(addChainToWallet()).resolves.toBe('rejected');
+        await expect(outcome()).resolves.toBe('rejected');
         expect(request.mock.calls.map((call) => call[0].method)).toEqual([
             'wallet_switchEthereumChain',
             'eth_requestAccounts'
@@ -518,7 +524,7 @@ describe('addChainToWallet', () =>
 
         withProvider(request);
 
-        await expect(addChainToWallet()).resolves.toBe('failed');
+        await expect(outcome()).resolves.toBe('failed');
         expect(request.mock.calls.filter((call) => call[0].method === 'eth_requestAccounts')).toHaveLength(1);
     });
 
@@ -542,11 +548,204 @@ describe('addChainToWallet', () =>
 
         withProvider(request);
 
-        await expect(addChainToWallet()).resolves.toBe('added');
+        await expect(outcome()).resolves.toBe('added');
         expect(request.mock.calls.map((call) => call[0].method)).toEqual([
             'wallet_switchEthereumChain',
             'wallet_addEthereumChain'
         ]);
+    });
+});
+
+/**
+ * The part that makes a failure traceable.
+ *
+ * "Could not add" is the same sentence whether the wallet rejected the parameters, rejected
+ * the site, or was never asked - so the outcome alone said nothing anybody could act on. What
+ * these pin is that the report names the wallet, the request and the wallet's own words.
+ */
+describe('the failure report', () =>
+{
+    it('records which wallet refused, which request, and in whose words', async () =>
+    {
+        const request = vi.fn().mockRejectedValue(Object.assign(new Error('Invalid chainId'), { code: -32602 }));
+
+        (window as unknown as { ethereum: unknown }).ethereum = { request, isMetaMask: true };
+
+        const report = await addChainToWallet();
+
+        expect(report.result).toBe('failed');
+        expect(report.providers).toBe(1);
+
+        // Both requests were refused, and both are on the record: the switch that started it
+        // and the add it fell through to.
+        expect(report.failures.map((failure) => failure.method)).toEqual([
+            'wallet_switchEthereumChain',
+            'wallet_addEthereumChain'
+        ]);
+
+        expect(report.failures[report.failures.length - 1]).toEqual({
+            wallet: 'MetaMask',
+            method: 'wallet_addEthereumChain',
+            code: -32602,
+            message: 'Invalid chainId'
+        });
+    });
+
+    /*
+     * Trust Wallet's mobile provider sets `isMetaMask` from its own config. Reading that flag
+     * before the specific ones would file every report from a phone under the wrong wallet -
+     * which is precisely the confusion this report exists to end.
+     */
+    it('names the wallet from its own flags, not from an isMetaMask it also sets', async () =>
+    {
+        const request = vi.fn().mockRejectedValue(Object.assign(new Error('nope'), { code: 4100 }));
+
+        (window as unknown as { ethereum: unknown }).ethereum = { request, isTrust: true, isMetaMask: true };
+
+        const report = await addChainToWallet();
+
+        expect(report.failures[0].wallet).toBe('Trust Wallet');
+    });
+
+    it('calls an anonymous provider a wallet rather than guessing', async () =>
+    {
+        withProvider(vi.fn().mockRejectedValue(new Error('boom')));
+
+        const report = await addChainToWallet();
+
+        expect(report.failures[0].wallet).toBe('wallet');
+    });
+
+    it('records nothing when the wallet simply does it', async () =>
+    {
+        withProvider(vi.fn().mockResolvedValue(null));
+
+        const report = await addChainToWallet();
+
+        expect(report.result).toBe('added');
+        expect(report.failures).toEqual([]);
+    });
+
+    // An answer is not a fault. A visitor who pressed cancel has nothing to trace, and
+    // putting their decision in a fault report would only send somebody looking for a bug.
+    it('does not record the visitor declining as a failure', async () =>
+    {
+        withProvider(vi.fn().mockRejectedValue(Object.assign(new Error('User rejected'), { code: 4001 })));
+
+        const report = await addChainToWallet();
+
+        expect(report.result).toBe('rejected');
+        expect(report.failures).toEqual([]);
+    });
+
+    /*
+     * The refusal that only a report can explain. On a phone the whole thing SUCCEEDS, and
+     * the 4100 that made it take the long way round is still worth having: it is the
+     * difference between "this wallet needed connecting" and "this wallet is broken".
+     */
+    it('keeps the refusal that forced the connection, even when the outcome is added', async () =>
+    {
+        let ready = false;
+
+        const request = vi.fn(async ({ method }: { method: string }) =>
+        {
+            if (method === 'eth_requestAccounts')
+            {
+                ready = true;
+
+                return ['0x01'];
+            }
+
+            if (!ready)
+            {
+                throw Object.assign(new Error('provider is not ready'), { code: 4100 });
+            }
+
+            return null;
+        });
+
+        (window as unknown as { ethereum: unknown }).ethereum = { request, isTrust: true };
+
+        const report = await addChainToWallet();
+
+        expect(report.result).toBe('added');
+        expect(report.failures).toEqual([
+            {
+                wallet: 'Trust Wallet',
+                method: 'wallet_switchEthereumChain',
+                code: 4100,
+                message: 'provider is not ready'
+            }
+        ]);
+    });
+
+    it('says a stub with no request method was exactly that', async () =>
+    {
+        (window as { ethereum?: unknown }).ethereum = {};
+
+        const report = await addChainToWallet();
+
+        expect(report.result).toBe('failed');
+        expect(report.failures[0].message).toBe('provider has no request method');
+    });
+
+    it('reads a message off a wallet that rejected with a bare string', async () =>
+    {
+        withProvider(vi.fn().mockRejectedValue('everything is on fire'));
+
+        const report = await addChainToWallet();
+
+        expect(report.failures[0].message).toBe('everything is on fire');
+        expect(report.failures[0].code).toBeUndefined();
+    });
+
+    // A wallet that answers with a stack trace must not push the page off the screen.
+    it('trims a message too long for a toast', async () =>
+    {
+        withProvider(vi.fn().mockRejectedValue(new Error('x'.repeat(400))));
+
+        const report = await addChainToWallet();
+
+        expect(report.failures[0].message!.length).toBeLessThanOrEqual(140);
+        expect(report.failures[0].message!.endsWith('…')).toBe(true);
+    });
+
+    it('counts the providers it had to choose between', async () =>
+    {
+        const refuse = vi.fn().mockRejectedValue(new Error('no'));
+
+        (window as unknown as { ethereum: unknown }).ethereum = {
+            request: refuse,
+            providers: [{ request: refuse }, { request: refuse }]
+        };
+
+        const report = await addChainToWallet();
+
+        expect(report.providers).toBe(3);
+    });
+});
+
+describe('describeFailure', () =>
+{
+    it('names the wallet, the request, the code and the reason', () =>
+    {
+        expect(describeFailure({
+            wallet: 'Trust Wallet',
+            method: 'wallet_addEthereumChain',
+            code: 4100,
+            message: 'provider is not ready'
+        })).toBe('Trust Wallet · wallet_addEthereumChain · 4100 · provider is not ready');
+    });
+
+    // Plenty of wallets send no code, and several send no message. Neither may leave a
+    // dangling separator in a line somebody is about to paste into a bug report.
+    it('leaves out the parts the wallet did not send', () =>
+    {
+        expect(describeFailure({ wallet: 'wallet', method: 'wallet_switchEthereumChain' }))
+            .toBe('wallet · wallet_switchEthereumChain');
+
+        expect(describeFailure({ wallet: 'MetaMask', method: 'eth_requestAccounts', code: -32002 }))
+            .toBe('MetaMask · eth_requestAccounts · -32002');
     });
 });
 
