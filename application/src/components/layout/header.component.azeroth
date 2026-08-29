@@ -1,6 +1,6 @@
 import { For, Link, Show } from 'azerothjs';
 
-import { Check, Languages, Menu, Moon, Sun, X } from 'lucide';
+import { Blocks, Check, CircleDollarSign, Languages, Menu, Moon, Newspaper, Search, Sun, Users, Wallet, X } from 'lucide';
 
 import { LOCALES, nativeName, useLocale } from '../../stores/locale';
 import { captureOverlay } from '../../lib/overlay';
@@ -22,6 +22,21 @@ type SectionId = 'wallet' | 'tokenomics' | 'chain' | 'explorer' | 'social';
 const SECTIONS: SectionId[] = ['wallet', 'tokenomics', 'chain', 'explorer', 'social'];
 
 const GLYPH: Record<Theme, typeof Moon> = { dark: Moon, light: Sun };
+
+/**
+ * One glyph per drawer row. Drawn from the vocabulary the sections themselves already use -
+ * `Blocks` is the chain in both the network and explorer sections, `Wallet` and
+ * `CircleDollarSign` likewise - so a mark means the same thing wherever it appears. The
+ * table is a full `Record`, so a section added to `SECTIONS` without a glyph is a compile
+ * error rather than a row that quietly renders short.
+ */
+const SECTION_GLYPH: Record<SectionId, typeof Wallet> = {
+    wallet: Wallet,
+    tokenomics: CircleDollarSign,
+    chain: Blocks,
+    explorer: Search,
+    social: Users
+};
 
 /**
  * Sticky header that condenses once the page scrolls.
@@ -267,24 +282,36 @@ export default component Header()
                             { icon(X, 'size-5') }
                         </IconButton>
 
-                        <For each={ SECTIONS } key={ (id) => id } let={ id }>
-                            <a
-                                href={ () => sectionHref(id) }
-                                class="rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink"
+                        { /* A divided list rather than the bar's loose row of links: at this
+                             width the rows are the page's whole index, and a hairline between
+                             them is what makes each one read as its own target rather than as
+                             one block of words. `divide-y` puts the rule BETWEEN rows only, so
+                             there is no stray line above the first or below the last, and it
+                             is direction-neutral - a horizontal rule needs no RTL counterpart.
+                             The group drops the nav's `gap-1` on purpose: a gap would leave
+                             each rule floating in the space instead of dividing two rows. */ }
+                        <div class="flex flex-col divide-y divide-line">
+                            <For each={ SECTIONS } key={ (id) => id } let={ id }>
+                                <a
+                                    href={ () => sectionHref(id) }
+                                    class="flex items-center gap-3 rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink"
+                                    onClick={ () => jump() }
+                                >
+                                    { icon(SECTION_GLYPH[id], 'size-[18px] shrink-0') }
+                                    <span>{ label(id) }</span>
+                                </a>
+                            </For>
+
+                            <Link
+                                to="/blog"
+                                class="flex items-center gap-3 rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink aria-[current=page]:text-ink"
+                                activeClass="is-current"
                                 onClick={ () => jump() }
                             >
-                                { label(id) }
-                            </a>
-                        </For>
-
-                        <Link
-                            to="/blog"
-                            class="rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink aria-[current=page]:text-ink"
-                            activeClass="is-current"
-                            onClick={ () => jump() }
-                        >
-                            { t().blog.all }
-                        </Link>
+                                { icon(Newspaper, 'size-[18px] shrink-0') }
+                                <span>{ t().blog.all }</span>
+                            </Link>
+                        </div>
 
                         { /* Everything from here down sits at the FOOT of the drawer, which
                              is what `mt-auto` buys: the links keep their natural height at
@@ -307,7 +334,7 @@ export default component Header()
                                  label a thumb can read beats a glyph it has to guess at. Each
                                  row states its current value on the trailing edge, which is the
                                  same string the bar's tooltip shows on hover. */ }
-                            <div class="mt-3 flex flex-col gap-1 border-t border-line pt-3">
+                            <div class="mt-3 flex flex-col divide-y divide-line border-t border-line pt-3">
                                 <button
                                     type="button"
                                     class="theme-trigger flex items-center gap-3 rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink"
