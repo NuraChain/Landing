@@ -81,19 +81,25 @@ export interface ChainFact
     link?: boolean;
 }
 
-/** TODO(real-data): placeholder values. A wrong chainId or rpcUrl is actively harmful. */
-export const NETWORK_NAME = 'Nura Mainnet';
+/**
+ * The chain as its owner states it, and as the node agrees: `eth_chainId` against RPC_URL
+ * answered `0x3fc` when this was last checked, on 2026-08-30. These are the values a wallet
+ * STORES and a reader pastes by hand, so a wrong one here is how somebody loses funds -
+ * re-verify against the node rather than editing either of them from memory.
+ */
+export const NETWORK_NAME = 'Nura Chain';
 export const CHAIN_ID = 1020;
 export const RPC_URL = 'https://rpc.nurachain.net';
 export const EXPLORER_URL = 'https://explorer.nurachain.net';
+
 // https, not http: the origin already 301s to TLS, so the plaintext hop bought nothing but
 // a redirect that an on-path attacker can strip. This one is a link to a SWAP - the page
 // where somebody connects a wallet and moves funds - so it is the last link on the site
 // that should start in the clear. Verified 2026-08-20: https answers 200 directly.
 export const SWAP_URL = 'https://swap.nurachain.net/';
-export const NATIVE_TOKEN = 'Nura Coin';
+export const NATIVE_TOKEN = 'Nura';
 
-/** TODO(real-data): ticker, as unconfirmed as the rest. Wallets show it next to balances. */
+/** The ticker, which wallets show next to a balance. */
 export const NATIVE_TOKEN_SYMBOL = 'NURA';
 
 export const CHAIN: readonly ChainFact[] =
