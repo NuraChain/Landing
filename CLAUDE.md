@@ -262,7 +262,9 @@ Load the **`accessibility-audit`** skill for review work.
   to whatever opened it. The focus half matters most because both mount through a `Portal`
   at the end of `document.body` — without it, Tab from the trigger walks the entire page
   underneath the scrim before reaching the panel covering it. The trap wraps at both ends.
-- `prefers-reduced-motion` is honoured globally in `styles.css`.
+- `prefers-reduced-motion` is honoured in JS, through `motionOk()` in `lib/motion.ts` -
+  there is no global CSS rule for it in `styles.css` (the only `@media` there is
+  `pointer: coarse`), and the touch-target comment claiming one sits "below" is stale.
 
 ## Motion
 
