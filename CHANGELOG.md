@@ -7,8 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.5] - 2026-08-29
+
+### Added
+
+- **Theme and language, inside the mobile drawer.** The scrim sits above the header, so
+  while the drawer was open the bar's own two controls were behind it - visible and
+  unreachable. Below `md` the bar gives them up and the drawer carries them as labelled
+  rows, each stating its current value; from `md` up nothing changes.
+- **A head of its own for `/` and `/about`.** The kit calls a renderer only for a
+  `render: 'server'` route, so both landing pages were served the shell verbatim: one
+  shared title and description, no canonical, no Open Graph, no structured data. Each now
+  carries its own, plus `WebSite` and `Organization` JSON-LD on the home page. The bodies
+  are still the browser's to render - only the head moved.
+- **Binance Wallet.** `window.BinanceChain` was never collected, so a visitor with only
+  Binance installed reached the `no-provider` path and the add-chain button simply jumped
+  down the page.
+- **Three repository skills** - `tailwindcss`, `i18n-rtl-ltr` and `accessibility-audit`.
+  The latter two were already named in CLAUDE.md as things to load before layout and
+  review work, and neither existed.
+
 ### Fixed
 
+- **The drawer left the page frozen when a phone was rotated.** Landscape crosses the `md`
+  breakpoint, so `md:hidden` stopped painting the drawer and its scrim - but the state
+  stayed open, and with it the scroll lock and the focus trap. The page looked entirely
+  normal and would not scroll, with nothing on screen to explain it and no Escape key to
+  reach for. Crossing the breakpoint now closes it.
+- **The drawer clipped its own contents on a short viewport.** It is `inset-y-0` with no
+  overflow of its own, so anything past the fold was unreachable - 571px of content in a
+  430px panel. It scrolls now, with `overscroll-contain` so the page behind does not take
+  over at the ends.
+- **A wallet that announces late, or only under its own global, was never found.** EIP-6963
+  discovery ran only when `window.ethereum` was absent, and then spent a timeout before any
+  prompt could open; it now listens from load. MetaMask's nested error codes are read
+  properly too - a `4001` buried inside a `-32603` was being treated as a generic failure
+  and re-prompting somebody who had just declined.
+- **The Android download pointed at a package id that is not published.**
 - **A malformed blog address answered 500 instead of 404.** `/blog/%` - or any url whose
   slug carries a truncated percent-escape - threw a `URIError` from inside
   `decodeURIComponent`, taking the SSR render down with it. The slug lookup is now
@@ -33,6 +68,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The drawer reads as a list.** Every row carries an icon drawn from the vocabulary the
+  sections already use, with a rule between rows; the download CTA and the two setting rows
+  sit at the foot of the panel rather than floating mid-drawer.
+- **The language picker's flags are fetched on intent, not on open.** Six of the ten are
+  inlined into the bundle; the other four - `es` alone is 79KB of coat of arms - were only
+  requested once the dialog rendered them, so the modal assembled itself in front of the
+  reader. They now warm when a pointer or focus reaches the trigger, or when the drawer
+  opens. Not on load: 111KB is not a toll for visitors who never open the picker.
+- **`/about` is served `noindex` and is no longer in the sitemap.** It still renders the
+  AzerothJS starter template - "You navigated here client-side", a list of `npm test`, and
+  a link to the framework's repository. Indexed under this brand that competes with the
+  home page for the site's own name. Both come back the day the page has real copy.
+- Two notes corrected against the code they describe: `prefers-reduced-motion` is gated in
+  JavaScript by `motionOk()` and not by any CSS rule, and the blog routes serve a crawler
+  the real article rather than the loading frame `routes.ts` still described.
 - README rewritten to match reality: it still documented the sqlite index, the `/admin`
   dashboard and the long-gone `admin:key` script.
 - `.idea/` untracked (the folder was already gitignored; the files predated the ignore).
