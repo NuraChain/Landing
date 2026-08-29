@@ -92,6 +92,12 @@ export const CHAIN_ID = 1020;
 export const RPC_URL = 'https://rpc.nurachain.net';
 export const EXPLORER_URL = 'https://explorer.nurachain.net';
 
+/**
+ * Absolute, because a wallet draws this in its own network list with no page to resolve a
+ * relative path against. It is the same `/icon.png` the header, the footer and the favicon
+ * already use, so the mark beside the network is the one the reader saw on the site.
+ */
+export const ICON_URL = 'https://nurachain.net/icon.png';
 // https, not http: the origin already 301s to TLS, so the plaintext hop bought nothing but
 // a redirect that an on-path attacker can strip. This one is a link to a SWAP - the page
 // where somebody connects a wallet and moves funds - so it is the last link on the site
@@ -123,7 +129,10 @@ export const ADD_CHAIN_PARAMS =
     chainName: NETWORK_NAME,
     nativeCurrency: { name: NATIVE_TOKEN, symbol: NATIVE_TOKEN_SYMBOL, decimals: 18 },
     rpcUrls: [RPC_URL],
-    blockExplorerUrls: [EXPLORER_URL]
+    blockExplorerUrls: [EXPLORER_URL],
+    // EIP-3085's optional icon. Wallets that draw a mark beside a network use it and the
+    // rest ignore the field, so there is nothing to lose by sending it.
+    iconUrls: [ICON_URL]
 } as const;
 
 export interface Allocation

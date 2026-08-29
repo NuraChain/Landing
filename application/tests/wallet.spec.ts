@@ -6,7 +6,7 @@
 // state the button can render.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { ADD_CHAIN_PARAMS, CHAIN_ID, EXPLORER_URL, NATIVE_TOKEN, NATIVE_TOKEN_SYMBOL, NETWORK_NAME, RPC_URL } from '../src/lib/content/site';
+import { ADD_CHAIN_PARAMS, CHAIN_ID, EXPLORER_URL, ICON_URL, NATIVE_TOKEN, NATIVE_TOKEN_SYMBOL, NETWORK_NAME, RPC_URL } from '../src/lib/content/site';
 
 type Request = (args: { method: string; params?: unknown[] }) => Promise<unknown>;
 
@@ -569,6 +569,17 @@ describe('ADD_CHAIN_PARAMS', () =>
         expect(ADD_CHAIN_PARAMS.chainId).toMatch(/^0x[0-9a-f]+$/);
         expect(ADD_CHAIN_PARAMS.chainId).not.toMatch(/^0x0/);
         expect(ADD_CHAIN_PARAMS.chainId).not.toBe(String(CHAIN_ID));
+    });
+
+    /*
+     * EIP-3085's optional icon, and the only field here pointing at something this site
+     * serves itself. Absolute on purpose: a wallet draws it in its own network list, where
+     * a relative path resolves against nothing and the network turns up unmarked.
+     */
+    it('carries an absolute icon url', () =>
+    {
+        expect(ADD_CHAIN_PARAMS.iconUrls).toEqual([ICON_URL]);
+        expect(ICON_URL.startsWith('https://')).toBe(true);
     });
 
     it('carries the same endpoints the manual card tells people to type', () =>
