@@ -6,17 +6,32 @@
 // state the button can render.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { addChainToWallet } from '../src/lib/wallet';
 import { ADD_CHAIN_PARAMS, CHAIN_ID, EXPLORER_URL, NATIVE_TOKEN, NATIVE_TOKEN_SYMBOL, NETWORK_NAME, RPC_URL } from '../src/lib/content/site';
 
 type Request = (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+
+/**
+ * Re-imported per test, not bound once at the top of the file.
+ *
+ * `lib/wallet` keeps its EIP-6963 registry in a module-level array, filled by a listener it
+ * attaches AT IMPORT - which is the point of that design, but it means the wallet announced
+ * by one test stays a candidate for every test that runs after it. A spec expecting `failed`
+ * would then reach that leftover provider, get a `success` off it, and pass or fail on
+ * declaration order alone. It did: `--sequence.shuffle` failed four ways on this file before
+ * this was added, which is exactly the drift `npm run test:shuffle` exists to catch.
+ *
+ * `vi.resetModules()` hands each test its own copy of the module, and so its own empty
+ * registry. Listeners left on `window` by the discarded copies push into arrays nothing
+ * reads.
+ */
+let addChainToWallet: typeof import('../src/lib/wallet').addChainToWallet;
 
 const withProvider = (request: Request): void =>
 {
     (window as { ethereum?: { request: Request } }).ethereum = { request };
 };
 
-beforeEach(() =>
+beforeEach(async () =>
 {
     delete (window as { ethereum?: unknown }).ethereum;
     delete (window as { trustwallet?: unknown }).trustwallet;
@@ -24,6 +39,9 @@ beforeEach(() =>
     delete (window as { nurawallet?: unknown }).nurawallet;
     delete (window as { nuraWallet?: unknown }).nuraWallet;
     delete (window as { nura?: unknown }).nura;
+
+    vi.resetModules();
+    ({ addChainToWallet } = await import('../src/lib/wallet'));
 });
 
 afterEach(() =>
@@ -234,6 +252,7 @@ describe('addChainToWallet', () =>
         await expect(addChainToWallet()).resolves.toBe('rejected');
         expect(second).not.toHaveBeenCalled();
     });
+
 });
 
 /**
