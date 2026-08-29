@@ -188,6 +188,63 @@ describe('AddChainButton state machine', () =>
         await vi.waitFor(() => expect(label(container)).toBe(en.addChain.done));
     });
 
+    /*
+     * The reported bug, at the seam the reader actually touches: the Trust Wallet APP on a
+     * phone, whose provider refuses every request with 4100 until the site has an account.
+     * The button used to end on "Could not add" here while the EXTENSION of the same name
+     * worked, so what this pins is that the two now finish the same way.
+     */
+    it('adds the chain in a wallet that refuses until the site has connected', async () =>
+    {
+        let ready = false;
+        const known = new Set<string>();
+
+        const request = vi.fn(async ({ method, params }: { method: string; params?: unknown[] }) =>
+        {
+            if (method === 'eth_requestAccounts')
+            {
+                ready = true;
+
+                return ['0x0000000000000000000000000000000000000001'];
+            }
+
+            if (!ready)
+            {
+                throw Object.assign(new Error('provider is not ready'), { code: 4100 });
+            }
+
+            const chainId = (params?.[0] as { chainId?: string } | undefined)?.chainId ?? '';
+
+            if (method === 'wallet_addEthereumChain')
+            {
+                known.add(chainId);
+
+                return null;
+            }
+
+            if (method === 'wallet_switchEthereumChain' && !known.has(chainId))
+            {
+                throw Object.assign(new Error('Unrecognized chain ID'), { code: 4902 });
+            }
+
+            return null;
+        });
+
+        withProvider(request);
+
+        const { container } = renderTest(() => AddChainButton({}));
+
+        fire(container.querySelector('button')!, 'click');
+
+        await vi.waitFor(() => expect(label(container)).toBe(en.addChain.done));
+        expect(request.mock.calls.map((call) => call[0].method)).toEqual([
+            'wallet_switchEthereumChain',
+            'eth_requestAccounts',
+            'wallet_switchEthereumChain',
+            'wallet_addEthereumChain'
+        ]);
+    });
+
     // Regression guard on the `status() === 'pending'` early return: without it, an
     // impatient double-click opens a second wallet prompt behind the first.
     it('ignores a second click while a request is still in flight', async () =>

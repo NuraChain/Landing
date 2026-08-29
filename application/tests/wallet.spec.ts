@@ -383,6 +383,171 @@ describe('addChainToWallet', () =>
         await expect(addChainToWallet()).resolves.toBe('failed');
         expect(request).toHaveBeenCalledTimes(1);
     });
+
+    /*
+     * Trust Wallet's MOBILE provider in miniature, which is a different codebase from the
+     * extension of the same name. Every request is refused with 4100 "provider is not ready"
+     * until an account has been shared, and `requestAccounts` is the one handler exempt from
+     * that gate - see `src/base_provider.js` in trustwallet/trust-web3-provider.
+     *
+     * Reproduced rather than stubbed at the outcome, because the bug was entirely in the
+     * ORDER of the calls: the site went straight to the switch, was refused before the
+     * wallet ever saw it, and reported "Could not add" on a phone while working perfectly in
+     * the extension on a desktop.
+     */
+    const trustWalletOnAPhone = () =>
+    {
+        let ready = false;
+        const known = new Set<string>();
+
+        return vi.fn(async ({ method, params }: { method: string; params?: unknown[] }) =>
+        {
+            if (method === 'eth_requestAccounts')
+            {
+                ready = true;
+
+                return ['0x0000000000000000000000000000000000000001'];
+            }
+
+            if (!ready)
+            {
+                throw Object.assign(new Error('provider is not ready'), { code: 4100 });
+            }
+
+            const chainId = (params?.[0] as { chainId?: string } | undefined)?.chainId ?? '';
+
+            if (method === 'wallet_addEthereumChain')
+            {
+                known.add(chainId);
+
+                return null;
+            }
+
+            if (method === 'wallet_switchEthereumChain' && !known.has(chainId))
+            {
+                throw Object.assign(new Error('Unrecognized chain ID'), { code: 4902 });
+            }
+
+            return null;
+        });
+    };
+
+    it('connects first when the wallet refuses everything until the site has an account', async () =>
+    {
+        const request = trustWalletOnAPhone();
+
+        (window as unknown as { ethereum: unknown }).ethereum = { request, isTrust: true };
+
+        await expect(addChainToWallet()).resolves.toBe('added');
+
+        // The order IS the fix. Without the connection in the middle the two chain calls are
+        // refused before the wallet sees either of them.
+        expect(request.mock.calls.map((call) => call[0].method)).toEqual([
+            'wallet_switchEthereumChain',
+            'eth_requestAccounts',
+            'wallet_switchEthereumChain',
+            'wallet_addEthereumChain'
+        ]);
+    });
+
+    it('recognises the refusal from its message when no code is attached', async () =>
+    {
+        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
+        {
+            if (method === 'eth_requestAccounts')
+            {
+                return ['0x0000000000000000000000000000000000000001'];
+            }
+
+            return null;
+        });
+
+        let first = true;
+        const gated = vi.fn(async (payload: { method: string; params?: unknown[] }) =>
+        {
+            if (first && payload.method !== 'eth_requestAccounts')
+            {
+                first = false;
+
+                throw new Error('provider is not ready');
+            }
+
+            return request(payload);
+        });
+
+        (window as unknown as { ethereum: unknown }).ethereum = { request: gated };
+
+        await expect(addChainToWallet()).resolves.toBe('added');
+        expect(gated.mock.calls.map((call) => call[0].method)).toContain('eth_requestAccounts');
+    });
+
+    it('reports rejected and stops when the connection itself is declined', async () =>
+    {
+        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
+        {
+            if (method === 'eth_requestAccounts')
+            {
+                throw Object.assign(new Error('User rejected the request'), { code: 4001 });
+            }
+
+            throw Object.assign(new Error('provider is not ready'), { code: 4100 });
+        });
+
+        withProvider(request);
+
+        // Declining the CONNECTION is still declining. It must not come back as a failure,
+        // and nothing further may be asked of the wallet.
+        await expect(addChainToWallet()).resolves.toBe('rejected');
+        expect(request.mock.calls.map((call) => call[0].method)).toEqual([
+            'wallet_switchEthereumChain',
+            'eth_requestAccounts'
+        ]);
+    });
+
+    it('gives up rather than looping when the wallet still refuses after connecting', async () =>
+    {
+        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
+        {
+            if (method === 'eth_requestAccounts')
+            {
+                return ['0x0000000000000000000000000000000000000001'];
+            }
+
+            throw Object.assign(new Error('provider is not ready'), { code: 4100 });
+        });
+
+        withProvider(request);
+
+        await expect(addChainToWallet()).resolves.toBe('failed');
+        expect(request.mock.calls.filter((call) => call[0].method === 'eth_requestAccounts')).toHaveLength(1);
+    });
+
+    /*
+     * The guard on the other side of the same change. Asking for an account up front would
+     * hand every desktop reader a connection prompt - and an address the site has no use for
+     * - to do something the extension does without one. The connection is a repair for a
+     * wallet that demanded it, not a step in the normal path.
+     */
+    it('never asks for an account when the wallet did not say it needed one', async () =>
+    {
+        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
+        {
+            if (method === 'wallet_switchEthereumChain')
+            {
+                throw Object.assign(new Error('Unknown chain'), { code: 4902 });
+            }
+
+            return null;
+        });
+
+        withProvider(request);
+
+        await expect(addChainToWallet()).resolves.toBe('added');
+        expect(request.mock.calls.map((call) => call[0].method)).toEqual([
+            'wallet_switchEthereumChain',
+            'wallet_addEthereumChain'
+        ]);
+    });
 });
 
 /**

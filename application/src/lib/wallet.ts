@@ -265,11 +265,116 @@ const isRejection = (error: unknown): boolean =>
     return typeof message === 'string' && (REJECTED_BY_USER.test(message) || REJECTED_BARE.test(message));
 };
 
-const addChain = async (provider: Eip1193Provider): Promise<AttemptResult> =>
+/**
+ * EIP-1193 4100, "unauthorized": the wallet will not run this method for a site it has not
+ * been introduced to.
+ *
+ * This is why the button worked in Trust Wallet's browser EXTENSION and failed in the Trust
+ * Wallet APP on a phone - two different codebases behind one name. The mobile provider gates
+ * every request behind a `ready` flag that is only set once an account has been shared, and
+ * refuses everything else before it reaches the wallet at all:
+ *
+ *     postMessage(handler, id, data) {
+ *       if (this.ready || handler === "requestAccounts") { super.postMessage(...) }
+ *       else { this.sendError(id, new ProviderRpcError(4100, "provider is not ready")); }
+ *     }
+ *
+ * (`src/base_provider.js` and `src/ethereum_provider.js`, trustwallet/trust-web3-provider.)
+ * So neither the switch nor the add was ever seen by anything that could have granted it.
+ * The extension has no such gate, and several other in-app browsers fork this provider and
+ * carry it.
+ *
+ * Matched on the message as well as the code because the gate is one string in one file,
+ * and a wallet that reworded it while keeping the behaviour would put the bug straight back.
+ */
+const NOT_AUTHORISED = /provider is not ready|not authori[sz]ed|unauthori[sz]ed/i;
+
+const isUnauthorized = (error: unknown): boolean =>
+{
+    if (errorCode(error) === 4100)
+    {
+        return true;
+    }
+
+    const message = (error as { message?: unknown } | null | undefined)?.message;
+
+    return typeof message === 'string' && NOT_AUTHORISED.test(message);
+};
+
+/** `unauthorized` is not an outcome the button renders - it is a step the caller can take. */
+type ChainAttempt = AttemptResult | 'unauthorized';
+
+const addChain = async (provider: Eip1193Provider): Promise<ChainAttempt> =>
 {
     try
     {
         await provider.request({ method: 'wallet_addEthereumChain', params: [ADD_CHAIN_PARAMS] });
+
+        return 'success';
+    }
+    catch (error: unknown)
+    {
+        if (isRejection(error))
+        {
+            return 'rejected';
+        }
+
+        return isUnauthorized(error) ? 'unauthorized' : 'failed';
+    }
+};
+
+const switchOrAddChain = async (provider: Eip1193Provider): Promise<ChainAttempt> =>
+{
+    try
+    {
+        await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_HEX }] });
+
+        return 'success';
+    }
+    catch (error: unknown)
+    {
+        // The visitor declined the prompt. Do not fall through to a second prompt
+        // (`wallet_addEthereumChain`) and do not try the next wallet: they said no once.
+        if (isRejection(error))
+        {
+            return 'rejected';
+        }
+
+        // Not a refusal and not a fault - the wallet wants an introduction first. Reported
+        // up rather than handled here, because the retry belongs after the connection.
+        if (isUnauthorized(error))
+        {
+            return 'unauthorized';
+        }
+
+        // -32002 - a prompt for this very request is already open, either in front of the
+        // reader or left unanswered behind the page. An add sent now queues a second sheet
+        // behind the first instead of helping.
+        if (errorCode(error) === -32002)
+        {
+            return 'failed';
+        }
+
+        /*
+         * Anything else: ADD the chain. This used to be an allowlist - 4902 ("unknown
+         * chain"), -32601 and -32603 - and every wallet outside it got a hard failure
+         * without the request the button is actually named after ever being sent.
+         *
+         * An allowlist is the wrong shape for this. There is no registry of the codes every
+         * wallet on every phone returns, and the cost of the two directions is not
+         * symmetric: a needless add request costs one prompt the reader can dismiss, while
+         * a missing one costs the feature. Switching first stays only as an optimisation -
+         * it spares a redundant prompt for a reader who already has the chain.
+         */
+        return addChain(provider);
+    }
+};
+
+const connect = async (provider: Eip1193Provider): Promise<AttemptResult> =>
+{
+    try
+    {
+        await provider.request({ method: 'eth_requestAccounts', params: [] });
 
         return 'success';
     }
@@ -286,46 +391,37 @@ const attemptForProvider = async (provider: Eip1193Provider): Promise<AttemptRes
         return 'failed';
     }
 
-    try
+    const first = await switchOrAddChain(provider);
+
+    if (first !== 'unauthorized')
     {
-        await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_HEX }] });
-
-        return 'success';
+        return first;
     }
-    catch (error: unknown)
+
+    /*
+     * The wallet said it will not act for a site it has not met. Introduce the site, then
+     * ask again - on a phone this is the only order that works at all.
+     *
+     * Deliberately NOT done up front. `eth_requestAccounts` hands over an address, which is
+     * more than adding a network needs and more than somebody agreed to by pressing a button
+     * that says nothing about accounts. On an extension the add already works without it and
+     * no account is ever shared, and it stays that way: the connection is asked for only
+     * when a wallet has said, in EIP-1193's own vocabulary, that it will not proceed without
+     * one. That costs the reader on a phone two prompts instead of one, which is the price
+     * of the button working there at all.
+     */
+    const connected = await connect(provider);
+
+    if (connected !== 'success')
     {
-        // The visitor declined the prompt. Do not fall through to a second prompt
-        // (`wallet_addEthereumChain`) and do not try the next wallet: they said no once.
-        if (isRejection(error))
-        {
-            return 'rejected';
-        }
-
-        // -32002 - a prompt for this very request is already open, either in front of the
-        // reader or left unanswered behind the page. An add sent now queues a second sheet
-        // behind the first instead of helping.
-        if (errorCode(error) === -32002)
-        {
-            return 'failed';
-        }
-
-        /*
-         * Anything else: ADD the chain. This used to be an allowlist - 4902 ("unknown
-         * chain"), -32601 and -32603 - and every wallet outside it got a hard failure
-         * without the request the button is actually named after ever being sent.
-         *
-         * Trust Wallet's in-app browser on a phone is exactly that wallet. It does not
-         * answer an unknown chain with 4902; its native bridge surfaces a generic error,
-         * so the site reported "Could not add" having never once asked to add anything.
-         *
-         * An allowlist is the wrong shape for this. There is no registry of the codes
-         * every wallet on every phone returns, and the cost of the two directions is not
-         * symmetric: a needless add request costs one prompt the reader can dismiss, while
-         * a missing one costs the feature. Switching first stays only as an optimisation -
-         * it spares a redundant prompt for a reader who already has the chain.
-         */
-        return addChain(provider);
+        return connected;
     }
+
+    const second = await switchOrAddChain(provider);
+
+    // Still refusing with an account shared: nothing left to try on this provider, and
+    // retrying the connection would only loop.
+    return second === 'unauthorized' ? 'failed' : second;
 };
 
 export type AddChainResult = 'added' | 'rejected' | 'failed' | 'no-provider';
@@ -340,6 +436,10 @@ export type AddChainResult = 'added' | 'rejected' | 'failed' | 'no-provider';
  * supported wallets - MetaMask, Trust Wallet, Nura Wallet and Binance - which all speak
  * EIP-1193 and either inject one of the globals above or announce through EIP-6963, in an
  * extension or in a phone's in-app browser.
+ *
+ * A wallet that refuses both because the site has not connected to it yet is connected to
+ * and asked again - see `isUnauthorized`, which is the whole reason the app on a phone
+ * behaved differently from the extension of the same name.
  *
  * Returns an outcome instead of throwing, because every branch is an expected state the
  * button renders, not an error: `no-provider` is most desktop browsers, `rejected` is the
