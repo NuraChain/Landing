@@ -105,7 +105,8 @@ export const es: Strings =
     {
         cta: 'Añadir Nura Chain a la billetera',
         done: 'Añadida a tu billetera',
-        failed: 'No se pudo añadir'
+        failed: 'No se pudo añadir',
+        noWallet: 'No se detectó ninguna cartera. Añade la red a mano con los valores de abajo.'
     },
 
     wallet:

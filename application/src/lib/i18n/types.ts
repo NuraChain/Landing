@@ -158,6 +158,8 @@ export interface Strings
         cta: string;
         done: string;
         failed: string;
+        /** Reported when nothing on the machine can be asked - the manual card is the fallback. */
+        noWallet: string;
     };
 
     wallet:

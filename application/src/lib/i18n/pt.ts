@@ -105,7 +105,8 @@ export const pt: Strings =
     {
         cta: 'Adicionar a Nura Chain à carteira',
         done: 'Adicionada à sua carteira',
-        failed: 'Não foi possível adicionar'
+        failed: 'Não foi possível adicionar',
+        noWallet: 'Nenhuma carteira detectada. Adicione a rede manualmente com os valores abaixo.'
     },
 
     wallet:

@@ -105,7 +105,8 @@ export const zh: Strings =
     {
         cta: '将 Nura Chain 添加到钱包',
         done: '已添加到钱包',
-        failed: '添加失败'
+        failed: '添加失败',
+        noWallet: '未检测到钱包。请用下方的值手动添加网络。'
     },
 
     wallet:

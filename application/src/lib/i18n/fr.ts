@@ -105,7 +105,8 @@ export const fr: Strings =
     {
         cta: 'Ajouter Nura Chain au portefeuille',
         done: 'Ajoutée à votre portefeuille',
-        failed: 'Échec de l\'ajout'
+        failed: 'Échec de l\'ajout',
+        noWallet: 'Aucun portefeuille détecté. Ajoutez le réseau à la main avec les valeurs ci-dessous.'
     },
 
     wallet:

@@ -105,7 +105,8 @@ export const tr: Strings =
     {
         cta: 'Nura Chain\'i cüzdana ekle',
         done: 'Cüzdanına eklendi',
-        failed: 'Eklenemedi'
+        failed: 'Eklenemedi',
+        noWallet: 'Cüzdan bulunamadı. Ağı aşağıdaki değerlerle elle ekleyin.'
     },
 
     wallet:
