@@ -342,6 +342,7 @@
        standing hint on six text nodes would be a standing allocation for no gain. */
     .hero-word
     {
+        height: 80px;
         display: inline-block;
         overflow: hidden;
     }
