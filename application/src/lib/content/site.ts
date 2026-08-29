@@ -52,7 +52,7 @@ export const DOWNLOADS: readonly Download[] =
     {
         id: 'android',
         label: 'Android',
-        url: 'https://play.google.com/store/apps/details?id=io.nurawallet.android',
+        url: 'https://play.google.com/store/apps/details?id=wallet.nurachain.net',
         note: 'Google Play'
     },
     { id: 'windows', label: 'Windows', url: `${ LATEST }/Nura-Wallet-Windows-x64-setup.exe`, note: '.exe · x64' },
