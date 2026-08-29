@@ -7,6 +7,7 @@ dist-server/
 logs/
 coverage/
 artifacts/
+.playwright-mcp
 
 # Local configuration. `server/.env` will hold the admin key once the dashboard lands, so this
 # line is the only thing standing between a visitor and that dashboard. `.env.example` is the
