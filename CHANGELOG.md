@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-08-30
+
+### Added
+
+- **The add-chain button asks WHICH wallet.** With more than one extension installed it went
+  to whichever provider won the `window.ethereum` race, which is not a choice anybody made.
+  The providers are collected in `lib/wallets.ts` and offered in a picker; the chain is then
+  added to the wallet that was picked.
+- **A refusal now says which wallet refused, and with what.** "Could not add" was the whole
+  report for every failure; the wallet's own name and code travel with it.
+- **Toasts can carry a technical detail** under the message, for exactly that case.
+- **The network icon travels with the add-chain request**, so a wallet that shows a chain
+  mark beside a balance has one to show.
+
+### Fixed
+
+- **The network and native currency names were placeholders, and wallets store them.**
+  `Nura Mainnet` and `Nura Coin` are `Nura Chain` and `Nura`, checked against the node's own
+  `eth_chainId` (`0x3fc`) on 2026-08-30. The blog's ten translations follow the same names.
+- **Wallets that refuse until connected.** Some answer an add with "unauthorised" until a
+  connection exists, so the flow connects first and then adds.
+- **A switch that refuses no longer ends the attempt** - whatever it refused with, the chain
+  is added.
+- **A failed add sends the reader to the manual values**, which were always the fallback.
+- **An open network panel was buried by the page around it.** The section reveal leaves an
+  inline `translate` on every section and every tile, and each of those is a stacking
+  context - so neither the price note nor the TVL breakdown could paint past its own tile.
+  Two tiles across, the price note sat UNDER the tile in the row below; four across, the
+  wallet section drew its border through both panels and swallowed the explorer links inside
+  them, which were visible and unclickable. Section and tile are lifted while a panel is
+  open, and only then.
+- **The breakdown's rows wrapped mid-address in Persian.** A quarter of `max-w-4xl` is 213px
+  and a label-and-value row does not fit that in every language. Both panels are now at least
+  18rem wide, anchored to the tile edge that keeps them inside the container, and they match
+  each other's shape.
+
 ## [1.6.6] - 2026-08-29
 
 ### Fixed
