@@ -106,7 +106,10 @@ export const zh: Strings =
         cta: '将 Nura Chain 添加到钱包',
         done: '已添加到钱包',
         failed: '添加失败',
-        noWallet: '未检测到钱包。请用下方的值手动添加网络。'
+        pick: '选择钱包',
+        get: '获取',
+        detected: '已检测到',
+        mismatch: '你的钱包已用其他代币占用该链 ID。请在钱包中删除，或使用下方的值手动添加。'
     },
 
     wallet:

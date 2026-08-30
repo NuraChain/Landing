@@ -3,7 +3,7 @@ import { createSignal } from 'azerothjs';
 import { Check, TriangleAlert, Wallet } from 'lucide';
 
 import { motionOk } from '../../lib/motion';
-import { addChainToWallet, describeFailure } from '../../lib/wallet';
+import { addChain, type AddChainOutcome } from '../../lib/wallet';
 
 import { useLocale } from '../../stores/locale';
 import { useToasts } from '../../stores/toasts';
@@ -12,20 +12,26 @@ import Button from '../ui/button.component.azeroth';
 import type { ButtonShape, ButtonSize, ButtonVariant } from '../ui/button.component.azeroth';
 import { icon } from '../icons/icon';
 
+import WalletPicker from './wallet-picker.component.azeroth';
+
 type Status = 'idle' | 'pending' | 'added' | 'failed';
 
 /**
- * The one-click version of the chain reference card: asks the injected wallet to add Nura
- * Chain (EIP-3085) and answers on its own label, the same way CopyField confirms a copy.
+ * The one-click version of the chain reference card: asks a wallet the reader NAMES to store
+ * Nura Chain (EIP-3085), and answers on its own label the way CopyField confirms a copy.
  *
- * With no wallet extension present - most desktop browsers - it says so and sends the reader
- * to the manual values, because those ARE the fallback.
+ * It asks which wallet first, through the picker, and that is the fix rather than a flourish.
+ * This button spent six revisions trying to work out on its own which of the objects on
+ * `window` was a wallet, which of them the reader meant, and what each of their refusals had
+ * meant - because the injected global says none of that. The picker replaces the whole of it
+ * with a question the reader can answer in one press, and the request then goes to that exact
+ * provider. See lib/wallet.ts for what went with it.
  *
- * It used to answer that case with `location.hash = '#chain'` and nothing else, which is how
- * this button came to be reported as doing nothing at all. Assigning a hash the document
- * already carries fires no navigation and moves no scroll, and one of the two places this
- * button is rendered is INSIDE the chain section - so pressing it there was a genuine no-op,
- * silent in every direction. Every outcome now reports through the toast store.
+ * A reader with none of the three installed is not a failure case any more either: the picker
+ * lists the roster with a link to each, which is a better answer than a toast saying no wallet
+ * was found. The manual values remain the fallback for a wallet that refuses outright, and the
+ * page still travels to them - a phone's in-app browser that will not do EIP-3085 is the one
+ * case no amount of handling in lib/wallet can rescue.
  */
 export default component AddChainButton(props: { size?: ButtonSize; variant?: ButtonVariant; shape?: ButtonShape })
 {
@@ -33,15 +39,18 @@ export default component AddChainButton(props: { size?: ButtonSize; variant?: Bu
     const toasts = useToasts();
 
     const [status, setStatus] = createSignal<Status>('idle');
+    const [picking, setPicking] = createSignal(false);
 
     let timer = 0;
 
     /**
      * Send the reader to the values they can copy.
      *
-     * `scrollIntoView` rather than a hash assignment, for the reason in the header: the hash
-     * may already be the one being set. Honouring `motionOk` here because this IS autonomous
-     * movement - the page travels on its own after a press.
+     * `scrollIntoView` rather than a hash assignment: the hash may already be the one being
+     * set - one of the two places this button is rendered is INSIDE the chain section - and
+     * assigning a hash the document already carries fires no navigation and moves no scroll.
+     * That is how this button once came to be reported as doing nothing at all. `motionOk`
+     * because this IS autonomous movement: the page travels on its own after a press.
      */
     const showChainCard = (): void =>
     {
@@ -51,19 +60,10 @@ export default component AddChainButton(props: { size?: ButtonSize; variant?: Bu
         });
     };
 
-    const run = async (): Promise<void> =>
+    /** What each outcome says, and how loudly. A dismissal is not a failure and must not read as one. */
+    const report = (outcome: AddChainOutcome): void =>
     {
-        if (status() === 'pending')
-        {
-            return;
-        }
-
-        setStatus('pending');
-
-        const report = await addChainToWallet();
-        const result = report.result;
-
-        if (result === 'rejected')
+        if (outcome === 'dismissed')
         {
             // They were asked and said no. Repeating it back as a failure would be telling
             // somebody their own decision went wrong.
@@ -72,47 +72,19 @@ export default component AddChainButton(props: { size?: ButtonSize; variant?: Bu
             return;
         }
 
-        if (result === 'no-provider')
+        if (outcome === 'added')
         {
-            setStatus('idle');
-            toasts.push('error', t().addChain.noWallet);
-            showChainCard();
-
-            return;
-        }
-
-        setStatus(result);
-
-        if (result === 'added')
-        {
+            setStatus('added');
             toasts.push('success', t().addChain.done);
         }
         else
         {
-            /*
-             * Say WHICH wallet refused WHAT, and in whose words.
-             *
-             * "Could not add" on its own is the same sentence whether the wallet rejected the
-             * parameters, rejected the site, or was never actually asked - so it named the
-             * one thing already obvious from the button not working, and nothing that could
-             * be traced. The last refusal goes on the toast, which is the only channel a
-             * reader holding a phone has.
-             *
-             * The whole sequence goes to the console, because the toast can only carry one
-             * line and a single press can produce several - two wallets installed, or the
-             * connect-then-retry in lib/wallet, where the first refusal and the last say
-             * different things. This is the only console call in the app and it earns its
-             * place: without it a desktop report loses everything but the final line.
-             */
-            const last = report.failures[report.failures.length - 1];
+            setStatus('failed');
 
-            toasts.push('error', t().addChain.failed, last === undefined ? undefined : describeFailure(last));
-            console.error('[add-chain]', report);
-
-            // A wallet that was there and still could not do it - a phone's in-app browser
-            // refusing EIP-3085 outright is the case no amount of error-code handling in
-            // lib/wallet can rescue. Send them to the same manual values `no-provider`
-            // gets: without that this branch is a dead end on the one device in their hand.
+            // `mismatch` is its own sentence on purpose. "Could not add" is the wrong thing to
+            // tell somebody whose wallet already holds this chain id under another ticker:
+            // that is a situation they can go and fix, and only if they are told what it is.
+            toasts.push('error', outcome === 'mismatch' ? t().addChain.mismatch : t().addChain.failed);
             showChainCard();
         }
 
@@ -120,17 +92,38 @@ export default component AddChainButton(props: { size?: ButtonSize; variant?: Bu
         timer = window.setTimeout(() => setStatus('idle'), 2600);
     };
 
+    const run = async (rdns: string): Promise<void> =>
+    {
+        if (status() === 'pending')
+        {
+            return;
+        }
+
+        setStatus('pending');
+        report(await addChain(rdns));
+    };
+
     cleanup { window.clearTimeout(timer); }
 
-    <Button
-        variant={ props.variant ?? 'secondary' }
-        size={ props.size ?? 'md' }
-        shape={ props.shape ?? 'rounded' }
-        onClick={ () => void run() }
-    >
-        { () => icon(status() === 'added' ? Check : status() === 'failed' ? TriangleAlert : Wallet, 'size-[18px]') }
-        { () => status() === 'added' ? t().addChain.done
-            : status() === 'failed' ? t().addChain.failed
-            : t().addChain.cta }
-    </Button>
+    {/* `contents` so the wrapper adds no box of its own: this button sits in a flex row
+        at both call sites, and the picker beside it is portaled out of the tree anyway. */}
+    <span class="contents">
+        <Button
+            variant={ props.variant ?? 'secondary' }
+            size={ props.size ?? 'md' }
+            shape={ props.shape ?? 'rounded' }
+            onClick={ () => setPicking(true) }
+        >
+            { () => icon(status() === 'added' ? Check : status() === 'failed' ? TriangleAlert : Wallet, 'size-[18px]') }
+            { () => status() === 'added' ? t().addChain.done
+                : status() === 'failed' ? t().addChain.failed
+                : t().addChain.cta }
+        </Button>
+
+        <WalletPicker
+            open={ picking() }
+            onPick={ (rdns) => void run(rdns) }
+            onClose={ () => setPicking(false) }
+        />
+    </span>
 }

@@ -1,0 +1,156 @@
+import { For, Portal, Show } from 'azerothjs';
+
+import { ExternalLink, Wallet, X } from 'lucide';
+
+import { captureOverlay } from '../../lib/overlay';
+import { walletOptions } from '../../lib/wallet';
+import { WALLET_BRANDS } from '../../lib/wallets';
+
+import { useLocale } from '../../stores/locale';
+
+import IconButton from '../ui/icon-button.component.azeroth';
+import { icon } from '../icons/icon';
+
+// Which wallet.
+//
+// Asked even where only one is installed, because the alternative is a button that silently
+// picks for the reader - and with a roster of three there is no honest way to guess which of
+// them a person meant. It is also the only place a visitor with none of them installed is told
+// which wallets this site works with and where to get one.
+//
+// The whole roster is shown whether or not it is installed: the two states answer different
+// questions. An installed wallet is something to click; a missing one is a link. A dialog
+// listing only what happened to be detected leaves somebody with nothing installed staring at
+// an empty box, which is exactly the case the old button handled worst.
+//
+// Portaled and `fixed` like the language dialog in the header, for the same reason: the header
+// is sticky and carries a backdrop-filter, which traps anything rendered under it in its own
+// stacking context. `captureOverlay` is the same one the drawer and the language dialog use -
+// Escape closes, the page behind stops scrolling, focus moves in and comes back out again.
+export default component WalletPicker(props: {
+    open: boolean;
+
+    onPick: (rdns: string) => void;
+    onClose: () => void;
+})
+{
+    const { t } = useLocale();
+
+    effect
+    {
+        if (!props.open)
+        {
+            return;
+        }
+
+        const release = captureOverlay(() => props.onClose(), '[role="dialog"]');
+
+        cleanup
+        {
+            release();
+        }
+    }
+
+    /** The announced entry for a brand, or undefined when that wallet is not installed. */
+    const installed = (rdns: string): { icon: string | null } | undefined =>
+        walletOptions().find((option) => option.rdns === rdns);
+
+    const choose = (rdns: string): void =>
+    {
+        props.onPick(rdns);
+        props.onClose();
+    };
+
+    <Show when={ () => props.open }>
+        <Portal>
+            { /* ONE child, same as the drawer and the language dialog: `Portal` appends a
+                 single node. */ }
+            <div>
+                <div
+                    class="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm"
+                    onClick={ () => props.onClose() }
+                ></div>
+
+                { /* `left-1/2` with `-translate-x-1/2` is PHYSICAL on purpose, exactly as in
+                     the language dialog: centring is symmetric, so it lands identically in
+                     both directions, while the logical `start-1/2` would resolve to
+                     `right: 50%` in Persian and throw the dialog half a width off centre. */ }
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={ () => t().addChain.pick }
+                    class="fixed left-1/2 top-1/2 z-[81] max-h-[85vh] w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-line bg-surface p-4 shadow-2xl"
+                >
+                    <div class="mb-3 flex items-center justify-between gap-3">
+                        <h2 class="flex items-center gap-2 font-semibold text-ink">
+                            { icon(Wallet, 'size-[18px]') }
+                            { () => t().addChain.pick }
+                        </h2>
+
+                        <IconButton label={ t().nav.closeMenu } onClick={ () => props.onClose() }>
+                            { icon(X, 'size-5') }
+                        </IconButton>
+                    </div>
+
+                    <ul class="flex flex-col gap-1">
+                        <For each={ () => WALLET_BRANDS } key={ (brand) => brand.rdns } let={ brand }>
+                            <li>
+                                <Show
+                                    when={ () => installed(brand.rdns) !== undefined }
+                                    fallback={ () =>
+                                        // A link and not a disabled button: "you do not have
+                                        // this one" is only useful if it comes with somewhere
+                                        // to go.
+                                        <a
+                                            class="flex w-full items-center gap-2.5 rounded-xl border border-transparent px-3 py-2.5 text-sm text-muted no-underline transition-colors hover:bg-elevated hover:text-ink"
+                                            href={ brand.install }
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            <span class="grid size-6 shrink-0 place-items-center text-faint">
+                                                { icon(Wallet, 'size-[17px]') }
+                                            </span>
+                                            <span class="min-w-0 flex-1 truncate text-start">{ brand.label }</span>
+                                            <span class="flex shrink-0 items-center gap-1.5 text-xs text-faint">
+                                                { () => t().addChain.get }
+                                                { icon(ExternalLink, 'size-3.5') }
+                                            </span>
+                                        </a>
+                                    }
+                                >
+                                    <button
+                                        type="button"
+                                        class="flex w-full cursor-pointer items-center gap-2.5 rounded-xl border border-transparent px-3 py-2.5 text-sm text-ink transition-colors hover:bg-elevated"
+                                        onClick={ () => choose(brand.rdns) }
+                                    >
+                                        { /* The wallet's OWN vector when it announced one, and
+                                             a neutral glyph when it did not. Lending one
+                                             brand's logo to another would be a
+                                             misrepresentation, and this site ships no wallet
+                                             logos but its own. */ }
+                                        <span class="grid size-6 shrink-0 place-items-center">
+                                            <Show
+                                                when={ () => installed(brand.rdns)?.icon !== null }
+                                                fallback={ () => <span class="text-muted">{ icon(Wallet, 'size-[17px]') }</span> }
+                                            >
+                                                <img
+                                                    src={ () => installed(brand.rdns)?.icon ?? '' }
+                                                    alt=""
+                                                    width="24"
+                                                    height="24"
+                                                    class="size-6 rounded"
+                                                />
+                                            </Show>
+                                        </span>
+                                        <span class="min-w-0 flex-1 truncate text-start">{ brand.label }</span>
+                                        <span class="shrink-0 text-xs text-faint">{ () => t().addChain.detected }</span>
+                                    </button>
+                                </Show>
+                            </li>
+                        </For>
+                    </ul>
+                </div>
+            </div>
+        </Portal>
+    </Show>
+}

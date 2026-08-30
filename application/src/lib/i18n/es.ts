@@ -106,7 +106,10 @@ export const es: Strings =
         cta: 'Añadir Nura Chain a la billetera',
         done: 'Añadida a tu billetera',
         failed: 'No se pudo añadir',
-        noWallet: 'No se detectó ninguna cartera. Añade la red a mano con los valores de abajo.'
+        pick: 'Elige una cartera',
+        get: 'Obtener',
+        detected: 'Detectada',
+        mismatch: 'Tu cartera ya tiene este id de cadena con otro token. Elimínalo allí o usa los valores de abajo.'
     },
 
     wallet:

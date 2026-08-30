@@ -1,751 +1,294 @@
 // The EIP-3085 path: the one place this site talks to a wallet extension.
 //
-// `addChainToWallet` returns an outcome instead of throwing, so the tests below are mostly
-// about which outcome each failure shape maps to - a wallet that rejects, a wallet that is
-// not there, and a wallet that throws something that is not an Error all have to land on a
-// state the button can render.
+// Discovery is EIP-6963 and the reader names the wallet, so these tests are about two things:
+// which announcements are allowed to become an option at all, and which outcome each shape of
+// refusal maps to. A wallet that declines, a wallet that holds the chain id under another
+// ticker and a wallet that simply fails are three different things to say to somebody.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import type { AddChainResult } from '../src/lib/wallet';
-
 import { ADD_CHAIN_PARAMS, CHAIN_ID, EXPLORER_URL, ICON_URL, NATIVE_TOKEN, NATIVE_TOKEN_SYMBOL, NETWORK_NAME, RPC_URL } from '../src/lib/content/site';
+import { METAMASK_RDNS, NURA_RDNS, TRUST_RDNS } from '../src/lib/wallets';
 
 type Request = (args: { method: string; params?: unknown[] }) => Promise<unknown>;
 
 /**
  * Re-imported per test, not bound once at the top of the file.
  *
- * `lib/wallet` keeps its EIP-6963 registry in a module-level array, filled by a listener it
- * attaches AT IMPORT - which is the point of that design, but it means the wallet announced
- * by one test stays a candidate for every test that runs after it. A spec expecting `failed`
- * would then reach that leftover provider, get a `success` off it, and pass or fail on
- * declaration order alone. It did: `--sequence.shuffle` failed four ways on this file before
- * this was added, which is exactly the drift `npm run test:shuffle` exists to catch.
- *
- * `vi.resetModules()` hands each test its own copy of the module, and so its own empty
- * registry. Listeners left on `window` by the discarded copies push into arrays nothing
- * reads.
+ * `lib/wallet` keeps its registry in a module-level map, filled by a listener it attaches AT
+ * IMPORT - which is the point of that design, but it means the wallet announced by one test
+ * would still be a candidate for every test after it. `vi.resetModules()` hands each test its
+ * own copy of the module, and so its own empty registry; listeners left on `window` by the
+ * discarded copies push into maps nothing reads. `--sequence.shuffle` is what catches the
+ * alternative.
  */
-let addChainToWallet: typeof import('../src/lib/wallet').addChainToWallet;
-let describeFailure: typeof import('../src/lib/wallet').describeFailure;
+let wallet: typeof import('../src/lib/wallet');
 
-/** The outcome alone, for the many tests that only care which branch was taken. */
-const outcome = async (): Promise<AddChainResult> => (await addChainToWallet()).result;
-
-const withProvider = (request: Request): void =>
+/** One EIP-6963 announcement, as an extension makes it. */
+const announce = (rdns: string, request: Request, icon = 'data:image/svg+xml;base64,PHN2Zy8+'): void =>
 {
-    (window as { ethereum?: { request: Request } }).ethereum = { request };
+    window.dispatchEvent(new CustomEvent('eip6963:announceProvider', {
+        detail: {
+            info: { uuid: `uuid-${ rdns }`, name: rdns, icon, rdns },
+            provider: { request }
+        }
+    }));
 };
+
+/** A wallet that says yes to everything, and records what it was asked. */
+const accepting = (): { request: Request; calls: Array<{ method: string; params?: unknown[] }> } =>
+{
+    const calls: Array<{ method: string; params?: unknown[] }> = [];
+
+    return {
+        calls,
+        request: async (args) =>
+        {
+            calls.push(args);
+
+            return null;
+        }
+    };
+};
+
+/** A wallet that refuses with whatever it was given. */
+const refusing = (error: unknown): Request => () => Promise.reject(error);
 
 beforeEach(async () =>
 {
-    delete (window as { ethereum?: unknown }).ethereum;
-    delete (window as { trustwallet?: unknown }).trustwallet;
-    delete (window as { trustWallet?: unknown }).trustWallet;
-    delete (window as { nurawallet?: unknown }).nurawallet;
-    delete (window as { nuraWallet?: unknown }).nuraWallet;
-    delete (window as { nura?: unknown }).nura;
-
     vi.resetModules();
-    ({ addChainToWallet, describeFailure } = await import('../src/lib/wallet'));
+    wallet = await import('../src/lib/wallet');
+    wallet.forgetWallets();
 });
 
 afterEach(() =>
 {
-    delete (window as { ethereum?: unknown }).ethereum;
-    delete (window as { trustwallet?: unknown }).trustwallet;
-    delete (window as { trustWallet?: unknown }).trustWallet;
-    delete (window as { nurawallet?: unknown }).nurawallet;
-    delete (window as { nuraWallet?: unknown }).nuraWallet;
-    delete (window as { nura?: unknown }).nura;
+    wallet.forgetWallets();
     vi.restoreAllMocks();
 });
 
-describe('addChainToWallet', () =>
+describe('discovery', () =>
 {
-    it('reports no-provider when no wallet is injected', async () =>
+    it('finds nothing until a wallet announces itself', () =>
     {
-        await expect(outcome()).resolves.toBe('no-provider');
+        expect(wallet.walletOptions()).toEqual([]);
     });
 
-    it('reports added when the wallet accepts the request', async () =>
+    it('takes up a roster wallet that announces', () =>
     {
-        withProvider(vi.fn().mockResolvedValue(null));
+        announce(METAMASK_RDNS, accepting().request);
 
-        await expect(outcome()).resolves.toBe('added');
+        expect(wallet.walletOptions()).toHaveLength(1);
+        expect(wallet.walletOptions()[0]?.rdns).toBe(METAMASK_RDNS);
+        expect(wallet.walletOptions()[0]?.label).toBe('MetaMask');
     });
 
-    it('switches to the chain when it is already known (no add needed)', async () =>
+    // The gate. A wallet outside the roster is not offered - see lib/wallets.ts, which is also
+    // the one place widening it happens.
+    it('drops an announcement from a wallet this site does not offer', () =>
     {
-        const request = vi.fn().mockResolvedValue(null);
+        announce('io.rabby', accepting().request);
+        announce('com.okex.wallet', accepting().request);
 
-        withProvider(request);
-
-        await addChainToWallet();
-
-        expect(request).toHaveBeenCalledTimes(1);
-        expect(request).toHaveBeenCalledWith({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x3fc' }]
-        });
+        expect(wallet.walletOptions()).toEqual([]);
     });
 
-    it('adds the chain when the wallet does not know it (4902 → add)', async () =>
+    /*
+     * Roster order, not announcement order. Which extension answers first is a race, and a
+     * list whose rows move between two visits is a list nobody can aim at.
+     */
+    it('lists them in the roster\'s order however they announced', () =>
     {
-        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
-        {
-            if (method === 'wallet_switchEthereumChain')
-            {
-                throw Object.assign(new Error('Unknown chain'), { code: 4902 });
-            }
+        announce(TRUST_RDNS, accepting().request);
+        announce(METAMASK_RDNS, accepting().request);
+        announce(NURA_RDNS, accepting().request);
 
-            return null;
-        });
-
-        withProvider(request);
-
-        await expect(outcome()).resolves.toBe('added');
-
-        expect(request).toHaveBeenCalledTimes(2);
-        expect(request.mock.calls[0][0]).toEqual({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x3fc' }]
-        });
-        expect(request.mock.calls[1][0]).toEqual({
-            method: 'wallet_addEthereumChain',
-            params: [ADD_CHAIN_PARAMS]
-        });
+        expect(wallet.walletOptions().map((option) => option.rdns))
+            .toEqual([NURA_RDNS, METAMASK_RDNS, TRUST_RDNS]);
     });
 
-    it('falls back to add when switch is not supported (-32601)', async () =>
+    // Wallets announce unprompted at load AND on request, so the same one arrives twice on an
+    // ordinary page view.
+    it('holds one entry per wallet however many times it announces', () =>
     {
-        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
-        {
-            if (method === 'wallet_switchEthereumChain')
-            {
-                throw Object.assign(new Error('Method not found'), { code: -32601 });
-            }
+        announce(METAMASK_RDNS, accepting().request);
+        announce(METAMASK_RDNS, accepting().request);
 
-            return null;
-        });
-
-        withProvider(request);
-
-        await expect(outcome()).resolves.toBe('added');
-        expect(request).toHaveBeenCalledTimes(2);
-        expect(request.mock.calls[1][0].method).toBe('wallet_addEthereumChain');
+        expect(wallet.walletOptions()).toHaveLength(1);
     });
 
-    // The visitor declining the MetaMask prompt is code 4001. It is not an error condition
-    // for this site - the button says so and goes back to idle - but it must not be
-    // mistaken for success.
-    it('reports rejected, not failed, when the visitor declines the prompt', async () =>
+    /*
+     * EIP-6963 requires a data URI and an extension is free to announce anything at all. An
+     * image data URI cannot run script, where an `http(s)` one would be a request to a third
+     * party made from this page.
+     */
+    it('refuses an icon that is not an image data uri', () =>
     {
-        withProvider(vi.fn().mockRejectedValue(Object.assign(new Error('User rejected the request.'), { code: 4001 })));
+        announce(METAMASK_RDNS, accepting().request, 'https://example.com/logo.png');
 
-        // Its own outcome: the button reports a failure to the reader, and a decision the
-        // reader made is not one. `failed` here put "Could not add" in front of somebody who
-        // had just pressed cancel.
-        await expect(outcome()).resolves.toBe('rejected');
+        expect(wallet.walletOptions()[0]?.icon).toBeNull();
     });
 
-    it('reports failed when the wallet rejects the params', async () =>
+    it('keeps an icon that is one', () =>
     {
-        withProvider(vi.fn().mockRejectedValue(Object.assign(new Error('Invalid chainId'), { code: -32602 })));
+        announce(METAMASK_RDNS, accepting().request, 'data:image/png;base64,AA==');
 
-        await expect(outcome()).resolves.toBe('failed');
+        expect(wallet.walletOptions()[0]?.icon).toBe('data:image/png;base64,AA==');
     });
 
-    // Wallet extensions are not required to reject with an Error, and a `catch` that
-    // re-read `.message` off a string would throw inside the handler.
-    it('reports failed when the wallet rejects with a non-Error value', async () =>
+    it('survives an announcement carrying no detail at all', () =>
     {
-        withProvider(vi.fn().mockRejectedValue('nope'));
+        window.dispatchEvent(new CustomEvent('eip6963:announceProvider'));
 
-        await expect(outcome()).resolves.toBe('failed');
+        expect(wallet.walletOptions()).toEqual([]);
+    });
+});
+
+describe('addChain', () =>
+{
+    it('adds the chain, and asks the wallet exactly once', async () =>
+    {
+        const provider = accepting();
+        announce(METAMASK_RDNS, provider.request);
+
+        expect(await wallet.addChain(METAMASK_RDNS)).toBe('added');
+
+        /*
+         * ONE request, and it is the one the button is named after.
+         *
+         * This is the regression the rewrite exists for. The previous version sent
+         * `wallet_switchEthereumChain` first and decided what to do next from whatever came
+         * back - so the ordinary path ran two requests, and a wallet that answered the first
+         * one oddly settled the outcome of a button that had not yet asked for anything.
+         * There is nothing to switch to before the chain is added.
+         */
+        expect(provider.calls).toHaveLength(1);
+        expect(provider.calls[0]?.method).toBe('wallet_addEthereumChain');
+        expect(provider.calls[0]?.params).toEqual([ADD_CHAIN_PARAMS]);
     });
 
-    it('reports failed when the provider throws synchronously', async () =>
+    // Adding a network needs no account, and `eth_requestAccounts` hands over an address
+    // nobody agreed to share by pressing a button that says nothing about accounts.
+    it('never asks for an account', async () =>
     {
-        withProvider(vi.fn().mockImplementation(() =>
-        {
-            throw new Error('provider exploded');
+        const provider = accepting();
+        announce(METAMASK_RDNS, provider.request);
+
+        await wallet.addChain(METAMASK_RDNS);
+
+        expect(provider.calls.map((call) => call.method)).not.toContain('eth_requestAccounts');
+    });
+
+    it('asks the wallet that was CHOSEN, not whichever announced first', async () =>
+    {
+        const first = accepting();
+        const second = accepting();
+        announce(METAMASK_RDNS, first.request);
+        announce(TRUST_RDNS, second.request);
+
+        await wallet.addChain(TRUST_RDNS);
+
+        expect(first.calls).toEqual([]);
+        expect(second.calls).toHaveLength(1);
+    });
+
+    it('refuses an rdns that never announced', async () =>
+    {
+        expect(await wallet.addChain(METAMASK_RDNS)).toBe('refused');
+    });
+
+    it('refuses a stub that announced without a usable request method', async () =>
+    {
+        window.dispatchEvent(new CustomEvent('eip6963:announceProvider', {
+            detail: { info: { uuid: 'u', name: 'n', icon: '', rdns: METAMASK_RDNS }, provider: {} }
         }));
 
-        await expect(outcome()).resolves.toBe('failed');
+        expect(await wallet.addChain(METAMASK_RDNS)).toBe('refused');
     });
 
-    // A provider object that is present but malformed (no `request`) is a real shape: some
-    // extensions inject a stub before they finish loading.
-    it('reports failed rather than crashing when the injected object has no request method', async () =>
+    it('reads a decline as a decline, not a failure', async () =>
     {
-        (window as { ethereum?: unknown }).ethereum = {};
+        announce(METAMASK_RDNS, refusing({ code: 4001, message: 'User rejected the request.' }));
 
-        await expect(outcome()).resolves.toBe('failed');
-    });
-
-    it('never resolves to added when the request never settles successfully', async () =>
-    {
-        withProvider(vi.fn().mockRejectedValue(new Error('timeout')));
-
-        const results = await Promise.all([outcome(), outcome(), outcome()]);
-
-        expect(results).toEqual(['failed', 'failed', 'failed']);
-    });
-
-    it('uses a provider from window.ethereum.providers when multiple wallets are present', async () =>
-    {
-        const request = vi.fn().mockResolvedValue(null);
-        const secondary = vi.fn().mockResolvedValue(null);
-        (window as unknown as { ethereum: unknown }).ethereum = {
-            request,
-            providers: [{ request: secondary } as unknown as { request: Request }, { request } as unknown as { request: Request }]
-        };
-
-        await expect(outcome()).resolves.toBe('added');
-        // Should try a provider from the array - either the array entry or the proxy.
-        expect(request.mock.calls.length + secondary.mock.calls.length).toBeGreaterThan(0);
-    });
-
-    it('supports Trust Wallet via window.trustwallet.ethereum', async () =>
-    {
-        const request = vi.fn().mockResolvedValue(null);
-        (window as unknown as { trustwallet: unknown }).trustwallet = { ethereum: { request } };
-
-        await expect(outcome()).resolves.toBe('added');
-        expect(request).toHaveBeenCalledWith(expect.objectContaining({ method: 'wallet_switchEthereumChain' }));
-    });
-
-    it('supports Nura Wallet via window.nurawallet', async () =>
-    {
-        const request = vi.fn().mockResolvedValue(null);
-        (window as unknown as { nurawallet: unknown }).nurawallet = { request };
-
-        await expect(outcome()).resolves.toBe('added');
-        expect(request).toHaveBeenCalledWith(expect.objectContaining({ method: 'wallet_switchEthereumChain' }));
-    });
-
-    it('discovers providers via EIP-6963 when window.ethereum is absent', async () =>
-    {
-        const request = vi.fn().mockResolvedValue(null);
-        const provider = { request };
-
-        // Announce after the module dispatches eip6963:requestProvider
-        window.addEventListener('eip6963:requestProvider', () =>
-        {
-            window.dispatchEvent(
-                new CustomEvent('eip6963:announceProvider', {
-                    detail: { info: { name: 'Fake Wallet', rdns: 'com.example.fake' }, provider }
-                })
-            );
-        }, { once: true });
-
-        await expect(outcome()).resolves.toBe('added');
-        expect(request).toHaveBeenCalledWith(expect.objectContaining({ method: 'wallet_switchEthereumChain' }));
-    });
-
-    it('does not try a second provider after user rejected (4001)', async () =>
-    {
-        const first = vi.fn().mockRejectedValue(Object.assign(new Error('rejected'), { code: 4001 }));
-        const second = vi.fn().mockResolvedValue(null);
-        (window as unknown as { ethereum: unknown }).ethereum = {
-            request: first,
-            providers: [{ request: first } as unknown as { request: Request }, { request: second } as unknown as { request: Request }]
-        };
-
-        // `rejected`, not `failed`: they were asked and answered. The loop still stops - the
-        // point of the test - because a second wallet prompt after a no is harassment.
-        await expect(outcome()).resolves.toBe('rejected');
-        expect(second).not.toHaveBeenCalled();
+        expect(await wallet.addChain(METAMASK_RDNS)).toBe('dismissed');
     });
 
     /*
-     * The bug this suite exists to hold shut, reported from a phone: Trust Wallet's in-app
-     * browser said "Could not add".
-     *
-     * The fallthrough to `wallet_addEthereumChain` used to be gated on an allowlist of error
-     * codes - 4902, -32601, -32603 - and Trust's native bridge does not answer an unknown
-     * chain with any of them. It surfaces a generic error, often with no numeric code at
-     * all, so the site gave up having never once sent the request the button is named after.
+     * Mobile in-app browsers bridge the native sheet's dismissal back into the page as a plain
+     * error with a message and no numeric code, so a code-only test reads a cancellation as a
+     * fault - and tells somebody their own decision went wrong.
      */
-    it('adds the chain when the switch fails with a generic error carrying no code at all', async () =>
+    it('reads a decline that arrives as a message only', async () =>
     {
-        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
+        for (const message of ['User rejected the request', 'Rejected by the user', 'Cancelled.', 'User denied transaction'])
         {
-            if (method === 'wallet_switchEthereumChain')
-            {
-                throw new Error('Internal error');
-            }
+            wallet.forgetWallets();
+            announce(METAMASK_RDNS, refusing(new Error(message)));
 
-            return null;
-        });
-
-        (window as unknown as { ethereum: unknown }).ethereum = { request, isTrust: true };
-
-        await expect(outcome()).resolves.toBe('added');
-
-        expect(request).toHaveBeenCalledTimes(2);
-        expect(request.mock.calls[1][0]).toEqual({
-            method: 'wallet_addEthereumChain',
-            params: [ADD_CHAIN_PARAMS]
-        });
+            expect(await wallet.addChain(METAMASK_RDNS), message).toBe('dismissed');
+        }
     });
 
-    it('adds the chain when the switch fails with an error code nobody has enumerated', async () =>
+    // A looser pattern would read this - a real parameter fault the reader must be told about -
+    // as a decision they made, and silence it.
+    it('does not read a rejected PARAMETER as a rejected prompt', async () =>
     {
-        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
-        {
-            if (method === 'wallet_switchEthereumChain')
-            {
-                throw Object.assign(new Error('Unsupported chain'), { code: -32000 });
-            }
+        announce(METAMASK_RDNS, refusing(new Error('Rejected: invalid chainId')));
 
-            return null;
-        });
-
-        withProvider(request);
-
-        await expect(outcome()).resolves.toBe('added');
-        expect(request.mock.calls[1][0].method).toBe('wallet_addEthereumChain');
-    });
-
-    it('adds the chain when the switch rejects with a bare string', async () =>
-    {
-        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
-        {
-            if (method === 'wallet_switchEthereumChain')
-            {
-                throw 'nope';
-            }
-
-            return null;
-        });
-
-        withProvider(request);
-
-        await expect(outcome()).resolves.toBe('added');
+        expect(await wallet.addChain(METAMASK_RDNS)).toBe('refused');
     });
 
     /*
-     * The other half of the same change. Broadening the fallthrough means a decline is no
-     * longer recognised by code alone, and mobile wallets bridge a dismissed sheet back as a
-     * message with no code - so without a message test the reader who pressed cancel would
-     * be prompted a second time by the add.
+     * -32602 here is almost always one thing: the wallet already holds this chain id under a
+     * different ticker and will not re-add it. The reader can go and fix that, but only if the
+     * page says so instead of "your wallet said no".
      */
-    it('reports rejected without a second prompt when the decline arrives as a message only', async () =>
+    it('names the case where the wallet already holds this id under another ticker', async () =>
     {
-        const request = vi.fn().mockRejectedValue(new Error('User rejected the request'));
+        announce(METAMASK_RDNS, refusing({ code: -32602, message: 'may not specify a different symbol' }));
 
-        withProvider(request);
-
-        await expect(outcome()).resolves.toBe('rejected');
-        expect(request).toHaveBeenCalledTimes(1);
-    });
-
-    it('recognises a decline phrased the other way round', async () =>
-    {
-        const request = vi.fn().mockRejectedValue(new Error('Request cancelled by user'));
-
-        withProvider(request);
-
-        await expect(outcome()).resolves.toBe('rejected');
-        expect(request).toHaveBeenCalledTimes(1);
-    });
-
-    it('recognises a decline that is nothing but the word', async () =>
-    {
-        const request = vi.fn().mockRejectedValue(new Error('Cancelled'));
-
-        withProvider(request);
-
-        await expect(outcome()).resolves.toBe('rejected');
-        expect(request).toHaveBeenCalledTimes(1);
+        expect(await wallet.addChain(METAMASK_RDNS)).toBe('mismatch');
     });
 
     /*
-     * The false positive the message test is shaped to avoid. A param fault the reader has
-     * to be TOLD about must not be silenced as a decision they made - `rejected` shows no
-     * toast at all, so mistaking one for the other hides a real failure completely.
+     * MetaMask wraps the provider error it got from its own middleware, so the real code
+     * arrives buried under an outer -32603. Reading only the outer one turns a refusal that
+     * has a name into the generic one.
      */
-    it('does not read a rejected parameter as a rejected prompt', async () =>
+    it('reads the code MetaMask buried under its own wrapper', async () =>
     {
-        const request = vi.fn().mockRejectedValue(new Error('Rejected: invalid chainId'));
+        announce(METAMASK_RDNS, refusing({
+            code: -32603,
+            message: 'Internal JSON-RPC error.',
+            data: { originalError: { code: -32602, message: 'different symbol' } }
+        }));
 
-        withProvider(request);
+        expect(await wallet.addChain(METAMASK_RDNS)).toBe('mismatch');
 
-        await expect(outcome()).resolves.toBe('failed');
+        wallet.forgetWallets();
+        announce(TRUST_RDNS, refusing({ code: -32603, data: { originalError: { code: 4001 } } }));
+
+        expect(await wallet.addChain(TRUST_RDNS)).toBe('dismissed');
     });
 
-    // -32002: a prompt for this request is already open. A second one queues behind the
-    // first rather than helping, so this is the one non-decline that does not fall through.
-    it('does not stack a second prompt when one is already pending (-32002)', async () =>
+    it('reports anything else as a refusal', async () =>
     {
-        const request = vi.fn().mockRejectedValue(
-            Object.assign(new Error('Already processing eth_requestAccounts'), { code: -32002 })
-        );
+        announce(METAMASK_RDNS, refusing(new Error('boom')));
 
-        withProvider(request);
-
-        await expect(outcome()).resolves.toBe('failed');
-        expect(request).toHaveBeenCalledTimes(1);
+        expect(await wallet.addChain(METAMASK_RDNS)).toBe('refused');
     });
 
-    /*
-     * Trust Wallet's MOBILE provider in miniature, which is a different codebase from the
-     * extension of the same name. Every request is refused with 4100 "provider is not ready"
-     * until an account has been shared, and `requestAccounts` is the one handler exempt from
-     * that gate - see `src/base_provider.js` in trustwallet/trust-web3-provider.
-     *
-     * Reproduced rather than stubbed at the outcome, because the bug was entirely in the
-     * ORDER of the calls: the site went straight to the switch, was refused before the
-     * wallet ever saw it, and reported "Could not add" on a phone while working perfectly in
-     * the extension on a desktop.
-     */
-    const trustWalletOnAPhone = () =>
+    it('reports a provider that throws something that is not an Error', async () =>
     {
-        let ready = false;
-        const known = new Set<string>();
+        announce(METAMASK_RDNS, refusing('nope'));
 
-        return vi.fn(async ({ method, params }: { method: string; params?: unknown[] }) =>
-        {
-            if (method === 'eth_requestAccounts')
-            {
-                ready = true;
-
-                return ['0x0000000000000000000000000000000000000001'];
-            }
-
-            if (!ready)
-            {
-                throw Object.assign(new Error('provider is not ready'), { code: 4100 });
-            }
-
-            const chainId = (params?.[0] as { chainId?: string } | undefined)?.chainId ?? '';
-
-            if (method === 'wallet_addEthereumChain')
-            {
-                known.add(chainId);
-
-                return null;
-            }
-
-            if (method === 'wallet_switchEthereumChain' && !known.has(chainId))
-            {
-                throw Object.assign(new Error('Unrecognized chain ID'), { code: 4902 });
-            }
-
-            return null;
-        });
-    };
-
-    it('connects first when the wallet refuses everything until the site has an account', async () =>
-    {
-        const request = trustWalletOnAPhone();
-
-        (window as unknown as { ethereum: unknown }).ethereum = { request, isTrust: true };
-
-        await expect(outcome()).resolves.toBe('added');
-
-        // The order IS the fix. Without the connection in the middle the two chain calls are
-        // refused before the wallet sees either of them.
-        expect(request.mock.calls.map((call) => call[0].method)).toEqual([
-            'wallet_switchEthereumChain',
-            'eth_requestAccounts',
-            'wallet_switchEthereumChain',
-            'wallet_addEthereumChain'
-        ]);
+        expect(await wallet.addChain(METAMASK_RDNS)).toBe('refused');
     });
 
-    it('recognises the refusal from its message when no code is attached', async () =>
+    it('reports a provider that throws synchronously', async () =>
     {
-        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
-        {
-            if (method === 'eth_requestAccounts')
-            {
-                return ['0x0000000000000000000000000000000000000001'];
-            }
+        announce(METAMASK_RDNS, (): never => { throw new Error('sync'); });
 
-            return null;
-        });
-
-        let first = true;
-        const gated = vi.fn(async (payload: { method: string; params?: unknown[] }) =>
-        {
-            if (first && payload.method !== 'eth_requestAccounts')
-            {
-                first = false;
-
-                throw new Error('provider is not ready');
-            }
-
-            return request(payload);
-        });
-
-        (window as unknown as { ethereum: unknown }).ethereum = { request: gated };
-
-        await expect(outcome()).resolves.toBe('added');
-        expect(gated.mock.calls.map((call) => call[0].method)).toContain('eth_requestAccounts');
-    });
-
-    it('reports rejected and stops when the connection itself is declined', async () =>
-    {
-        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
-        {
-            if (method === 'eth_requestAccounts')
-            {
-                throw Object.assign(new Error('User rejected the request'), { code: 4001 });
-            }
-
-            throw Object.assign(new Error('provider is not ready'), { code: 4100 });
-        });
-
-        withProvider(request);
-
-        // Declining the CONNECTION is still declining. It must not come back as a failure,
-        // and nothing further may be asked of the wallet.
-        await expect(outcome()).resolves.toBe('rejected');
-        expect(request.mock.calls.map((call) => call[0].method)).toEqual([
-            'wallet_switchEthereumChain',
-            'eth_requestAccounts'
-        ]);
-    });
-
-    it('gives up rather than looping when the wallet still refuses after connecting', async () =>
-    {
-        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
-        {
-            if (method === 'eth_requestAccounts')
-            {
-                return ['0x0000000000000000000000000000000000000001'];
-            }
-
-            throw Object.assign(new Error('provider is not ready'), { code: 4100 });
-        });
-
-        withProvider(request);
-
-        await expect(outcome()).resolves.toBe('failed');
-        expect(request.mock.calls.filter((call) => call[0].method === 'eth_requestAccounts')).toHaveLength(1);
-    });
-
-    /*
-     * The guard on the other side of the same change. Asking for an account up front would
-     * hand every desktop reader a connection prompt - and an address the site has no use for
-     * - to do something the extension does without one. The connection is a repair for a
-     * wallet that demanded it, not a step in the normal path.
-     */
-    it('never asks for an account when the wallet did not say it needed one', async () =>
-    {
-        const request = vi.fn().mockImplementation(async ({ method }: { method: string }) =>
-        {
-            if (method === 'wallet_switchEthereumChain')
-            {
-                throw Object.assign(new Error('Unknown chain'), { code: 4902 });
-            }
-
-            return null;
-        });
-
-        withProvider(request);
-
-        await expect(outcome()).resolves.toBe('added');
-        expect(request.mock.calls.map((call) => call[0].method)).toEqual([
-            'wallet_switchEthereumChain',
-            'wallet_addEthereumChain'
-        ]);
-    });
-});
-
-/**
- * The part that makes a failure traceable.
- *
- * "Could not add" is the same sentence whether the wallet rejected the parameters, rejected
- * the site, or was never asked - so the outcome alone said nothing anybody could act on. What
- * these pin is that the report names the wallet, the request and the wallet's own words.
- */
-describe('the failure report', () =>
-{
-    it('records which wallet refused, which request, and in whose words', async () =>
-    {
-        const request = vi.fn().mockRejectedValue(Object.assign(new Error('Invalid chainId'), { code: -32602 }));
-
-        (window as unknown as { ethereum: unknown }).ethereum = { request, isMetaMask: true };
-
-        const report = await addChainToWallet();
-
-        expect(report.result).toBe('failed');
-        expect(report.providers).toBe(1);
-
-        // Both requests were refused, and both are on the record: the switch that started it
-        // and the add it fell through to.
-        expect(report.failures.map((failure) => failure.method)).toEqual([
-            'wallet_switchEthereumChain',
-            'wallet_addEthereumChain'
-        ]);
-
-        expect(report.failures[report.failures.length - 1]).toEqual({
-            wallet: 'MetaMask',
-            method: 'wallet_addEthereumChain',
-            code: -32602,
-            message: 'Invalid chainId'
-        });
-    });
-
-    /*
-     * Trust Wallet's mobile provider sets `isMetaMask` from its own config. Reading that flag
-     * before the specific ones would file every report from a phone under the wrong wallet -
-     * which is precisely the confusion this report exists to end.
-     */
-    it('names the wallet from its own flags, not from an isMetaMask it also sets', async () =>
-    {
-        const request = vi.fn().mockRejectedValue(Object.assign(new Error('nope'), { code: 4100 }));
-
-        (window as unknown as { ethereum: unknown }).ethereum = { request, isTrust: true, isMetaMask: true };
-
-        const report = await addChainToWallet();
-
-        expect(report.failures[0].wallet).toBe('Trust Wallet');
-    });
-
-    it('calls an anonymous provider a wallet rather than guessing', async () =>
-    {
-        withProvider(vi.fn().mockRejectedValue(new Error('boom')));
-
-        const report = await addChainToWallet();
-
-        expect(report.failures[0].wallet).toBe('wallet');
-    });
-
-    it('records nothing when the wallet simply does it', async () =>
-    {
-        withProvider(vi.fn().mockResolvedValue(null));
-
-        const report = await addChainToWallet();
-
-        expect(report.result).toBe('added');
-        expect(report.failures).toEqual([]);
-    });
-
-    // An answer is not a fault. A visitor who pressed cancel has nothing to trace, and
-    // putting their decision in a fault report would only send somebody looking for a bug.
-    it('does not record the visitor declining as a failure', async () =>
-    {
-        withProvider(vi.fn().mockRejectedValue(Object.assign(new Error('User rejected'), { code: 4001 })));
-
-        const report = await addChainToWallet();
-
-        expect(report.result).toBe('rejected');
-        expect(report.failures).toEqual([]);
-    });
-
-    /*
-     * The refusal that only a report can explain. On a phone the whole thing SUCCEEDS, and
-     * the 4100 that made it take the long way round is still worth having: it is the
-     * difference between "this wallet needed connecting" and "this wallet is broken".
-     */
-    it('keeps the refusal that forced the connection, even when the outcome is added', async () =>
-    {
-        let ready = false;
-
-        const request = vi.fn(async ({ method }: { method: string }) =>
-        {
-            if (method === 'eth_requestAccounts')
-            {
-                ready = true;
-
-                return ['0x01'];
-            }
-
-            if (!ready)
-            {
-                throw Object.assign(new Error('provider is not ready'), { code: 4100 });
-            }
-
-            return null;
-        });
-
-        (window as unknown as { ethereum: unknown }).ethereum = { request, isTrust: true };
-
-        const report = await addChainToWallet();
-
-        expect(report.result).toBe('added');
-        expect(report.failures).toEqual([
-            {
-                wallet: 'Trust Wallet',
-                method: 'wallet_switchEthereumChain',
-                code: 4100,
-                message: 'provider is not ready'
-            }
-        ]);
-    });
-
-    it('says a stub with no request method was exactly that', async () =>
-    {
-        (window as { ethereum?: unknown }).ethereum = {};
-
-        const report = await addChainToWallet();
-
-        expect(report.result).toBe('failed');
-        expect(report.failures[0].message).toBe('provider has no request method');
-    });
-
-    it('reads a message off a wallet that rejected with a bare string', async () =>
-    {
-        withProvider(vi.fn().mockRejectedValue('everything is on fire'));
-
-        const report = await addChainToWallet();
-
-        expect(report.failures[0].message).toBe('everything is on fire');
-        expect(report.failures[0].code).toBeUndefined();
-    });
-
-    // A wallet that answers with a stack trace must not push the page off the screen.
-    it('trims a message too long for a toast', async () =>
-    {
-        withProvider(vi.fn().mockRejectedValue(new Error('x'.repeat(400))));
-
-        const report = await addChainToWallet();
-
-        expect(report.failures[0].message!.length).toBeLessThanOrEqual(140);
-        expect(report.failures[0].message!.endsWith('…')).toBe(true);
-    });
-
-    it('counts the providers it had to choose between', async () =>
-    {
-        const refuse = vi.fn().mockRejectedValue(new Error('no'));
-
-        (window as unknown as { ethereum: unknown }).ethereum = {
-            request: refuse,
-            providers: [{ request: refuse }, { request: refuse }]
-        };
-
-        const report = await addChainToWallet();
-
-        expect(report.providers).toBe(3);
-    });
-});
-
-describe('describeFailure', () =>
-{
-    it('names the wallet, the request, the code and the reason', () =>
-    {
-        expect(describeFailure({
-            wallet: 'Trust Wallet',
-            method: 'wallet_addEthereumChain',
-            code: 4100,
-            message: 'provider is not ready'
-        })).toBe('Trust Wallet · wallet_addEthereumChain · 4100 · provider is not ready');
-    });
-
-    // Plenty of wallets send no code, and several send no message. Neither may leave a
-    // dangling separator in a line somebody is about to paste into a bug report.
-    it('leaves out the parts the wallet did not send', () =>
-    {
-        expect(describeFailure({ wallet: 'wallet', method: 'wallet_switchEthereumChain' }))
-            .toBe('wallet · wallet_switchEthereumChain');
-
-        expect(describeFailure({ wallet: 'MetaMask', method: 'eth_requestAccounts', code: -32002 }))
-            .toBe('MetaMask · eth_requestAccounts · -32002');
+        expect(await wallet.addChain(METAMASK_RDNS)).toBe('refused');
     });
 });
 

@@ -159,7 +159,14 @@ export interface Strings
         done: string;
         failed: string;
         /** Reported when nothing on the machine can be asked - the manual card is the fallback. */
-        noWallet: string;
+        /** The picker's title: which of the roster wallets to ask. */
+        pick: string;
+        /** Trailing hint on a wallet that is not installed - the row is a link to it. */
+        get: string;
+        /** Trailing hint on a wallet that announced itself. */
+        detected: string;
+        /** The wallet holds this chain id under another ticker - a thing the reader can fix. */
+        mismatch: string;
     };
 
     wallet:

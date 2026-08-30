@@ -106,7 +106,10 @@ export const tr: Strings =
         cta: 'Nura Chain\'i cüzdana ekle',
         done: 'Cüzdanına eklendi',
         failed: 'Eklenemedi',
-        noWallet: 'Cüzdan bulunamadı. Ağı aşağıdaki değerlerle elle ekleyin.'
+        pick: 'Bir cüzdan seçin',
+        get: 'Edin',
+        detected: 'Bulundu',
+        mismatch: 'Cüzdanınızda bu zincir kimliği başka bir tokenle kayıtlı. Oradan silin ya da aşağıdaki değerleri kullanın.'
     },
 
     wallet:
