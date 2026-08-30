@@ -240,7 +240,16 @@ export default component NetworkSection()
         }
     }
 
-    <section id="network" class="border-t border-line px-5 py-16 sm:py-20">
+    { /* Lifted only while a panel is open. Both panels hang below their tile and past this
+         section's own bottom edge, and every section on the page carries an inline `translate`
+         from its reveal - which makes each one a stacking context, so no z-index INSIDE this
+         section can beat the section after it, however large. Without the lift the wallet
+         section drew its border across an open panel and swallowed the links under it. */ }
+    <section
+        id="network"
+        class={ () => 'border-t border-line px-5 py-16 sm:py-20'
+            + (showPriceNote || showParts ? ' relative z-10' : '') }
+    >
         <div class="mx-auto max-w-4xl">
             <SectionHeading index="01" title={ t().network.title } subtitle={ t().network.subtitle } />
 
@@ -267,7 +276,11 @@ export default component NetworkSection()
                      optional garnish: the pool behind this quote holds a few hundred dollars,
                      and a number that small moves on a single trade. Stating the price
                      without stating that would be the same failure as inventing one. */ }
-                <Card shape="square" class="relative flex flex-col">
+                { /* Raised while the note is open, for the same reason the section is: the
+                     reveal leaves an inline `translate` on every tile, so each tile is a
+                     stacking context and the note's own z-index cannot reach past it. Two
+                     tiles across, the note landed UNDER the tile in the row below. */ }
+                <Card shape="square" class={ 'relative flex flex-col' + (showPriceNote ? ' z-30' : '') }>
                     <p class="flex items-start gap-2 font-label text-[13px] uppercase tracking-[0.14em] text-faint">
                         { icon(CircleDollarSign, 'size-4 shrink-0') }
                         { t().network.price }
@@ -367,7 +380,7 @@ export default component NetworkSection()
                      breakdown: "$0.00" is a fact about two balances, and a reader who
                      wants to know which asset is empty should not have to open a block
                      explorer to find out. */ }
-                <Card shape="square" class="relative flex flex-col">
+                <Card shape="square" class={ 'relative flex flex-col' + (showParts ? ' z-30' : '') }>
                     <p class="flex items-start gap-2 font-label text-[13px] uppercase tracking-[0.14em] text-faint">
                         { icon(Lock, 'size-4 shrink-0') }
                         { t().network.tvl }
