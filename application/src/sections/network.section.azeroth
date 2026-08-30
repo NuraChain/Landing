@@ -308,15 +308,22 @@ export default component NetworkSection()
                           is click-through AND out of the tab order - `tabindex="-1"` on its
                           links, because an invisible control that accepts focus is a focus
                           ring that disappears (WCAG 2.4.7), and Tab landing nowhere visible
-                          reads as the keyboard having broken. */ }
+                          reads as the keyboard having broken.
+
+                          Never narrower than 18rem, and anchored to the tile's START edge so
+                          the extra width grows inward. A quarter of `max-w-4xl` is 213px, and
+                          a two-column row of label and value does not fit in that at every
+                          language - the breakdown's own rows wrapped mid-address in Persian.
+                          The tile is the minimum, not the measure. */ }
                     <Show when={ () => price !== null }>
                         <div
                             id="network-price-note"
-                            class={ () => 'absolute inset-x-0 top-full z-20 pt-2 '
+                            class={ () => 'absolute start-0 top-full z-20 w-[max(100%,18rem)]'
+                                + ' max-w-[calc(100vw-2.5rem)] pt-2 '
                                 + (showPriceNote ? '' : 'pointer-events-none') }
                         >
                             <div
-                                class={ () => 'rounded-xl border border-line bg-elevated p-3 shadow-2xl'
+                                class={ () => 'border border-line bg-elevated p-3 shadow-2xl'
                                     + ' transition-opacity duration-150 '
                                     + (showPriceNote ? 'opacity-100' : 'opacity-0') }
                             >
@@ -418,11 +425,17 @@ export default component NetworkSection()
                           `Show`, so the amounts reach a screen reader whether or not the
                           panel is open. Absolute, so opening it cannot shove the
                           neighbouring tiles around. While closed it is click-through AND out
-                          of the tab order - same reasoning as the price note above. */ }
+                          of the tab order - same reasoning as the price note above.
+
+                          Anchored to the END edge, the mirror of the price note: this is the
+                          LAST tile of the row, so width it does not get from the tile has to
+                          grow back toward the middle or it leaves the container. Logical, so
+                          the pair swaps sides in Persian and Arabic without a second rule. */ }
                     <Show when={ () => tvl !== null }>
                         <div
                             id="network-tvl-parts"
-                            class={ () => 'absolute inset-x-0 top-full z-20 pt-2 '
+                            class={ () => 'absolute end-0 top-full z-20 w-[max(100%,18rem)]'
+                                + ' max-w-[calc(100vw-2.5rem)] pt-2 '
                                 + (showParts ? '' : 'pointer-events-none') }
                         >
                             <div
