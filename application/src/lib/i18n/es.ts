@@ -109,7 +109,9 @@ export const es: Strings =
         pick: 'Elige una cartera',
         get: 'Obtener',
         detected: 'Detectada',
-        mismatch: 'Tu cartera ya tiene este id de cadena con otro token. Elimínalo allí o usa los valores de abajo.'
+        openApp: 'Abrir la app',
+        mismatch: 'Tu cartera ya tiene este id de cadena con otro token. Elimínalo allí o usa los valores de abajo.',
+        unanswered: 'Nura Wallet no respondió. Instálala en este dispositivo e inténtalo de nuevo.'
     },
 
     wallet:

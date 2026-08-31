@@ -109,7 +109,9 @@ export const fr: Strings =
         pick: 'Choisissez un portefeuille',
         get: 'Obtenir',
         detected: 'Détecté',
-        mismatch: 'Votre portefeuille a déjà cet id de chaîne avec un autre jeton. Supprimez-le là-bas ou utilisez les valeurs ci-dessous.'
+        openApp: 'Ouvrir l\'app',
+        mismatch: 'Votre portefeuille a déjà cet id de chaîne avec un autre jeton. Supprimez-le là-bas ou utilisez les valeurs ci-dessous.',
+        unanswered: 'Nura Wallet n\'a pas répondu. Installez-le sur cet appareil, puis réessayez.'
     },
 
     wallet:

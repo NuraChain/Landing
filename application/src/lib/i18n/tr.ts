@@ -109,7 +109,9 @@ export const tr: Strings =
         pick: 'Bir cüzdan seçin',
         get: 'Edin',
         detected: 'Bulundu',
-        mismatch: 'Cüzdanınızda bu zincir kimliği başka bir tokenle kayıtlı. Oradan silin ya da aşağıdaki değerleri kullanın.'
+        openApp: 'Uygulamayı aç',
+        mismatch: 'Cüzdanınızda bu zincir kimliği başka bir tokenle kayıtlı. Oradan silin ya da aşağıdaki değerleri kullanın.',
+        unanswered: 'Nura Wallet yanıt vermedi. Uygulamayı bu cihaza kurup tekrar deneyin.'
     },
 
     wallet:

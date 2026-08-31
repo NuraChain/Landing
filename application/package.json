@@ -13,10 +13,10 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "test:shuffle": "vitest run --sequence.shuffle",
-        "test:unit": "vitest run tests/wallet.spec.ts tests/stores.spec.ts tests/content.spec.ts tests/i18n.spec.ts tests/network.spec.ts",
+        "test:unit": "vitest run tests/wallet.spec.ts tests/nura-link.spec.ts tests/stores.spec.ts tests/content.spec.ts tests/i18n.spec.ts tests/network.spec.ts",
         "test:integration": "vitest run tests/add-chain.spec.ts tests/network-section.spec.ts tests/network-http.spec.ts tests/header.spec.ts tests/components.spec.ts tests/app-shell.spec.ts tests/app.spec.ts",
         "test:fuzz": "vitest run tests/network.fuzz.spec.ts",
-        "test:security": "vitest run tests/network-http.spec.ts tests/wallet.spec.ts tests/content.spec.ts tests/app-shell.spec.ts",
+        "test:security": "vitest run tests/network-http.spec.ts tests/wallet.spec.ts tests/nura-link.spec.ts tests/content.spec.ts tests/app-shell.spec.ts",
         "test:i18n": "vitest run tests/i18n.spec.ts tests/direction.spec.ts tests/prepaint.spec.ts",
         "coverage": "vitest run --coverage",
         "preview": "vite preview"

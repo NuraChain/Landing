@@ -165,8 +165,16 @@ export interface Strings
         get: string;
         /** Trailing hint on a wallet that announced itself. */
         detected: string;
+        /**
+         * Trailing hint on Nura Wallet, which is an application rather than an extension: the
+         * row is a button whether or not anything announced, because the request leaves over
+         * `nurawallet://` and opens the app.
+         */
+        openApp: string;
         /** The wallet holds this chain id under another ticker - a thing the reader can fix. */
         mismatch: string;
+        /** The deep link went out and nothing came back - the app is most likely not installed. */
+        unanswered: string;
     };
 
     wallet:

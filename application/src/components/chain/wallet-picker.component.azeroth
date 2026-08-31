@@ -3,7 +3,7 @@ import { For, Portal, Show } from 'azerothjs';
 import { ExternalLink, Wallet, X } from 'lucide';
 
 import { captureOverlay } from '../../lib/overlay';
-import { walletOptions } from '../../lib/wallet';
+import { isReachable, walletOptions } from '../../lib/wallet';
 import { WALLET_BRANDS } from '../../lib/wallets';
 
 import { useLocale } from '../../stores/locale';
@@ -95,8 +95,14 @@ export default component WalletPicker(props: {
                     <ul class="flex flex-col gap-1">
                         <For each={ () => WALLET_BRANDS } key={ (brand) => brand.rdns } let={ brand }>
                             <li>
+                                { /* Reachable, not installed. They are the same question for an
+                                     extension, which can only be asked once it has announced
+                                     itself - and two different ones for Nura Wallet, which is
+                                     an application answering over `nurawallet://` whether or
+                                     not this page ever saw an announcement. The hint below
+                                     says which of the two put the button there. */ }
                                 <Show
-                                    when={ () => installed(brand.rdns) !== undefined }
+                                    when={ () => isReachable(brand.rdns) }
                                     fallback={ () =>
                                         // A link and not a disabled button: "you do not have
                                         // this one" is only useful if it comes with somewhere
@@ -127,10 +133,16 @@ export default component WalletPicker(props: {
                                              a neutral glyph when it did not. Lending one
                                              brand's logo to another would be a
                                              misrepresentation, and this site ships no wallet
-                                             logos but its own. */ }
+                                             logos but its own.
+
+                                             `?? null` and not a bare `!== null`: a wallet with
+                                             no announcement AT ALL reaches this button now, and
+                                             `undefined?.icon` is undefined, which is not null -
+                                             so the optional chain alone drew an <img src="">
+                                             and a broken-image glyph beside Nura Wallet. */ }
                                         <span class="grid size-6 shrink-0 place-items-center">
                                             <Show
-                                                when={ () => installed(brand.rdns)?.icon !== null }
+                                                when={ () => (installed(brand.rdns)?.icon ?? null) !== null }
                                                 fallback={ () => <span class="text-muted">{ icon(Wallet, 'size-[17px]') }</span> }
                                             >
                                                 <img
@@ -143,7 +155,9 @@ export default component WalletPicker(props: {
                                             </Show>
                                         </span>
                                         <span class="min-w-0 flex-1 truncate text-start">{ brand.label }</span>
-                                        <span class="shrink-0 text-xs text-faint">{ () => t().addChain.detected }</span>
+                                        <span class="shrink-0 text-xs text-faint">
+                                            { () => installed(brand.rdns) === undefined ? t().addChain.openApp : t().addChain.detected }
+                                        </span>
                                     </button>
                                 </Show>
                             </li>

@@ -34,7 +34,7 @@ sections/         page sections (network, tokenomics, chain, explorer, social)
 pages/            route components (home, about, blog, post)
 stores/           locale and theme, each a createStore singleton
 lib/              content/site.ts (every fact the site states), network.ts, wallet.ts,
-                  markdown.ts, overlay.ts, section-href.ts, i18n/
+                  nura-link.ts, markdown.ts, overlay.ts, section-href.ts, i18n/
 api.ts            the typed client - the ONLY file that crosses into server/, and with types only
 routes.ts         the one route table, read by the client router, the SSR entry and the kit
 styles.css        the design system
@@ -61,6 +61,16 @@ reading for fifteen minutes after the swap goes quiet, and answers 503 when it h
 never an empty 200, because the tile distinguishes "asked and got nothing" from "still asking".
 The gateway is injectable (`ApiDeps.market`) and the suite's harness defaults it to one that
 always refuses, so no spec can reach the network by forgetting to stub it.
+
+**Two ways to reach a wallet, one file each.** `lib/wallet.ts` is the only code that hands
+anything to an extension - discovery is EIP-6963, the reader names the wallet in the picker, and
+the request goes to that exact provider. Nura Wallet is a Tauri application, so outside its own
+in-app browser there is nothing to inject into and `lib/nura-link.ts` carries the same request
+over `nurawallet://dapp?request=<base64url>`, the answer returning in a FRESH tab as a `#nura=`
+fragment that is forwarded to the waiting tab and then wiped. Two things fail silently if
+changed: the callback must be `https:` - the wallet drops anything else without a word, so deep
+links cannot be exercised over `http://localhost` - and `NURA_RDNS` is the rdns the wallet
+ANNOUNCES (`net.nurachain.wallet`), not its Tauri bundle id.
 
 A new chain field starts in `server/src/schemas.ts`. The browser's type is inferred from that
 declaration, so the shape is decided in exactly one place and cannot drift.

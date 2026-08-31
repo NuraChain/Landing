@@ -1,7 +1,8 @@
 import { createSignal, type Getter } from 'azerothjs';
 
 import { ADD_CHAIN_PARAMS } from './content/site';
-import { brandFor, usableIcon, WALLET_BRANDS } from './wallets';
+import { nuraRequest } from './nura-link';
+import { brandFor, NURA_RDNS, usableIcon, WALLET_BRANDS } from './wallets';
 
 /**
  * Asking a wallet to store Nura Chain (EIP-3085).
@@ -56,11 +57,12 @@ export interface WalletOption
 /**
  * What came of asking a wallet to add the network.
  *
- * Four outcomes and not a boolean, because they are four different things to say to a reader:
- * a dismissal is not a failure and must never be reported as one, and a wallet that already
- * holds this chain id under another ticker is a situation the reader can go and fix.
+ * Five outcomes and not a boolean, because they are five different things to say to a reader:
+ * a dismissal is not a failure and must never be reported as one, a wallet that already holds
+ * this chain id under another ticker is a situation the reader can go and fix, and a deep link
+ * nothing answered is not a wallet refusing - it is a wallet that was never there.
  */
-export type AddChainOutcome = 'added' | 'dismissed' | 'mismatch' | 'refused';
+export type AddChainOutcome = 'added' | 'dismissed' | 'mismatch' | 'refused' | 'unanswered';
 
 const [options, setOptions] = createSignal<WalletOption[]>([]);
 
@@ -123,6 +125,19 @@ export const forgetWallets = (): void =>
 };
 
 /**
+ * Whether this wallet can be asked at all right now, which is the question the picker draws a
+ * row from - a button to press, or a link to go and install.
+ *
+ * Announced is the usual answer, and reads off the signal rather than the map so a wallet that
+ * announces late redraws the row it belongs to. Nura Wallet is the standing exception: it is an
+ * application rather than an extension, reachable over its own scheme with no announcement at
+ * all. That is not the same as being installed - nothing on the web can tell whether an
+ * application exists until it either answers or does not, which is what `unanswered` reports.
+ */
+export const isReachable = (rdns: string): boolean =>
+    rdns === NURA_RDNS || options().some((option) => option.rdns === rdns);
+
+/**
  * The error code a wallet actually meant.
  *
  * MetaMask wraps the provider error it got from its own middleware, so a code sent by the inner
@@ -173,11 +188,39 @@ const isDismissal = (error: unknown): boolean =>
 };
 
 /**
+ * One refusal, read the same way whether a provider threw it or the deep link carried it back.
+ *
+ * -32602 is almost always one thing: the wallet already holds this chain id under a different
+ * ticker and refuses to re-add it. That is a fixable situation the reader can act on, so it
+ * must not read as the generic "your wallet said no".
+ */
+const refusal = (error: unknown): AddChainOutcome =>
+    isDismissal(error) ? 'dismissed' : codeOf(error) === -32602 ? 'mismatch' : 'refused';
+
+/**
+ * The same request, over `nurawallet://`, for the browsers Nura Wallet cannot inject into.
+ *
+ * Sending the identical `ADD_CHAIN_PARAMS` is the point: the extension path, the link path and
+ * the values printed on the chain card are one constant, so no two of them can drift.
+ */
+const overLink = async (): Promise<AddChainOutcome> =>
+{
+    const outcome = await nuraRequest('wallet_addEthereumChain', [ADD_CHAIN_PARAMS]);
+
+    if (outcome.status === 'answered')
+    {
+        return 'added';
+    }
+
+    return outcome.status === 'unanswered' ? 'unanswered' : refusal(outcome.error);
+};
+
+/**
  * Asks ONE wallet to store this network.
  *
  * Needs no connection - only a chosen wallet. Answers with an outcome rather than throwing,
  * because every branch is an expected state the button renders and not an error: a reader
- * declining the prompt is the most ordinary of the four.
+ * declining the prompt is the most ordinary of the five.
  */
 export const addChain = async (rdns: string): Promise<AddChainOutcome> =>
 {
@@ -185,9 +228,12 @@ export const addChain = async (rdns: string): Promise<AddChainOutcome> =>
 
     if (entry === undefined || typeof entry.provider?.request !== 'function')
     {
-        // Announced and then not there, or a stub injected before the extension finished
-        // loading. Presents as a wallet that refused, because from here that is what it is.
-        return 'refused';
+        // Nothing announced. For Nura Wallet that is the ordinary case and not a fault - it is
+        // an application, so outside its own in-app browser there is no provider to inject and
+        // the request travels over the scheme instead. For an extension it means announced and
+        // then not there, or a stub injected before the extension finished loading, which
+        // presents as a wallet that refused because from here that is what it is.
+        return rdns === NURA_RDNS ? overLink() : 'refused';
     }
 
     try
@@ -198,14 +244,6 @@ export const addChain = async (rdns: string): Promise<AddChainOutcome> =>
     }
     catch (error: unknown)
     {
-        if (isDismissal(error))
-        {
-            return 'dismissed';
-        }
-
-        // -32602 here is almost always one thing: the wallet already holds this chain id under
-        // a different ticker and refuses to re-add it. That is a fixable situation the reader
-        // can act on, so it must not read as the generic "your wallet said no".
-        return codeOf(error) === -32602 ? 'mismatch' : 'refused';
+        return refusal(error);
     }
 };

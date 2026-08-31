@@ -109,7 +109,9 @@ export const en: Strings =
         pick: 'Choose a wallet',
         get: 'Get',
         detected: 'Detected',
-        mismatch: 'Your wallet already holds this chain id under a different token. Remove it there, or use the values below.'
+        openApp: 'Open app',
+        mismatch: 'Your wallet already holds this chain id under a different token. Remove it there, or use the values below.',
+        unanswered: 'Nura Wallet did not answer. Install it on this device, then try again.'
     },
 
     wallet:

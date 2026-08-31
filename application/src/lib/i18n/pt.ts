@@ -109,7 +109,9 @@ export const pt: Strings =
         pick: 'Escolhe uma carteira',
         get: 'Obter',
         detected: 'Detetada',
-        mismatch: 'A tua carteira já tem este id de cadeia com outro token. Remove-o aí ou usa os valores abaixo.'
+        openApp: 'Abrir a app',
+        mismatch: 'A tua carteira já tem este id de cadeia com outro token. Remove-o aí ou usa os valores abaixo.',
+        unanswered: 'A Nura Wallet não respondeu. Instala-a neste dispositivo e tenta de novo.'
     },
 
     wallet:

@@ -32,6 +32,11 @@ type Status = 'idle' | 'pending' | 'added' | 'failed';
  * was found. The manual values remain the fallback for a wallet that refuses outright, and the
  * page still travels to them - a phone's in-app browser that will not do EIP-3085 is the one
  * case no amount of handling in lib/wallet can rescue.
+ *
+ * Nura Wallet is askable whether or not anything announced it, because it is an application and
+ * answers over `nurawallet://` (lib/nura-link.ts). Its one extra outcome is `unanswered`: the
+ * link went out and nothing came back, which is the app not being installed rather than a
+ * wallet refusing, and sends the page to the builds instead of to the chain card.
  */
 export default component AddChainButton(props: { size?: ButtonSize; variant?: ButtonVariant; shape?: ButtonShape })
 {
@@ -44,17 +49,21 @@ export default component AddChainButton(props: { size?: ButtonSize; variant?: Bu
     let timer = 0;
 
     /**
-     * Send the reader to the values they can copy.
+     * Send the reader somewhere they can act on what just happened - the values they can copy,
+     * or the builds they can install.
      *
      * `scrollIntoView` rather than a hash assignment: the hash may already be the one being
      * set - one of the two places this button is rendered is INSIDE the chain section - and
      * assigning a hash the document already carries fires no navigation and moves no scroll.
      * That is how this button once came to be reported as doing nothing at all. `motionOk`
      * because this IS autonomous movement: the page travels on its own after a press.
+     *
+     * Optional all the way through: `#wallet` lives on the landing page only, and this button
+     * is rendered where the chain card is rather than where the downloads are.
      */
-    const showChainCard = (): void =>
+    const travelTo = (id: 'chain' | 'wallet'): void =>
     {
-        document.getElementById('chain')?.scrollIntoView({
+        document.getElementById(id)?.scrollIntoView({
             behavior: motionOk() ? 'smooth' : 'auto',
             block: 'start'
         });
@@ -77,6 +86,15 @@ export default component AddChainButton(props: { size?: ButtonSize; variant?: Bu
             setStatus('added');
             toasts.push('success', t().addChain.done);
         }
+        else if (outcome === 'unanswered')
+        {
+            // Nothing came back down the deep link, which nearly always means the application
+            // is not on this device. "Could not add" would be a report about a wallet that was
+            // never there, and the useful place to send somebody is the list of builds.
+            setStatus('failed');
+            toasts.push('error', t().addChain.unanswered);
+            travelTo('wallet');
+        }
         else
         {
             setStatus('failed');
@@ -85,7 +103,7 @@ export default component AddChainButton(props: { size?: ButtonSize; variant?: Bu
             // tell somebody whose wallet already holds this chain id under another ticker:
             // that is a situation they can go and fix, and only if they are told what it is.
             toasts.push('error', outcome === 'mismatch' ? t().addChain.mismatch : t().addChain.failed);
-            showChainCard();
+            travelTo('chain');
         }
 
         window.clearTimeout(timer);

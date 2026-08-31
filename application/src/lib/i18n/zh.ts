@@ -109,7 +109,9 @@ export const zh: Strings =
         pick: '选择钱包',
         get: '获取',
         detected: '已检测到',
-        mismatch: '你的钱包已用其他代币占用该链 ID。请在钱包中删除，或使用下方的值手动添加。'
+        openApp: '打开应用',
+        mismatch: '你的钱包已用其他代币占用该链 ID。请在钱包中删除，或使用下方的值手动添加。',
+        unanswered: 'Nura Wallet 未响应。请先在此设备上安装，然后重试。'
     },
 
     wallet:

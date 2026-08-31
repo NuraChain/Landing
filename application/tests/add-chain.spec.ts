@@ -153,6 +153,29 @@ describe('AddChainButton', () =>
         expect(missing.getAttribute('rel')).toBe('noreferrer');
     });
 
+    /*
+     * Nura Wallet is the exception to the row above: an application rather than an extension,
+     * pressable whether or not anything announced it, because the request leaves over
+     * `nurawallet://`. The hint says which of the two put the button there.
+     *
+     * The image assertion is a real regression. Reaching this branch with no announcement
+     * behind it was impossible until the deep link landed, and the icon test read
+     * `installed(...)?.icon !== null` - undefined is not null, so the row drew an `<img src="">`
+     * and a broken-image glyph beside the wallet whose landing page this is.
+     */
+    it('makes Nura Wallet pressable with nothing announced, and draws no image', () =>
+    {
+        const { container } = renderTest(() => AddChainButton({}));
+
+        fire(container.querySelector('button')!, 'click');
+
+        const nura = row('Nura Wallet');
+
+        expect(nura.tagName).toBe('BUTTON');
+        expect(nura.textContent).toContain(en.addChain.openApp);
+        expect(nura.querySelector('img')).toBeNull();
+    });
+
     it('confirms on the label when the wallet accepts, then returns to idle', async () =>
     {
         announce(METAMASK_RDNS, vi.fn().mockResolvedValue(null));
