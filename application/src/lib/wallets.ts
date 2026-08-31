@@ -16,16 +16,21 @@ export const METAMASK_RDNS = 'io.metamask';
 export const TRUST_RDNS = 'com.trustwallet.app';
 
 /**
- * Nura Wallet's identity, matching the bundle identifier in its own repository
- * (`src-tauri/tauri.conf.json`).
+ * Nura Wallet's identity, as the wallet ACTUALLY announces it: the string in its own
+ * `src/core/dapp.script.ts`, and in the connector it ships to dApps.
  *
- * It does not announce anything yet: Nura Wallet is a Tauri application for Windows and Android
- * whose in-app browser injects no EIP-1193 provider, so no page can currently detect it. It is
- * listed all the same - this site is the wallet's own landing page, and a reader who has it
- * should be told the button expects it. The moment the app announces itself under this rdns the
- * entry below starts working with no change here.
+ * This was `io.nurawallet`, the Tauri BUNDLE identifier from `src-tauri/tauri.conf.json`, on the
+ * assumption that an application announces itself under the name the operating system knows it
+ * by. It does not, and nothing failed loudly: an announcement carrying the real rdns was dropped
+ * by the roster gate below, so the wallet whose landing page this is was the one wallet the
+ * picker could never detect. A wrong rdns has no symptom other than silence, which is why the
+ * two names are written down here together.
+ *
+ * Its in-app browser injects a provider and announces it like any extension. An external
+ * browser cannot be injected into at all, and there the request travels over `nurawallet://`
+ * instead - see `lib/nura-link.ts`.
  */
-export const NURA_RDNS = 'io.nurawallet';
+export const NURA_RDNS = 'net.nurachain.wallet';
 
 export interface WalletBrand
 {
