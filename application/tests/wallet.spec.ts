@@ -286,7 +286,10 @@ describe('addChain', () =>
 
     it('reports a provider that throws synchronously', async () =>
     {
-        announce(METAMASK_RDNS, (): never => { throw new Error('sync'); });
+        announce(METAMASK_RDNS, (): never =>
+        {
+            throw new Error('sync');
+        });
 
         expect(await wallet.addChain(METAMASK_RDNS)).toBe('refused');
     });
