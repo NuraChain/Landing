@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-09-01
+
+### Added
+
+- **Nura Wallet can be asked from any browser, not only its own.** It is a Tauri application,
+  so outside its in-app browser there is nothing to inject a provider into and the page could
+  not reach it at all. `lib/nura-link.ts` carries the same `wallet_addEthereumChain` request
+  over `nurawallet://dapp?request=<base64url>`; the answer comes back in a FRESH tab as a
+  `#nura=` fragment, is handed sideways to the tab that is waiting, and the fragment is wiped.
+  The request sent is the same `ADD_CHAIN_PARAMS` the extension path and the chain card use,
+  so no two of the three can drift.
+- **The picker offers Nura Wallet as a button whether or not anything announced it**, marked
+  "Open app" rather than "Detected". Reachable and installed are one question for an extension
+  and two for an application - nothing on the web can tell whether an app exists until it
+  either answers or does not.
+- **A deep link nothing answers is its own outcome.** `unanswered` is not a wallet refusing,
+  it is a wallet that was never there, so it says so and sends the reader to the builds
+  instead of to the values they cannot use yet.
+
+### Fixed
+
+- **Nura Wallet was the one wallet the picker could never detect.** `NURA_RDNS` was
+  `io.nurawallet`, the Tauri BUNDLE identifier, and the wallet announces `net.nurachain.wallet`.
+  Every announcement it made was dropped by the roster gate, and a wrong rdns has no symptom
+  other than silence - which is why both names are now written down beside each other.
+- **A broken-image glyph sat beside Nura Wallet in the picker.** `installed(rdns)?.icon !== null`
+  is true for a wallet that never announced, so an `<img src="">` was drawn where the neutral
+  mark belonged.
+
 ## [1.7.0] - 2026-08-30
 
 ### Added
