@@ -1,0 +1,36 @@
+import { For } from 'azerothjs';
+
+import { nativeName, useLocale, type Locale } from '../../stores/locale';
+
+/**
+ * The whole reason the fallback model exists, said out loud.
+ *
+ * Shown on a document the reader's own language does not have yet - a post or the whitepaper,
+ * which is why it is a component rather than markup inside one page. The notice names no
+ * language itself: the ones the document DOES hold are listed beside it, each in its own script,
+ * which one translated sentence cannot do for ten. `lang` on each so a screen reader switches
+ * voice rather than reading Persian with an English one.
+ *
+ * Choosing one switches the SITE's language, not just this document's: a reader who can read
+ * Persian wants the interface in it too, and the page's own effect re-asks the server the
+ * moment the store moves.
+ */
+export default component TranslationNotice(props: { available: string[] })
+{
+    const { t, choose } = useLocale();
+
+    <aside class="flex flex-col gap-2 border border-line-strong bg-surface px-4 py-3 text-sm">
+        <p class="text-muted">{ t().blog.notTranslated }</p>
+        <p class="flex flex-wrap items-center gap-2">
+            <span class="text-faint">{ t().blog.availableIn }</span>
+            <For each={ props.available } key={ (code) => code } let={ code }>
+                <button
+                    type="button"
+                    class="border border-line px-2 py-0.5 text-ink transition-colors hover:border-accent"
+                    lang={ code }
+                    onClick={ () => choose(code as Locale) }
+                >{ nativeName(code as Locale) }</button>
+            </For>
+        </p>
+    </aside>
+}

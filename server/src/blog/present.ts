@@ -17,25 +17,37 @@ export const inSiteOrder = (locales: PostLocale[]): PostLocale[] =>
  *
  * Three steps, in order, and the order is the whole policy:
  *
- *   1. Their own language, if the post has been written in it.
- *   2. The post's DEFAULT language - chosen per post, so one written in Persian falls back to
- *      Persian rather than to an English translation nobody has produced.
+ *   1. Their own language, if the document has been written in it.
+ *   2. The document's DEFAULT language - chosen per document, so one written in Persian falls
+ *      back to Persian rather than to an English translation nobody has produced.
  *   3. Whatever exists, in the site's own order.
  *
- * Step three is not a nicety. A post can lose its default translation to a bad edit, and a
+ * Step three is not a nicety. A document can lose its default translation to a bad edit, and a
  * reader meeting an empty page would be worse served than one reading a language they did not
  * ask for - which the page tells them about either way.
+ *
+ * Generic over the row, because the blog and the whitepaper each carry their own translation
+ * shape and there must be ONE policy: a reader falling back differently on the whitepaper than
+ * on a post would be a bug nobody could describe.
  */
-export function resolve(stored: LoadedPost, wanted: PostLocale): TranslationRow | null
+export function pick<T extends { locale: PostLocale }>(
+    translations: readonly T[],
+    defaultLocale: PostLocale,
+    wanted: PostLocale
+): T | null
 {
-    const { post, translations } = stored;
-
     return translations.find((row) => row.locale === wanted)
-        ?? translations.find((row) => row.locale === post.defaultLocale)
+        ?? translations.find((row) => row.locale === defaultLocale)
         ?? inSiteOrder(translations.map((row) => row.locale))
             .map((locale) => translations.find((row) => row.locale === locale))
             .find((row) => row !== undefined)
         ?? null;
+}
+
+/** The blog's reading of {@link pick}: a post's default language is declared on the post. */
+export function resolve(stored: LoadedPost, wanted: PostLocale): TranslationRow | null
+{
+    return pick(stored.translations, stored.post.defaultLocale, wanted);
 }
 
 /** The fields every served shape shares, resolved for one reader. */

@@ -1,9 +1,10 @@
 import { Link, useParams } from 'azerothjs';
 
 import { client, type PostDetail } from '../api';
-import { directionOf, nativeName, useLocale, type Locale } from '../stores/locale';
+import { directionOf, useLocale } from '../stores/locale';
 
 import Markdown from '../components/content/markdown.component.azeroth';
+import TranslationNotice from '../components/content/translation-notice.component.azeroth';
 import EmptyState from '../components/ui/empty-state.component.azeroth';
 import Skeleton from '../components/ui/skeleton.component.azeroth';
 
@@ -17,7 +18,7 @@ import Skeleton from '../components/ui/skeleton.component.azeroth';
 export default component Post()
 {
     const params = useParams();
-    const { t, locale, choose } = useLocale();
+    const { t, locale } = useLocale();
 
     state post = null as PostDetail | null;
     state missing = false;
@@ -115,34 +116,10 @@ export default component Post()
                     </p>
                 </header>
 
-                { /*
-                     The whole reason the fallback model exists, said out loud.
-
-                     The notice names no language itself: the ones this post DOES hold are listed
-                     beside it, each in its own script, which one translated sentence cannot do
-                     for ten. `lang` on each so a screen reader switches voice rather than reading
-                     Persian with an English one.
-                  */ }
+                { /* The whole reason the fallback model exists, said out loud - see the
+                     component for why it names no language itself. */ }
                 <Show when={ !post!.translated }>
-                    <aside class="flex flex-col gap-2 border border-line-strong bg-surface px-4 py-3 text-sm">
-                        <p class="text-muted">{ t().blog.notTranslated }</p>
-                        <p class="flex flex-wrap items-center gap-2">
-                            <span class="text-faint">{ t().blog.availableIn }</span>
-                            <For each={ post!.available } key={ (code) => code } let={ code }>
-                                { /* Switches the SITE's language, not just this post's: a reader
-                                     who can read Persian wants the interface in it too, and the
-                                     effect above re-asks the server the moment the store moves.
-                                     Each is named in its own language - somebody looking for
-                                     Persian should not have to read English to find it. */ }
-                                <button
-                                    type="button"
-                                    class="border border-line px-2 py-0.5 text-ink transition-colors hover:border-accent"
-                                    lang={ code }
-                                    onClick={ () => choose(code as Locale) }
-                                >{ nativeName(code as Locale) }</button>
-                            </For>
-                        </p>
-                    </aside>
+                    <TranslationNotice available={ post!.available } />
                 </Show>
 
                 { /* The body is set in the language it was WRITTEN in, which is not always the
