@@ -1,178 +1,158 @@
-Nura Chain es una blockchain pública que ejecuta la Máquina Virtual de Ethereum. Se identifica con el ID de cadena `1020`, sella un bloque cada tres segundos, tarifica las transacciones con el mercado de tarifas EIP-1559 y paga la computación en su moneda nativa, NURA. Alrededor de la red hay una cartera de autocustodia, un explorador de bloques, un swap y un puente, todos accesibles hoy.
+Nura Chain es una blockchain pública: un registro compartido de quién tiene qué, guardado por ordenadores en lugar de por un banco, que cualquiera puede leer y nadie puede reescribir a escondidas. Añade una página nueva a ese registro cada tres segundos, funciona con el mismo motor que Ethereum y tiene su propia moneda, NURA, que paga la pequeña comisión que cuesta cada transacción. A su alrededor hay una cartera, un explorador para consultar cosas, un swap para cambiar monedas y un puente para traer monedas desde otras redes.
 
-Este documento es la descripción de referencia de la red: qué es, cómo funciona, para qué sirve su moneda y cómo se reparte el suministro, qué existe a su alrededor y qué puede verificar un lector contra la cadena en lugar de aceptarlo por confianza. Está escrito para tres lectores a la vez: quien está decidiendo si tener NURA, quien está a punto de construir sobre la red y quien simplemente quiere saber qué está mirando.
+Este documento explica todo eso con palabras sencillas. Está escrito para quien nunca ha usado una blockchain, para quien está decidiendo si tener NURA y para quien solo quiere saber qué está mirando. Cuando una afirmación puede comprobarla cualquiera, decimos cómo; cuando no, también lo decimos.
 
-## 1. Introducción
+## 1. Qué es Nura Chain
 
-La mayoría de la gente conoce una blockchain nueva a través de un diálogo de cartera que pide cinco valores, y los pega sin saber qué significa ninguno de ellos. Nura Chain está construida para ser la experiencia contraria. Cada cifra que afirma este documento o bien puede leerse de la propia cadena o bien está claramente marcada como una afirmación publicada, y las herramientas que rodean la red son las que el ecosistema EVM en general ya utiliza.
+Piensa en una blockchain como en un cuaderno del que miles de personas guardan copias idénticas. Cuando alguien envía monedas, la transferencia se escribe en una página nueva, todas las copias reciben la misma página y, una vez que una página está dentro, se queda dentro. Nadie puede arrancar una ni cambiar una anotación antigua sin que todos lo noten. Ese es todo el truco, y es lo que permite que una blockchain mantenga el dinero honesto sin una empresa en medio.
 
-El nombre designa una sola cosa: la red. Los productos construidos sobre ella —Nura Wallet, Nura Explorer, Nura Swap— se describen en la sección 7 y son independientes de la cadena a la que sirven. Cualquier cartera EVM que acepte una red personalizada puede usar Nura Chain; la cartera del propio proyecto es una puerta de entrada, no la única.
+Nura Chain es uno de esos cuadernos. Lo que lo hace fácil de usar es que funciona con el mismo motor que Ethereum, la plataforma de blockchain más usada. Cualquier cartera, app o herramienta hecha para Ethereum funciona también en Nura Chain, así que no necesitas ningún programa especial para usarla. Si alguna vez has usado MetaMask o una cartera parecida, ya sabes cómo.
 
-## 2. Principios de diseño
+Una cosa que conviene tener clara: Nura Chain es la red. Nura Wallet, Nura Explorer y Nura Swap son productos construidos encima de ella, y se describen en la sección 7. Puedes usar la red con la cartera que prefieras.
 
-Cuatro decisiones dan forma a todo lo que sigue.
+## 2. En qué creemos
 
-- **Ejecución familiar.** La red ejecuta la EVM sin cambios, de modo que los contratos, las librerías, las claves y las direcciones se trasladan desde Ethereum sin modificación. El primer día de un desarrollador en Nura Chain es una entrada de configuración, no una reescritura.
-- **Autocustodia por defecto.** Nura Wallet nunca guarda una clave y no puede mover un saldo. La red no tiene recuperación de cuentas, ni congelación, ni ninguna vía de gasto privilegiada; quien tiene la clave tiene la moneda.
-- **Verificable antes que confiable.** El ID de cadena, el intervalo de bloque, el mercado de tarifas y la identidad de cada productor de bloques pueden leerse por RPC público. Donde una cifra no puede leerse de la cadena —el suministro total es el caso importante— este documento lo dice en lugar de insinuar lo contrario.
-- **Una superficie pequeña, descrita con honestidad.** La red entrega menos piezas de las que podría enumerar una página de marketing, y cada una de ellas se describe aquí con sus límites, incluidos los incómodos.
+Cuatro ideas dan forma a todo lo que sigue.
 
-## 3. La red
+- **Tus llaves, tus monedas.** Tu cartera guarda tus monedas con una clave secreta que nunca sale de tu dispositivo. Nadie en Nura, y nadie en ningún otro sitio, puede mover tus monedas, congelarlas ni quitártelas. La otra cara de la moneda es que tampoco nadie puede recuperarlas por ti.
+- **Comprueba, no confíes.** Los datos importantes de la red puede comprobarlos cualquiera con una cartera o un navegador web. Cuando una cifra no se puede comprobar, este documento lo dice, en lugar de dejar que supongas que sí.
+- **Herramientas conocidas.** Nada en Nura Chain necesita un tipo nuevo de app. Las carteras y herramientas que la gente ya usa funcionan aquí.
+- **Decirlo claro.** Menos promesas, contadas con honestidad, incluidas las partes que no son halagadoras.
 
-### 3.1 Ejecución: la Máquina Virtual de Ethereum
+## 3. Cómo funciona la red
 
-Nura Chain ejecuta bytecode de la EVM. Un contrato compilado con Solidity o Vyper para la EVM corre aquí con la misma semántica, los mismos costes de instrucción y el mismo espacio de direcciones de 20 bytes que tendría en Ethereum. El nodo responde a la interfaz JSON-RPC estándar de Ethereum, así que ethers.js, viem, web3.py, wagmi, Hardhat y Foundry funcionan contra él sin más que un endpoint y un ID de cadena.
+### 3.1 Bloques: una página nueva cada tres segundos
 
-La compatibilidad es una afirmación únicamente sobre la capa de ejecución. Una dirección que se controla en Ethereum se controla aquí, porque deriva de la misma clave secp256k1, pero los saldos, los contratos desplegados y el historial son libros contables separados. Nada de lo que se envíe a «la misma dirección en otra cadena» se traslada entre ellas. La sección 9 vuelve sobre esto porque es de donde proceden la mayoría de las pérdidas reales.
+Las páginas del cuaderno se llaman bloques. Nura Chain escribe uno nuevo cada tres segundos, con un horario fijo, haya enviado alguien algo en ese tiempo o no. El primer bloque se escribió el 6 de junio de 2026, y la cuenta no ha dejado de subir desde entonces. Puedes verla subir en la página de inicio del sitio y en Nura Explorer.
 
-### 3.2 Bloques, tiempo y tarifas
+### 3.2 Comisiones: un pequeño cargo por cada transacción
 
-La red sella un bloque cada tres segundos. El intervalo es fijo y no un objetivo: las cabeceras consecutivas difieren exactamente en tres segundos. El primer bloque de la cadena lleva una marca de tiempo del 6 de junio de 2026, 00:00 UTC.
+Cada transacción paga una comisión en NURA, un poco como el sello de una carta. La comisión tiene dos partes: una cantidad base que fija la red y una propina opcional que puedes añadir si quieres que tu transacción se atienda antes. Tu cartera lo calcula por ti; nunca tienes que hacerlo a mano. En el momento de escribir esto, la cantidad base es una fracción diminuta de un NURA, pero la fija la red y puede cambiar, así que toma la comisión que te muestra tu cartera como la cifra real.
 
-Las transacciones se tarifican con el mercado de tarifas EIP-1559. Cada bloque lleva una tarifa base fijada por el protocolo, y el remitente añade encima una tarifa de prioridad; el campo `baseFeePerGas` de cada cabecera y los métodos `eth_maxPriorityFeePerGas` y `eth_feeHistory` exponen ambas. En el momento de esta revisión, la tarifa base está en 1 gwei y el límite de gas por bloque es de 150.000.000 de gas. Ambos son valores para leer en tiempo de ejecución y no para fijar en el código, que es lo que hace por defecto la estimación de tarifas de una librería.
+### 3.3 Quién escribe los bloques
 
-Las cabeceras tienen la forma que producen los clientes modernos de Ethereum: un `difficulty` de cero, un `nonce` vacío, un `mixHash` de cero y los campos introducidos por las actualizaciones Shanghai, Cancun y Prague: `withdrawalsRoot`, `parentBeaconBlockRoot`, `blobGasUsed` y `requestsHash`. El código que se bifurca ante una dificultad distinta de cero, o que espera que los campos de prueba de trabajo signifiquen algo, se comportará mal aquí exactamente igual que lo hace hoy en Ethereum.
+En algunas blockchains, como Bitcoin, los ordenadores compiten por resolver acertijos para ganarse el derecho a escribir el siguiente bloque; a eso se refiere la gente cuando habla de «minar». Nura Chain no funciona así. Sus bloques los escribe un productor de bloques autorizado, con el horario de tres segundos de arriba, y cada bloque deja constancia de qué cuenta lo escribió, de modo que quién produjo un bloque concreto es público y no una cuestión de confianza.
 
-### 3.3 Producción de bloques
+Para ser claros sobre cómo es eso hoy: en el momento de esta revisión, todos los bloques que muestreamos fueron escritos por la misma cuenta productora. Si se añadirán más productores es una decisión sobre cómo se gestiona la red, no algo que este documento prometa en un sentido ni en otro. Cualquier cambio se anuncia por los canales de la sección 10.
 
-Nura Chain no usa prueba de trabajo; los campos de cabecera de arriba lo descartan. Los bloques los sella un productor de bloques autorizado según el calendario fijo descrito arriba. La cuenta que selló un bloque queda registrada en su campo `miner`, de modo que el productor de cualquier bloque es un hecho público y no una afirmación en un documento.
+### 3.4 ¿Cuándo es definitiva una transacción?
 
-En esta revisión, cada bloque muestreado fue sellado por la misma cuenta productora. El tamaño del conjunto de productores es una cuestión de cómo se opera la red, no de su capa de ejecución, y este documento no lo fija. Cualquier cambio en él se anuncia por los canales del proyecto enumerados en la sección 11.
+Una vez que tu transacción queda escrita en un bloque, está hecha. Aparece en Nura Explorer en pocos segundos y nadie puede deshacerla, revertirla ni cancelarla, nosotros incluidos. Eso es lo que hace fiable el registro, y también es la razón por la que la sección 9 te pide que compruebes dos veces antes de enviar.
 
-La red no expone ninguna señal de finalidad separada por RPC. La inclusión en un bloque sellado es la confirmación que muestran las carteras y el explorador, y como los bloques llegan según un calendario, una transacción incluida es visible en el plazo de un intervalo.
+## 4. La moneda NURA
 
-### 3.4 Identidad de la red
+NURA es el dinero propio de la red, igual que el ether lo es de Ethereum. Paga las comisiones de la sección 3.2, y una cuenta sin nada de NURA no puede enviar nada, porque no puede pagar el sello.
 
-Estos son los valores que pide una cartera o una librería cliente. Son los mismos valores que lleva la tarjeta de la red en el sitio, y los mismos que guarda Nura Wallet.
+NURA forma parte de la propia red, no es una app que funciona sobre ella. Eso tiene una consecuencia práctica: no existe una «dirección del contrato de NURA» que añadir a tu cartera. Añades la red en sí, con los valores de la sección 10, y tu saldo de NURA simplemente aparece. Si una página te dice que pegues una dirección para «añadir NURA», ten cuidado: te está pidiendo algo que no existe.
 
-- Nombre de la red: Nura Chain
-- ID de cadena: `1020`, que las carteras piden en hexadecimal como `0x3fc`
-- Endpoint RPC: `https://rpc.nurachain.net`
-- Explorador de bloques: `https://explorer.nurachain.net`
-- Moneda nativa: Nura, símbolo `NURA`, 18 decimales
-- Tiempo de bloque: 3 segundos
+Como la mayoría de monedas de este tipo, NURA se puede dividir en fracciones muy pequeñas, así que puedes enviar una décima, una milésima o mucho menos de una moneda.
 
-El ID de cadena es más que una etiqueta. Bajo EIP-155 se firma dentro de cada transacción, de modo que una transacción firmada para la cadena 1020 no puede reproducirse en ninguna otra red, y una transacción firmada para otra red se rechaza aquí. Es también el valor que hay que comprobar antes de confiar en todo lo demás, incluida esta página:
+## 5. Cuántos NURA existen y a dónde van
 
-```bash
-curl -s https://rpc.nurachain.net \
-  -X POST -H 'content-type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}'
-```
+### 5.1 El total
 
-La respuesta es `{"jsonrpc":"2.0","id":1,"result":"0x3fc"}`. A una cartera compatible con EIP-3085 se le pueden entregar todos los valores de arriba en una sola petición, que es lo que hace el control «Añadir Nura Chain a la billetera» del sitio.
+El suministro total es de 1.000.000.000 NURA, mil millones, y no se crearán más allá de esa cifra.
 
-## 4. La moneda nativa
+Esa cifra la publica el proyecto. Conviene saber que es uno de los pocos números de aquí que no puedes comprobar por tu cuenta: una cartera o el explorador pueden mostrarte el saldo de cualquier dirección concreta, pero una moneda que forma parte de la red no tiene un contador que los sume todos. Los saldos individuales son comprobables; el total es la palabra del proyecto.
 
-NURA es la moneda nativa de la red. Paga el gas: cada transacción consume gas, el gas se tarifica en NURA y una cuenta necesita saldo antes de poder enviar nada en absoluto, incluido su primer despliegue de contrato. Es el papel que juega el ether en Ethereum, y la unidad más pequeña es igualmente una milmillonésima de milmillonésima de moneda.
+En esta revisión no indicamos un «suministro circulante». Esa cifra depende de cuáles de las porciones de abajo se consideran desbloqueadas en un día dado, y eso es un juicio y no una medición. Allí donde el proyecto publica las direcciones que guardan una porción, cualquiera puede vigilar esos saldos.
 
-Como es nativa y no un contrato, NURA no tiene dirección de token. Una página que pide «la dirección del contrato de NURA» para añadir la moneda está pidiendo algo que no existe; lo que hace aparecer el saldo es añadir la red. Los tokens ERC-20 existen en Nura Chain como contratos corrientes, y NURA no es uno de ellos.
+### 5.2 El reparto
 
-## 5. Suministro y asignación
+Los mil millones de monedas se dividen en seis partes. Para cada porción: la parte que le corresponde, el número de monedas y para qué sirve.
 
-### 5.1 Suministro total
+- **Bloqueado, 40%, 400.000.000 NURA.** Apartado y bloqueado durante un año. Qué se hace con él después se decide al terminar ese año, y cualquier decisión sobre esta porción necesita la aprobación de al menos el 65% de la red en una votación.
+- **Liquidez, 25%, 250.000.000 NURA.** Se usa a lo largo de un año para mantener suficiente NURA disponible en los fondos de intercambio, de modo que comprar y vender funcione con fluidez y el precio no dé bandazos con cada operación.
+- **Comunidad, 10%, 100.000.000 NURA.** Se entrega a lo largo de un año a quienes ayudan a crecer a la red: siendo activos, participando, construyendo cosas o trayendo a otros. Cada asignación la revisa y aprueba el consejo de gestión.
+- **Venta pública, 10%, 100.000.000 NURA.** Se vende al público por 24.000 dólares en total, lo que sale a 0,00024 dólares por NURA. Ese es el precio de esa venta, no el precio de mercado, y no dice nada sobre lo que vale NURA un día cualquiera.
+- **Tesorería, 10%, 100.000.000 NURA.** El presupuesto propio del proyecto a lo largo de un año, para desarrollo, infraestructura, productos y alianzas, bajo la supervisión del consejo de gestión.
+- **Airdrop, 5%, 50.000.000 NURA.** Se regala a lo largo de un año a personas alcanzadas a través de canales y comunidades seleccionados. La lista final la confirma el consejo de gestión.
 
-El suministro total publicado es de 1.000.000.000 NURA: mil millones.
+Esas seis porciones suman el 100%.
 
-Es una cifra publicada, no legible en cadena, y la distinción importa. Un ERC-20 expone `totalSupply()` porque es un contrato que lleva su propio libro; la emisión de una moneda nativa vive en la configuración del cliente y en el estado génesis, y no existe `eth_totalSupply`. Cualquier saldo individual puede leerse con `eth_getBalance`; el total, no.
+### 5.3 Comprobar un saldo
 
-El suministro circulante no se indica en esta revisión a propósito. El circulante depende de qué asignaciones cuentan como desbloqueadas en un momento dado, y eso es un juicio y no una medición, salvo que cada asignación bloqueada esté en una dirección publicada que cualquiera pueda vigilar.
+Todos los saldos de Nura Chain son públicos. Abre Nura Explorer, pega cualquier dirección y verás exactamente cuántos NURA tiene y cada transferencia que entra y sale. Funciona con tu propia dirección, con la de un amigo y con cualquier dirección que el proyecto publique para una de las porciones de arriba.
 
-### 5.2 Asignación
+## 6. Quién decide qué
 
-El total se divide en seis partes. Los porcentajes, el número de tokens que implican y las condiciones declaradas de cada porción son:
+En esta revisión hay dos reglas en vigor, y las dos tratan de las monedas de la sección 5, no de la red en sí.
 
-- **Bloqueado — 40%, 400.000.000 NURA.** Bloqueado durante un año. Qué ocurre con él se decidirá al terminar ese periodo, y cualquier decisión sobre esta porción requiere la aprobación de un voto de al menos el 65% de la red.
-- **Liquidez — 25%, 250.000.000 NURA.** Asignado a lo largo de un año a proveer y gestionar liquidez, con el objetivo de una liquidez de negociación funcional y un ecosistema NURA más estable.
-- **Comunidad — 10%, 100.000.000 NURA.** Distribuido entre miembros de la comunidad durante un año, para quienes ayudan a crecer la red con actividad, participación, desarrollo, referidos u otras aportaciones efectivas en lugar de pagando. La asignación sigue a la revisión y aprobación del consejo de gestión.
-- **Venta pública — 10%, 100.000.000 NURA.** Ofrecido en una venta pública con un precio total de 24.000 dólares, lo que sale a 0,00024 dólares por NURA.
-- **Tesorería — 10%, 100.000.000 NURA.** Asignado a lo largo de un año, bajo supervisión del consejo de gestión, a desarrollo del ecosistema, infraestructura, productos, alianzas y otras necesidades del proyecto.
-- **Airdrop — 5%, 50.000.000 NURA.** Distribuido como airdrop a lo largo de un año. Los receptores se identifican mediante canales y comunidades seleccionados, y la asignación final la confirma el consejo de gestión.
+El 40% bloqueado no se puede liberar, destinar a otro fin ni gastar sin una votación en la que lo apruebe al menos el 65% de la red. Esa es la única regla firme sobre la porción más grande del suministro.
 
-Esas seis partes suman el 100%. El precio de la venta pública es una condición fija de esa venta, no una cotización de mercado, y no debe leerse como una valoración de la moneda.
+Las porciones de comunidad, tesorería y airdrop, una cuarta parte de todas las monedas entre las tres, se reparten bajo la revisión de un consejo de gestión, que da el visto bueno a cada distribución.
 
-### 5.3 Verificar un saldo
+No afirmamos nada más allá de eso. No hay un sistema de votación para los ajustes de la propia red, como cada cuánto se escriben los bloques o quién los escribe. Eso lo deciden las personas que gestionan la red, y este documento lo dice así en lugar de describir un sistema que no existe.
 
-Todos los saldos de la red son públicos. Cualquier dirección, incluida cualquiera que el proyecto publique para una asignación, puede leerla cualquiera:
-
-```bash
-curl -s https://rpc.nurachain.net -X POST \
-  -H 'content-type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"eth_getBalance","params":["0xSomeAddress","latest"]}'
-```
-
-La respuesta va en wei, codificada en hexadecimal; divide entre 10^18 para obtener NURA. Nura Explorer muestra la misma cifra, y leer ambas es la costumbre que este documento recomienda de principio a fin.
-
-## 6. Gobernanza
-
-En esta revisión se declaran dos reglas de gobernanza para la red, y ambas conciernen a la asignación de arriba y no al protocolo.
-
-El 40% bloqueado del suministro no puede liberarse, reasignarse ni decidirse de ningún otro modo sin la aprobación de un voto de al menos el 65% de la red. Ese umbral es la única regla vinculante sobre la mayor porción individual del suministro.
-
-Las porciones de comunidad, tesorería y airdrop —el 25% del suministro entre las tres— se asignan bajo la revisión y supervisión de un consejo de gestión, que confirma cada distribución.
-
-No se reclama aquí ningún otro mecanismo de gobernanza. Los parámetros propios del protocolo —el intervalo de bloque, el mercado de tarifas, el conjunto de productores— los fijan los operadores de la red, y este documento no describe un sistema de votación en cadena para ellos porque no hay ninguno desplegado.
-
-## 7. El ecosistema
+## 7. Las herramientas alrededor de la red
 
 ### 7.1 Nura Wallet
 
-Nura Wallet es una cartera de autocustodia hecha para la red. Las claves privadas se generan y se guardan en el dispositivo, y la cartera no puede gastar un saldo por sí sola. Su código fuente y sus versiones se publican en GitHub.
+Nura Wallet es nuestra propia app de cartera. Guarda tu clave secreta en tu dispositivo y solo ahí; la app no puede gastar tus monedas por su cuenta, y nosotros tampoco. Su código fuente es público en GitHub, así que cualquiera puede leer qué hace.
 
-Está construida como aplicación nativa y no como extensión de navegador. Se publican compilaciones para Android, tanto en Google Play como en APK universal, para Windows como instalador x64 y para Linux como paquete Debian amd64. Las compilaciones para iOS y macOS aún no están publicadas. Cada compilación y arquitectura figura en la página de versiones de la cartera.
-
-Como es una aplicación, una página web no tiene dónde inyectarse fuera del navegador integrado de la propia cartera. Por eso el sitio la alcanza de dos maneras: mediante el anuncio de proveedor EIP-6963 dentro de ese navegador, y en todos los demás casos mediante un enlace profundo `nurawallet://` que lleva la petición a la app y devuelve la respuesta a la página. Cualquier otra cartera EVM alcanza la red mediante la petición corriente de añadir cadena de EIP-3085.
+Está disponible para Android, tanto en Google Play como en descarga directa, para Windows y para Linux. Las versiones para iPhone y Mac todavía no han salido. No estás obligado a usarla: cualquier cartera que permita añadir una red personalizada, MetaMask incluida, funciona con Nura Chain.
 
 ### 7.2 Nura Explorer
 
-Nura Explorer indexa bloques, transacciones y transferencias de la red. Es donde se confirma que una transacción ocurrió, donde pueden leerse el código y las llamadas de un contrato, y donde el productor de bloques de la sección 3.3 puede verse en cada bloque. Lee la misma cadena que sirve el endpoint RPC, y por eso comprobar ambos merece los diez segundos.
+Nura Explorer es la ventana pública al cuaderno. Escribe una dirección, una transacción o un número de bloque y verás todo sobre ello: saldos, transferencias, cuándo se escribió un bloque y quién lo hizo. Es donde confirmas que un pago llegó de verdad, y es la herramienta que hay detrás de la mayoría de los «esto puedes comprobarlo» de este documento.
 
 ### 7.3 Nura Swap
 
-Nura Swap es una interfaz de intercambio para la red. Su pool cotiza el precio de NURA frente a una representación envuelta de la moneda, y esa cotización es la que el sitio muestra como precio de NURA.
+Nura Swap es donde cambias NURA por otras monedas y al revés. Funciona a partir de un fondo común de monedas (un «pool»), y el precio que muestra es simplemente el saldo de ese fondo en ese momento.
 
-El pool es pequeño, así que una sola operación puede mover mucho la cotización. Es un precio de mercado de un solo pool, no un listado en un exchange, y por esa razón este documento no indica un precio.
+El fondo es pequeño. Eso significa que una sola operación grande puede mover mucho el precio, en cualquier dirección. Toma el precio del swap como lo que un fondo pequeño cotiza en ese momento, no como la cotización de un exchange, y no lo leas como una valoración de NURA.
 
 ### 7.4 El puente
 
-Un puente acuña representaciones de BNB y USDT en Nura Chain como contratos ERC-20 corrientes. Ambos son tokens de acuñación y quema, no bóvedas: una unidad existe en Nura solo porque una unidad quedó bloqueada en la cadena de origen. Sus contratos en Nura son:
+El puente te permite traer BNB y USDT a Nura Chain desde sus redes de origen. Funciona como el ticket de un guardarropa: tus monedas originales quedan bloqueadas en la otra red y aquí recibes una moneda «envuelta» equivalente que puedes gastar en Nura Chain. Devuelve la moneda envuelta y la original se libera.
+
+Una moneda envuelta solo vale lo que su original mientras el original esté realmente ahí. El sitio muestra el valor total que ha cruzado el puente, y esa cifra cuenta los tickets, no los abrigos: es correcta siempre que cada moneda envuelta esté respaldada una a una al otro lado. Las direcciones de las dos monedas envueltas están en la sección 10.
+
+## 8. Primeros pasos
+
+1. Instala una cartera. Nura Wallet, de la sección 7.1, o cualquier cartera que ya uses y que permita añadir una red personalizada.
+2. Añade Nura Chain. El botón «Añadir Nura Chain a la billetera» del sitio lo hace con un toque; si prefieres hacerlo a mano, los valores están en la sección 10.
+3. Comprueba que la cartera muestra el ID de cadena 1020 para la red. Si muestra cualquier otro número, estás en otra red, y todo lo que envíes irá a un sitio al que no querías.
+4. Consigue algo de NURA. Las comisiones se pagan en NURA, así que una cuenta vacía todavía no puede enviar nada.
+5. Envía primero una cantidad pequeña y luego búscala en Nura Explorer. Ver tu propia transferencia en el registro público es la mejor manera de entender cómo funciona todo esto.
+
+Si eres desarrollador, el blog del sitio tiene guías paso a paso para conectarse a la red y desplegar contratos; están enlazadas en la sección 10.
+
+## 9. A qué prestar atención
+
+- **Perder la frase de recuperación es perder las monedas.** Nadie puede restablecerla, ni en esta red ni en ninguna otra. Apúntala y guárdala en un lugar seguro.
+- **Un ID de cadena equivocado es perder las monedas.** Confirma siempre el 1020 antes de enviar, y trata cualquier página, incluida esta, como algo que comprobar y no como algo en lo que confiar.
+- **La misma dirección en otra red no es el mismo dinero.** Tu dirección existe también en Ethereum y en otras redes, pero los saldos son independientes. Enviar monedas a «la misma dirección en otra cadena» no las traslada. Solo el puente hace eso, y solo con BNB y USDT.
+- **El precio del swap puede oscilar.** Una sola operación en un fondo pequeño puede moverlo de golpe.
+- **Una moneda envuelta es el ticket, no el abrigo.** Vale lo que la original solo mientras el puente guarde la original.
+- **Algunas cifras son la palabra del proyecto.** El suministro total y las condiciones del reparto no se pueden comprobar en una cartera. Los saldos individuales, sí.
+- **Hoy la producción de bloques está en manos de una sola cuenta.** La sección 3.3 lo dice sin rodeos para que puedas tenerlo en cuenta ahora en vez de descubrirlo después.
+
+## 10. Los datos, para consultar
+
+Los valores que te pide una cartera cuando añades la red a mano:
+
+- Nombre de la red: Nura Chain
+- ID de cadena: `1020` (algunas carteras lo muestran como `0x3fc`, que es el mismo número escrito de otra forma)
+- Endpoint RPC: `https://rpc.nurachain.net`
+- Explorador de bloques: `https://explorer.nurachain.net`
+- Moneda: Nura, símbolo `NURA`, 18 decimales
+- Tiempo de bloque: 3 segundos
+
+Las dos monedas envueltas que el puente crea en Nura Chain:
 
 - BNB: `0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc`
 - USDT: `0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC`
 
-El valor puenteado a la red es, por tanto, el `totalSupply()` de cada token, que es como el sitio calcula el valor total bloqueado. Esa cifra mide el derecho acuñado en Nura; solo equivale al colateral mientras el puente sea solvente y esté respaldado uno a uno. El saldo del custodio en la cadena de origen es el lado autoritativo, y es la cifra que comprueba un lector cuidadoso.
+A dónde ir:
 
-## 8. Construir en Nura Chain
-
-Nada en una cadena de herramientas de Solidity es específico de esta red. Un despliegue es una entrada de red con el endpoint RPC y el ID de cadena de la sección 3.4, financiada con NURA suficiente para pagar el gas. Hay tres puntos de fricción que conviene conocer antes del primer despliegue.
-
-- Lee el ID de cadena del endpoint y compáralo con la configuración del framework. Los dos discrepan más a menudo de lo esperado, normalmente porque la configuración se copió de otro proyecto.
-- Deja que la librería estime las tarifas. La tarifa base y la tarifa de prioridad pueden leerse en tiempo de ejecución, y un precio de gas fijado a mano es la razón más común de que una transacción se quede sin minar.
-- Un contrato desplegado en otro sitio no está desplegado aquí. Volver a desplegarlo asigna una dirección nueva salvo que se use deliberadamente un desplegador determinista, y cualquier dependencia fija de contratos u oráculos de otra red debe revisarse.
-
-El endpoint RPC envía cabeceras CORS permisivas, de modo que una página que corre en el navegador puede leer directamente de la cadena sin un servidor en medio. El blog del proyecto lleva guías paso a paso para conectarse, desplegar un contrato y emitir un ERC-20.
-
-## 9. Seguridad y riesgo
-
-- **La autocustodia es una responsabilidad.** No hay vía de recuperación para una frase semilla perdida, ni en esta red ni en ninguna otra, y ninguna parte puede revertir una transacción una vez sellada.
-- **Un ID de cadena equivocado es como se pierden fondos.** Verifica `1020` contra el endpoint antes de guardar la red en una cartera, y trata cualquier página —incluida esta— como una afirmación que comprobar.
-- **La compatibilidad no es estado compartido.** Los activos no se trasladan entre cadenas por enviarse a la misma dirección. Solo el puente de la sección 7.4 lleva BNB o USDT a la red, y solo dentro de los límites indicados allí.
-- **La cotización del swap es poco profunda.** Un precio leído de un solo pool pequeño no es una valoración, y una sola operación puede moverlo.
-- **El puente conlleva riesgo de custodia.** Una representación acuñada vale su colateral solo mientras el custodio del lado de origen lo mantenga uno a uno.
-- **Algunas cifras son afirmaciones publicadas.** El suministro total y las condiciones de asignación de la sección 5 no pueden confirmarse por RPC. Donde el proyecto publique direcciones de asignación, sus saldos pueden leerse con la llamada de la sección 5.3.
-- **La producción de bloques está concentrada.** La sección 3.3 declara sin rodeos el conjunto de productores observado, para que un lector pueda sopesarlo ahora en lugar de descubrirlo más tarde.
-
-## 10. Aviso legal
-
-Este documento describe la red tal como es en la revisión indicada. No es una oferta, una solicitud ni asesoramiento de inversión, y nada en él debe leerse como una promesa sobre el precio, la liquidez o la disponibilidad futuros de NURA. Las cifras marcadas como afirmaciones publicadas son declaraciones del proyecto; cualquier otra cifra puede comprobarse contra la cadena con las llamadas mostradas. Las revisiones posteriores sustituyen a esta, y el número y la fecha de revisión al principio del documento identifican cuál tiene el lector en sus manos.
-
-## 11. Referencias
-
-- Endpoint RPC: `https://rpc.nurachain.net`
-- Explorador de bloques: [Nura Explorer](https://explorer.nurachain.net)
-- Swap: [Nura Swap](https://swap.nurachain.net/)
-- Versiones de la cartera: [Nura Wallet en GitHub](https://github.com/NuraChain/Wallet/releases)
-- Código fuente: [NuraChain en GitHub](https://github.com/NuraChain)
+- [Nura Explorer](https://explorer.nurachain.net), para consultar cualquier cosa
+- [Nura Swap](https://swap.nurachain.net/), para cambiar monedas
+- [Descargas de Nura Wallet](https://github.com/NuraChain/Wallet/releases), todas las versiones y plataformas
+- [Nura Chain en GitHub](https://github.com/NuraChain), el código fuente
 - Comunidad: [Telegram](https://t.me/nurachain), [X](https://x.com/nurachainnet), [Discord](https://discord.gg/8BMAXTdXQg), [Instagram](https://www.instagram.com/nura.chain/)
-- Estándares: [EIP-155](https://eips.ethereum.org/EIPS/eip-155) (protección contra repetición), [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) (mercado de tarifas), [EIP-3085](https://eips.ethereum.org/EIPS/eip-3085) (añadir una cadena a una cartera), [EIP-6963](https://eips.ethereum.org/EIPS/eip-6963) (descubrimiento de carteras)
-- Guías: [Qué es Nura Chain](/blog/what-is-nura-chain), [conectarse al RPC](/blog/connect-to-nura-chain-rpc), [añadir la red a una cartera](/blog/add-nura-chain-to-your-wallet), [desplegar un contrato](/blog/deploy-a-smart-contract-on-nura-chain), [suministro y asignación](/blog/nura-coin-tokenomics)
+- Guías: [qué es Nura Chain](/blog/what-is-nura-chain), [añadir la red a tu cartera](/blog/add-nura-chain-to-your-wallet), [leer el explorador](/blog/how-to-use-nura-chain-explorer), [suministro y asignación](/blog/nura-coin-tokenomics) y, para desarrolladores, [conectarse a la red](/blog/connect-to-nura-chain-rpc) y [desplegar un contrato](/blog/deploy-a-smart-contract-on-nura-chain)
+
+## 11. Una nota sobre qué es este documento
+
+Este documento describe la red tal como es en la revisión indicada arriba. No es una oferta, una recomendación ni un consejo de inversión, y nada de lo que contiene es una promesa sobre lo que valdrá NURA, lo fácil que será comprarla o venderla, o qué hará el proyecto a continuación. Las cifras descritas como la palabra del proyecto son exactamente eso; todas las demás pueden comprobarse con las herramientas de arriba. Cuando cambiamos algo que merece saberse, publicamos una revisión nueva, y el número y la fecha de la revisión te dicen cuál estás leyendo.

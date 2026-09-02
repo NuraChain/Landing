@@ -254,7 +254,9 @@ describe('the repository whitepaper', () =>
         {
             expect(row.title.length, row.locale).toBeGreaterThan(0);
             expect(row.summary.length, row.locale).toBeGreaterThan(0);
-            expect(row.body.length, row.locale).toBeGreaterThan(4000);
+            // A plain-language document, so the floor is low enough for Chinese, which says the
+            // same thing in a third of the characters - it is here to catch a stub, not a short edit.
+            expect(row.body.length, row.locale).toBeGreaterThan(2500);
         }
 
         expect(Number.isNaN(Date.parse(content.publishedAt))).toBe(false);
@@ -265,12 +267,13 @@ describe('the repository whitepaper', () =>
     {
         const reference = shape(english.body);
 
-        // Eleven numbered sections and eleven numbered subsections, two verbatim shell blocks,
-        // the same links in the same order, the same inline code. A translation that lost a
-        // section, translated a curl command or dropped a reference fails here by name.
+        // Eleven numbered sections and eleven numbered subsections, no code at all - it is a
+        // plain-language document - the same links in the same order, and the same inline
+        // code spans. A translation that lost a section, invented a fence or dropped a
+        // reference fails here by name.
         expect(reference.outline).toHaveLength(22);
-        expect(reference.fences).toHaveLength(2);
-        expect(reference.links).toHaveLength(17);
+        expect(reference.fences).toHaveLength(0);
+        expect(reference.links).toHaveLength(14);
 
         for (const row of content.translations)
         {
@@ -322,10 +325,10 @@ describe('the repository whitepaper', () =>
         const html = articleMarkup(detail);
 
         expect(html).toContain('<h1>Nura Chain Whitepaper</h1>');
-        expect(html).toContain('<h2>1. Introduction</h2>');
-        expect(html).toContain('<h2>11. References</h2>');
-        // Fenced shell survives the renderer verbatim, escaped rather than parsed.
-        expect(html).toContain('eth_chainId');
+        expect(html).toContain('<h2>1. What Nura Chain is</h2>');
+        expect(html).toMatch(/<h2>11\. /u);
+        // The reference values survive the renderer as code, escaped rather than parsed.
+        expect(html).toContain('<code>0x3fc</code>');
         expect(html).not.toContain('<script');
     });
 });

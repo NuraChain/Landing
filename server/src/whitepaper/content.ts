@@ -12,9 +12,10 @@ import { POST_LOCALES, type PostLocale, type WhitepaperDetail } from '../schemas
  * The whitepaper, read from disk.
  *
  * One document in ten languages, served at `/whitepaper` and downloadable as a PDF per language.
- * It follows the blog's model rather than the string tables' because it IS an article - two
- * thousand words of markdown with code fences in it - and because the fallback policy the blog
- * already has is exactly the one a reader whose language is missing should get here too.
+ * It follows the blog's model rather than the string tables' because it IS an article - some
+ * fifteen hundred words of markdown, written for a reader with no technical background - and
+ * because the fallback policy the blog already has is exactly the one a reader whose language
+ * is missing should get here too.
  *
  * Read ONCE, at construction, like the blog. Editing a body on a running server changes nothing
  * until it restarts, which is the deal the bundle already makes.

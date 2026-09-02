@@ -1,178 +1,158 @@
-Nura Chain, Ethereum Sanal Makinesi'ni (EVM) çalıştıran herkese açık bir blok zinciridir. `1020` zincir kimliğiyle tanınır, her üç saniyede bir blok mühürler, işlemleri EIP-1559 ücret piyasasıyla fiyatlar ve hesaplamanın bedelini yerel coini NURA ile öder. Ağın çevresinde kendi saklamalı bir cüzdan, bir blok gezgini, bir takas arayüzü ve bir köprü var; hepsine bugün erişilebilir.
+Nura Chain herkese açık bir blok zinciridir: kimin neye sahip olduğunu tutan, bir banka yerine bilgisayarların sakladığı, herkesin okuyabildiği ve kimsenin sessizce değiştiremediği ortak bir kayıt. Bu kayda her üç saniyede bir yeni sayfa ekler, Ethereum ile aynı motor üzerinde çalışır ve kendi coini vardır: her işlemin ödediği küçük ücreti karşılayan NURA. Çevresinde bir cüzdan, bir şeylere bakmak için bir gezgin, coin değiştirmek için bir takas ve başka ağlardan coin getirmek için bir köprü bulunur.
 
-Bu belge ağın başvuru niteliğindeki tanımıdır: ağ nedir, nasıl çalışır, coini ne işe yarar ve arz nasıl bölünmüştür, çevresinde ne var ve okuyan kişi neyi güvene dayanarak kabul etmek yerine zincirin kendisinden doğrulayabilir. Aynı anda üç okuyucu için yazıldı — NURA tutup tutmamaya karar veren biri, ağ üzerinde geliştirmeye başlamak üzere olan biri ve yalnızca neye baktığını bilmek isteyen biri.
+Bu belge bütün bunları sade sözcüklerle anlatıyor. Hiç blok zinciri kullanmamış biri, NURA tutup tutmamaya karar vermeye çalışan biri ve yalnızca neye baktığını bilmek isteyen biri için yazıldı. Bir iddia herkes tarafından denetlenebiliyorsa nasıl yapılacağını söylüyoruz; denetlenemiyorsa onu da söylüyoruz.
 
-## 1. Giriş
+## 1. Nura Chain nedir
 
-Çoğu insan yeni bir blok zinciriyle beş değer isteyen bir cüzdan iletişim kutusu üzerinden tanışır ve o değerleri hiçbirinin ne anlama geldiğini bilmeden yapıştırır. Nura Chain bunun tam tersi bir deneyim olmak üzere kuruldu. Bu belgenin belirttiği her rakam ya zincirin kendisinden okunabilir ya da yayımlanmış bir iddia olarak açıkça işaretlenmiştir; ağın çevresindeki araçlar da daha geniş EVM ekosisteminin zaten kullandığı araçlardır.
+Blok zincirini, binlerce kişinin birebir aynı kopyasını tuttuğu bir defter gibi düşünün. Biri coin gönderdiğinde transfer yeni bir sayfaya yazılır, her kopyaya aynı sayfa eklenir ve bir sayfa deftere girdi mi orada kalır. Kimse herkes fark etmeden bir sayfayı koparamaz ya da eski bir kaydı değiştiremez. Bütün numara bundan ibaret; bir blok zincirinin arada bir şirket olmadan parayı dürüst tutabilmesinin sebebi de bu.
 
-Bu ad tek bir şeyi kapsar: ağı. Üzerine kurulan ürünler — Nura Wallet, Nura Explorer, Nura Swap — Bölüm 7'de anlatılıyor ve hizmet ettikleri zincirden ayrıdırlar. Özel ağ kabul eden herhangi bir EVM cüzdanı Nura Chain'i kullanabilir; projenin kendi cüzdanı giriş yollarından biridir, tek yol değil.
+Nura Chain böyle bir defter. Kullanımını kolaylaştıran şey, en yaygın kullanılan blok zinciri platformu olan Ethereum ile aynı motoru çalıştırması. Ethereum için yapılmış her cüzdan, uygulama ya da araç Nura Chain'de de çalışır; yani kullanmak için özel bir yazılıma ihtiyacınız yok. MetaMask'i ya da benzer bir cüzdanı daha önce kullandıysanız nasıl yapılacağını zaten biliyorsunuz.
 
-## 2. Tasarım ilkeleri
+Akılda tutulması gereken bir şey var: Nura Chain ağın kendisidir. Nura Wallet, Nura Explorer ve Nura Swap onun üzerine kurulmuş ürünlerdir; Bölüm 7'de anlatılıyorlar. Ağı istediğiniz herhangi bir cüzdanla kullanabilirsiniz.
 
-Aşağıdaki her şeyi dört tercih biçimlendiriyor.
+## 2. Neyi savunuyoruz
 
-- **Tanıdık yürütme.** Ağ EVM'yi değiştirmeden çalıştırır; dolayısıyla sözleşmeler, kütüphaneler, anahtarlar ve adresler Ethereum'dan hiçbir değişiklik gerekmeden taşınır. Bir geliştiricinin Nura Chain'deki ilk günü bir yeniden yazım değil, bir yapılandırma girdisidir.
-- **Varsayılan olarak kendi saklama.** Nura Wallet hiçbir zaman bir anahtar tutmaz ve bir bakiyeyi hareket ettiremez. Ağda hesap kurtarma, dondurma ya da ayrıcalıklı bir harcama yolu yoktur; anahtar kimdeyse coin de ondadır.
-- **Güvenmeden önce doğrulanabilir.** Zincir kimliği, blok aralığı, ücret piyasası ve her blok üreticisinin kimliği herkese açık RPC üzerinden okunabilir. Bir rakamın zincirden okunamadığı yerde — önemli örnek toplam arzdır — bu belge aksini ima etmek yerine bunu açıkça söyler.
-- **Küçük bir yüzey, dürüstçe anlatılmış.** Ağ, bir pazarlama sayfasının sıralayabileceğinden daha az parça sunar ve her biri burada sınırlarıyla birlikte — rahatsız edici olanlar dahil — anlatılır.
+Aşağıdaki her şeyi dört fikir biçimlendiriyor.
 
-## 3. Ağ
+- **Anahtarlar sizin, coinler sizin.** Cüzdanınız coinlerinizi, cihazınızdan asla çıkmayan gizli bir anahtarla tutar. Ne Nura'da ne de başka bir yerde hiç kimse coinlerinizi taşıyamaz, donduramaz ya da alamaz. Madalyonun öbür yüzü şu: kimse onları sizin için geri de getiremez.
+- **Güvenmeyin, denetleyin.** Ağla ilgili önemli gerçekleri, elinde bir cüzdan ya da bir web tarayıcısı olan herkes denetleyebilir. Bir rakam denetlenemiyorsa bu belge, denetlenebileceğini varsaymanıza izin vermek yerine bunu açıkça söyler.
+- **Tanıdık araçlar.** Nura Chain'in hiçbir yanı yeni türde bir uygulama gerektirmez. İnsanların zaten kullandığı cüzdanlar ve araçlar burada da çalışır.
+- **Açık konuşmak.** Daha az vaat, dürüstçe anlatılmış; hoşa gitmeyen kısımlar da dahil.
 
-### 3.1 Yürütme: Ethereum Sanal Makinesi
+## 3. Ağ nasıl çalışır
 
-Nura Chain EVM bayt kodunu yürütür. EVM için Solidity ya da Vyper ile derlenmiş bir sözleşme burada, Ethereum'da sahip olacağı aynı anlambilimle, aynı komut maliyetleriyle ve aynı 20 baytlık adres alanıyla çalışır. Düğüm standart Ethereum JSON-RPC arayüzüne yanıt verir; dolayısıyla ethers.js, viem, web3.py, wagmi, Hardhat ve Foundry bir uç nokta ve bir zincir kimliğinden fazlasına ihtiyaç duymadan onunla çalışır.
+### 3.1 Bloklar: her üç saniyede bir yeni sayfa
 
-Uyumluluk yalnızca yürütme katmanı hakkında bir ifadedir. Ethereum'da denetlediğiniz bir adres burada da sizindir, çünkü aynı secp256k1 anahtarından türer — ama bakiyeler, dağıtılmış sözleşmeler ve geçmiş ayrı defterlerdir. "Başka bir zincirdeki aynı adrese" gönderilen hiçbir şey ikisi arasında taşınmaz. Bölüm 9 bu konuya geri döner, çünkü gerçek kayıpların çoğu buradan kaynaklanır.
+Defterin sayfalarına blok denir. Nura Chain her üç saniyede bir, sabit bir takvimle yeni bir blok yazar; o sürede birinin bir şey gönderip göndermediğine bakmaz. İlk blok 6 Haziran 2026'da yazıldı ve sayı o günden beri tırmanıyor. Tırmanışı sitenin ana sayfasında ve Nura Explorer'da izleyebilirsiniz.
 
-### 3.2 Bloklar, zaman ve ücretler
+### 3.2 Ücretler: her işlem için küçük bir bedel
 
-Ağ her üç saniyede bir blok mühürler. Aralık bir hedef değil, sabit bir değerdir: ardışık başlıklar arasında tam olarak üç saniye fark vardır. Zincirin ilk bloğu 6 Haziran 2026, 00:00 UTC zaman damgasını taşır.
+Her işlem NURA cinsinden bir ücret öder; biraz mektuba yapıştırılan posta pulu gibi. Ücretin iki parçası var: ağın belirlediği bir taban tutar ve işleminizin önce alınmasını istiyorsanız ekleyebileceğiniz isteğe bağlı bir bahşiş. Bunu cüzdanınız sizin yerinize hesaplar; elle hesaplamanız hiç gerekmez. Bu yazı yazılırken taban tutar bir NURA'nın çok küçük bir kesri; ama onu ağ belirler ve değişebilir, bu yüzden cüzdanınızın gösterdiği ücreti gerçek rakam olarak alın.
 
-İşlemler EIP-1559 ücret piyasasıyla fiyatlanır. Her blok protokolün belirlediği bir taban ücret taşır ve gönderen bunun üzerine bir öncelik ücreti ekler; her başlıktaki `baseFeePerGas` alanı ile `eth_maxPriorityFeePerGas` ve `eth_feeHistory` metotları ikisini de açığa çıkarır. Bu revizyon itibarıyla taban ücret 1 gwei, blok gaz sınırı ise 150.000.000 gazdır. İkisi de sabit kodlanacak değil, çalışma zamanında okunacak değerlerdir; bir kütüphanenin ücret tahmini de varsayılan olarak tam bunu yapar.
+### 3.3 Blokları kim yazıyor
 
-Başlıklar modern Ethereum istemcilerinin ürettiği biçimdedir: sıfır değerinde bir `difficulty`, boş bir `nonce`, sıfır bir `mixHash` ve Shanghai, Cancun ve Prague yükseltmeleriyle gelen alanlar — `withdrawalsRoot`, `parentBeaconBlockRoot`, `blobGasUsed` ve `requestsHash`. Sıfırdan farklı bir zorluk değerine göre dallanan ya da iş ispatı alanlarının bir anlam taşımasını bekleyen kod, burada da bugün Ethereum'da olduğu gibi hatalı davranır.
+Bitcoin gibi bazı blok zincirlerinde bilgisayarlar, bir sonraki bloğu yazma hakkı için bulmaca çözme yarışına girer; insanların "madencilik" dediği şey budur. Nura Chain böyle çalışmaz. Blokları, yukarıdaki üç saniyelik takvime göre yetkili bir blok üreticisi yazar ve her blok kendisini hangi hesabın yazdığını kaydeder; dolayısıyla herhangi bir bloğu kimin ürettiği bir güven meselesi değil, herkese açık bir bilgidir.
 
-### 3.3 Blok üretimi
+Bunun bugün nasıl göründüğünü açıkça söyleyelim: bu revizyon hazırlanırken örneklediğimiz her blok aynı üretici hesap tarafından yazılmıştı. Daha fazla üretici eklenip eklenmeyeceği ağın nasıl yönetildiğiyle ilgili bir karardır; bu belge o konuda ne olumlu ne olumsuz bir söz verir. Her değişiklik Bölüm 10'daki kanallardan duyurulur.
 
-Nura Chain iş ispatı kullanmaz; yukarıdaki başlık alanları bunu dışlar. Bloklar, yukarıda anlatılan sabit takvimde yetkili bir blok üreticisi tarafından mühürlenir. Bir bloğu mühürleyen hesap o bloğun `miner` alanına kaydedilir; dolayısıyla herhangi bir bloğun üreticisi bir belgedeki iddia değil, herkese açık bir olgudur.
+### 3.4 Bir işlem ne zaman kesinleşir?
 
-Bu revizyon itibarıyla örneklenen her blok aynı üretici hesabı tarafından mühürlenmişti. Üretici kümesinin büyüklüğü ağın yürütme katmanının değil, nasıl işletildiğinin meselesidir ve bu belge onu sabitlemez. Ondaki herhangi bir değişiklik Bölüm 11'de sıralanan proje kanallarından duyurulur.
+İşleminiz bir bloğa yazıldığı anda bitmiştir. Birkaç saniye içinde Nura Explorer'da görünür ve biz dahil hiç kimse onu geri alamaz, tersine çeviremez ya da iptal edemez. Kaydı güvenilir kılan budur; Bölüm 9'un göndermeden önce bir kez daha kontrol etmenizi istemesinin sebebi de bu.
 
-Ağ RPC üzerinden ayrı bir kesinlik sinyali sunmaz. Cüzdanların ve gezginin gösterdiği onay, mühürlenmiş bir bloğa dahil edilmedir ve bloklar bir takvime göre geldiği için dahil edilen bir işlem tek aralık içinde görünür olur.
+## 4. NURA coini
 
-### 3.4 Ağın kimliği
+NURA, ether'in Ethereum'un parası olması gibi, ağın kendi parasıdır. Bölüm 3.2'deki ücretleri öder ve hiç NURA'sı olmayan bir hesap hiçbir şey gönderemez, çünkü posta pulunu ödeyemez.
 
-Bir cüzdanın ya da istemci kütüphanesinin sizden isteyeceği değerler bunlar. Sitedeki ağ kartının taşıdığı ve Nura Wallet'ın sakladığı değerlerle aynıdırlar.
+NURA, ağın üzerinde çalışan bir uygulama değil, ağın içine yerleşik bir parçadır. Bunun pratik bir sonucu var: cüzdanınıza ekleyeceğiniz bir "NURA sözleşme adresi" yoktur. Bölüm 10'daki değerleri kullanarak ağın kendisini eklersiniz ve NURA bakiyeniz kendiliğinden görünür. Bir sayfa "NURA eklemek" için bir adres yapıştırmanızı söylüyorsa dikkatli olun: var olmayan bir şeyi istiyordur.
 
-- Ağ adı: Nura Chain
-- Zincir kimliği: `1020`, cüzdanların onaltılık biçimde `0x3fc` olarak istediği değer
-- RPC uç noktası: `https://rpc.nurachain.net`
-- Blok gezgini: `https://explorer.nurachain.net`
-- Yerel coin: Nura, sembolü `NURA`, 18 ondalık basamak
-- Blok süresi: 3 saniye
+Bu türden çoğu coin gibi NURA da çok küçük parçalara bölünebilir; yani bir coinin onda birini, binde birini ya da çok daha azını gönderebilirsiniz.
 
-Zincir kimliği bir etiketten fazlasıdır. EIP-155 uyarınca her işlemin imzasına dahil edilir; dolayısıyla 1020 zinciri için imzalanmış bir işlem başka hiçbir ağda yeniden oynatılamaz ve başka bir ağ için imzalanmış bir işlem burada reddedilir. Ayrıca, bu sayfa dahil geri kalan her şeye güvenmeden önce denetlenecek değer de odur:
+## 5. Kaç NURA var ve nereye gidiyor
 
-```bash
-curl -s https://rpc.nurachain.net \
-  -X POST -H 'content-type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}'
-```
+### 5.1 Toplam
 
-Yanıt `{"jsonrpc":"2.0","id":1,"result":"0x3fc"}` olur. EIP-3085'i destekleyen bir cüzdana yukarıdaki değerlerin tümü tek istekte verilebilir; sitedeki "Nura Chain'i cüzdana ekle" denetiminin yaptığı da budur.
+Toplam arz 1.000.000.000 NURA'dır, yani bir milyar; bunun ötesinde yenisi yaratılmayacak.
 
-## 4. Yerel coin
+Bu rakamı proje yayımlıyor. Şunu bilmekte yarar var: buradaki, kendi başınıza denetleyemeyeceğiniz az sayıdaki rakamdan biri bu. Bir cüzdan ya da gezgin size herhangi bir tek adresin bakiyesini gösterebilir; ama ağa yerleşik bir coinin hepsini toplayan bir sayacı yoktur. Tek tek bakiyeler denetlenebilir; toplam ise projenin sözüdür.
 
-NURA ağın yerel coinidir. Gaz öder: her işlem gaz tüketir, gaz NURA cinsinden fiyatlanır ve bir hesabın herhangi bir şey gönderebilmesi için — ilk sözleşme dağıtımı dahil — önce bakiyesi olmalıdır. Bu, ether'in Ethereum'da oynadığı rolün aynısıdır ve en küçük birim de aynı şekilde bir coinin milyarda birinin milyarda biridir.
-
-Bir sözleşme değil yerel varlık olduğu için NURA'nın token adresi yoktur. Coini eklemek üzere "NURA sözleşme adresini" isteyen bir sayfa var olmayan bir şeyi istiyordur; bakiyeyi görünür kılan şey ağı eklemektir. ERC-20 tokenlar Nura Chain üzerinde sıradan sözleşmeler olarak vardır ve NURA onlardan biri değildir.
-
-## 5. Arz ve dağılım
-
-### 5.1 Toplam arz
-
-Yayımlanan toplam arz 1.000.000.000 NURA'dır — bir milyar.
-
-Bu, zincirden okunabilen değil yayımlanmış bir rakamdır ve bu ayrım önemlidir. Bir ERC-20, kendi defterini tutan bir sözleşme olduğu için `totalSupply()` sunar; yerel bir coinin ihracı ise istemcinin yapılandırmasında ve genesis durumunda yaşar ve `eth_totalSupply` diye bir şey yoktur. Herhangi bir bakiye tek tek `eth_getBalance` ile okunabilir; toplam okunamaz.
-
-Bu revizyonda dolaşımdaki arz bilerek belirtilmemiştir. Dolaşımdaki arz, belirli bir anda hangi payların kilidi açılmış sayıldığına bağlıdır ve her kilitli pay herkesin izleyebileceği yayımlanmış bir adreste durmuyorsa bu bir ölçüm değil, bir yargıdır.
+Bu revizyonda bir "dolaşımdaki arz" rakamı vermiyoruz. O rakam, aşağıdaki payların hangilerinin belirli bir günde kilidi açılmış sayıldığına bağlıdır; bu da bir ölçüm değil, bir yargıdır. Projenin bir payı tutan adresleri yayımladığı yerlerde herkes onun yerine o bakiyeleri izleyebilir.
 
 ### 5.2 Dağılım
 
-Toplam altı parçaya bölünmüştür. Yüzdeler, bunların karşılık geldiği token sayıları ve her payın beyan edilen koşulları şunlardır:
+Bir milyar coin altıya bölünüyor. Her pay için: oranı, coin sayısı ve ne için olduğu.
 
-- **Kilitli — %40, 400.000.000 NURA.** Bir yıllığına kilitli. Akıbeti bu sürenin bitiminde kararlaştırılacak ve bu pay hakkındaki herhangi bir karar, ağın en az %65'inin oyuyla onaylanmalıdır.
-- **Likidite — %25, 250.000.000 NURA.** Bir yıllık süre boyunca likidite sağlamaya ve yönetmeye tahsis edilmiştir; amaç işleyen bir işlem likiditesi ve daha istikrarlı bir NURA ekosistemidir.
-- **Topluluk — %10, 100.000.000 NURA.** Bir yıl içinde topluluk üyelerine dağıtılır; ödeme yaparak değil etkinlik, katılım, geliştirme, yönlendirme ya da başka etkili katkılarla ağın büyümesine yardım edenler için. Tahsis, yönetim kurulunun incelemesi ve onayının ardından yapılır.
-- **Halka satış — %10, 100.000.000 NURA.** Toplam 24.000 dolar fiyatla halka satışa sunulur; bu, NURA başına 0,00024 dolar eder.
-- **Hazine — %10, 100.000.000 NURA.** Bir yıl boyunca, yönetim kurulunun gözetiminde ekosistem geliştirme, altyapı, ürünler, ortaklıklar ve projenin diğer ihtiyaçlarına tahsis edilir.
-- **Airdrop — %5, 50.000.000 NURA.** Bir yıl boyunca airdrop olarak dağıtılır. Alıcılar seçilmiş kanallar ve topluluklar üzerinden belirlenir, nihai tahsisi yönetim kurulu onaylar.
+- **Kilitli, %40, 400.000.000 NURA.** Bir yıllığına ayrılıp kilitlendi. Sonrasında ne olacağı o yılın sonunda kararlaştırılacak ve bu payla ilgili herhangi bir kararın oylamada ağın en az %65'inin onayını alması gerekiyor.
+- **Likidite, %25, 250.000.000 NURA.** Bir yıl boyunca işlem havuzlarında yeterli NURA bulundurmak için kullanılıyor; böylece alım satım sorunsuz işler ve fiyat her işlemde sıçramaz.
+- **Topluluk, %10, 100.000.000 NURA.** Bir yıl içinde ağın büyümesine yardım edenlere veriliyor: etkin olarak, katılarak, bir şeyler geliştirerek ya da başkalarını getirerek. Her tahsis yönetim kurulunca incelenip onaylanıyor.
+- **Halka satış, %10, 100.000.000 NURA.** Halka toplam 24.000 dolara satılıyor; bu da NURA başına 0,00024 dolar ediyor. Bu, o satışın fiyatıdır, piyasa fiyatı değil; NURA'nın herhangi bir günde ne ettiği hakkında hiçbir şey söylemez.
+- **Hazine, %10, 100.000.000 NURA.** Projenin bir yıllık kendi bütçesi; geliştirme, altyapı, ürünler ve ortaklıklar için, yönetim kurulunun gözetiminde.
+- **Airdrop, %5, 50.000.000 NURA.** Bir yıl boyunca seçilmiş kanallar ve topluluklar üzerinden ulaşılan kişilere dağıtılıyor. Nihai listeyi yönetim kurulu onaylıyor.
 
-Bu altı payın toplamı %100'dür. Halka satış fiyatı o satışın sabit bir koşuludur, piyasa kotasyonu değil; coinin bir değerlemesi olarak okunmamalıdır.
+Bu altı payın toplamı %100 eder.
 
-### 5.3 Bir bakiyeyi doğrulamak
+### 5.3 Bir bakiyeyi denetlemek
 
-Ağdaki her bakiye herkese açıktır. Projenin bir pay için yayımladığı adresler dahil herhangi bir adres herkes tarafından okunabilir:
+Nura Chain'deki her bakiye herkese açıktır. Nura Explorer'ı açın, herhangi bir adresi yapıştırın; tam olarak kaç NURA tuttuğunu ve giren çıkan her transferi görürsünüz. Bu kendi adresiniz için de, bir arkadaşınızınki için de, projenin yukarıdaki paylardan biri için yayımladığı herhangi bir adres için de geçerli.
 
-```bash
-curl -s https://rpc.nurachain.net -X POST \
-  -H 'content-type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"eth_getBalance","params":["0xSomeAddress","latest"]}'
-```
+## 6. Neye kim karar veriyor
 
-Yanıt wei cinsinden ve onaltılık kodlanmış gelir; NURA için 10^18'e bölün. Aynı rakamı Nura Explorer da gösterir ve ikisini birden okumak, bu belgenin baştan sona önerdiği alışkanlıktır.
+Bu revizyonda iki kural yürürlükte ve ikisi de ağın kendisiyle değil, Bölüm 5'teki coinlerle ilgili.
 
-## 6. Yönetişim
+Kilitli %40, ağın en az %65'inin onayladığı bir oylama olmadan serbest bırakılamaz, başka bir amaca yönlendirilemez ya da harcanamaz. Arzın en büyük tek payı üzerindeki tek kesin kural budur.
 
-Bu revizyonda ağ için iki yönetişim kuralı beyan edilmiştir ve ikisi de protokolü değil, yukarıdaki dağılımı ilgilendirir.
+Topluluk, hazine ve airdrop payları, hep birlikte tüm coinlerin dörtte biri, her dağıtımı tek tek onaylayan bir yönetim kurulunun incelemesi altında dağıtılıyor.
 
-Arzın kilitli %40'ı, ağın en az %65'inin oyuyla onaylanmadan serbest bırakılamaz, başka bir amaca yönlendirilemez ya da hakkında başka bir karar verilemez. Bu eşik, arzın en büyük tek payı üzerindeki tek bağlayıcı kuraldır.
+Bunun ötesinde bir iddiamız yok. Ağın kendi ayarları için, örneğin blokların ne sıklıkla yazıldığı ya da onları kimin yazdığı için bir oylama sistemi yoktur. Bunlara ağı işleten kişiler karar verir ve bu belge, var olmayan bir sistemi anlatmak yerine bunu açıkça söyler.
 
-Topluluk, hazine ve airdrop payları — birlikte arzın %25'i — her dağıtımı onaylayan bir yönetim kurulunun incelemesi ve gözetimi altında tahsis edilir.
-
-Burada başka bir yönetişim mekanizması iddia edilmiyor. Protokolün kendi parametreleri — blok aralığı, ücret piyasası, üretici kümesi — ağın işletmecileri tarafından belirlenir ve bu belge onlar için zincir üstü bir oylama sistemi tarif etmez, çünkü dağıtılmış böyle bir sistem yoktur.
-
-## 7. Ekosistem
+## 7. Ağın çevresindeki araçlar
 
 ### 7.1 Nura Wallet
 
-Nura Wallet, bu ağ için yapılmış kendi saklamalı bir cüzdandır. Özel anahtarlar cihazda üretilir ve cihazda tutulur; cüzdan bir bakiyeyi kendi başına harcayamaz. Kaynak kodu ve sürümleri GitHub'da yayımlanır.
+Nura Wallet bizim kendi cüzdan uygulamamız. Gizli anahtarınızı cihazınızda ve yalnızca orada tutar; uygulama coinlerinizi kendi başına harcayamaz, biz de harcayamayız. Kaynak kodu GitHub'da herkese açık, yani ne yaptığını isteyen herkes okuyabilir.
 
-Bir tarayıcı eklentisi değil, yerel bir uygulama olarak geliştirilmiştir. Derlemeler Android için hem Google Play'de hem evrensel APK olarak, Windows için x64 yükleyici olarak ve Linux için amd64 Debian paketi olarak yayımlanır. iOS ve macOS derlemeleri henüz yayımlanmadı. Her derleme ve mimari cüzdanın sürümler sayfasında listelenir.
-
-Bir uygulama olduğu için, cüzdanın kendi uygulama içi tarayıcısı dışında bir web sayfasının içine enjekte edeceği bir şey yoktur. Site bu yüzden ona iki yoldan ulaşır: o tarayıcının içinde EIP-6963 sağlayıcı duyurusu üzerinden, başka her yerde ise isteği uygulamaya taşıyıp yanıtı sayfaya geri getiren bir `nurawallet://` derin bağlantısı üzerinden. Diğer her EVM cüzdanı ağa olağan EIP-3085 zincir ekleme isteğiyle ulaşır.
+Android için hem Google Play'de hem doğrudan indirme olarak, ayrıca Windows ve Linux için mevcut. iPhone ve Mac sürümleri henüz çıkmadı. Onu kullanmak zorunda değilsiniz: özel ağ eklemenize izin veren her cüzdan, MetaMask dahil, Nura Chain ile çalışır.
 
 ### 7.2 Nura Explorer
 
-Nura Explorer ağdaki blokları, işlemleri ve transferleri dizinler. Bir işlemin gerçekten olduğunun doğrulandığı, bir sözleşmenin kodunun ve çağrılarının okunabildiği ve Bölüm 3.3'teki blok üreticisinin her blokta görülebildiği yerdir. RPC uç noktasının sunduğu zincirin aynısını okur; ikisini birden denetlemenin harcanan on saniyeye değmesinin sebebi de budur.
+Nura Explorer, deftere açılan herkese açık penceredir. Bir adres, bir işlem ya da bir blok numarası yazın; onunla ilgili her şeyi görürsünüz: bakiyeler, transferler, bir bloğun ne zaman ve kim tarafından yazıldığı. Bir ödemenin gerçekten ulaştığını doğruladığınız yer burasıdır ve bu belgedeki "bunu denetleyebilirsiniz" ifadelerinin çoğunun arkasındaki araç odur.
 
 ### 7.3 Nura Swap
 
-Nura Swap, ağ için bir takas arayüzüdür. Havuzu NURA'nın fiyatını coinin sarmalanmış bir temsiline karşı kote eder ve sitenin NURA fiyatı olarak gösterdiği de bu kotasyondur.
+Nura Swap, NURA'yı başka coinlerle ve geri değiştirdiğiniz yerdir. Ortak bir coin havuzundan çalışır ve gösterdiği fiyat, o anda o havuzun bakiyesinden başka bir şey değildir.
 
-Havuz küçüktür; dolayısıyla tek bir işlem kotasyonu belirgin biçimde oynatabilir. Bu, borsa listelemesi değil tek bir havuzdan alınan piyasa kotasyonudur ve bu belge bu sebeple bir fiyat belirtmez.
+Havuz küçük. Bu da tek bir büyük işlemin fiyatı iki yönde de epey oynatabileceği anlamına gelir. Takastaki fiyatı bir borsa listelemesi olarak değil, küçük bir havuzun o an verdiği kotasyon olarak görün ve onu NURA'nın bir değerlemesi gibi okumayın.
 
 ### 7.4 Köprü
 
-Bir köprü, BNB ve USDT'nin temsillerini Nura Chain üzerinde sıradan ERC-20 sözleşmeleri olarak basar. İkisi de kasa değil, bas-ve-yak tokenlarıdır: Nura üzerinde bir birim yalnızca kaynak zincirde bir birim kilitlendiği için vardır. Nura üzerindeki sözleşmeleri şunlardır:
+Köprü, BNB ve USDT'yi kendi ağlarından Nura Chain'e getirmenizi sağlar. Vestiyer fişi gibi çalışır: asıl coinleriniz öbür ağda kilitlenir ve burada, Nura Chain'de harcayabileceğiniz eşleşen bir "sarmalanmış" coin alırsınız. Sarmalanmış coini geri verdiğinizde asıl olan serbest bırakılır.
+
+Sarmalanmış bir coin, ancak aslı gerçekten orada durduğu sürece aslı kadar eder. Site köprüden geçen toplam değeri gösterir ve o rakam paltoları değil fişleri sayar: her sarmalanmış coin öbür tarafta birebir karşılandığı sürece doğrudur. İki sarmalanmış coinin adresleri Bölüm 10'da listeleniyor.
+
+## 8. Başlarken
+
+1. Bir cüzdan kurun. Bölüm 7.1'deki Nura Wallet ya da zaten kullandığınız, özel ağ ekleyebilen herhangi bir cüzdan.
+2. Nura Chain'i ona ekleyin. Sitedeki "Nura Chain'i cüzdana ekle" düğmesi bunu tek dokunuşla yapar; elle yapmayı tercih ederseniz değerler Bölüm 10'da.
+3. Cüzdanın ağ için zincir kimliği olarak 1020 gösterdiğini kontrol edin. Başka bir sayı gösteriyorsa farklı bir ağdasınız demektir ve gönderdiğiniz her şey istemediğiniz bir yere gider.
+4. Biraz NURA edinin. Ücretler NURA ile ödenir, bu yüzden boş bir hesap henüz hiçbir şey gönderemez.
+5. Önce küçük bir miktar gönderin, sonra onu Nura Explorer'da arayın. Kendi transferinizi herkese açık kayıtta görmek, bütün bunların nasıl işlediğini anlamanın en iyi yoludur.
+
+Geliştiriciyseniz sitenin blogunda ağa bağlanmak ve sözleşme dağıtmak için adım adım rehberler var; bağlantıları Bölüm 10'da.
+
+## 9. Nelere dikkat etmeli
+
+- **Kaybolan kurtarma ifadesi, kaybolan coin demektir.** Ne bu ağda ne başka bir ağda kimse onu sıfırlayamaz. Bir yere yazın ve güvenli bir yerde saklayın.
+- **Yanlış zincir kimliği, kaybolan coin demektir.** Göndermeden önce her zaman 1020 olduğunu doğrulayın ve bu sayfa dahil her sayfayı güvenilecek bir şey olarak değil, denetlenecek bir şey olarak görün.
+- **Başka bir ağdaki aynı adres, aynı para değildir.** Adresiniz Ethereum'da ve başka ağlarda da var, ama bakiyeler ayrıdır. Coinleri "başka bir zincirdeki aynı adrese" göndermek onları karşıya taşımaz. Bunu yalnızca köprü yapar ve yalnızca BNB ile USDT için.
+- **Takas fiyatı dalgalanabilir.** Küçük bir havuzdaki tek bir işlem onu sert biçimde oynatabilir.
+- **Sarmalanmış coin fiştir, palto değil.** Ancak köprü aslını tuttuğu sürece aslı kadar eder.
+- **Bazı rakamlar projenin sözüdür.** Toplam arz ve dağılımın koşulları bir cüzdanda denetlenemez. Tek tek bakiyeler denetlenebilir.
+- **Blok üretimi bugün tek bir hesabın elinde.** Bölüm 3.3 bunu açıkça söylüyor; sonradan öğrenmek yerine şimdi tartabilesiniz diye.
+
+## 10. Başvuru için temel bilgiler
+
+Ağı elle eklerken bir cüzdanın sizden istediği değerler:
+
+- Ağ adı: Nura Chain
+- Zincir kimliği: `1020` (bazı cüzdanlar bunu `0x3fc` olarak gösterir; aynı sayının farklı yazılmış hali)
+- RPC uç noktası: `https://rpc.nurachain.net`
+- Blok gezgini: `https://explorer.nurachain.net`
+- Coin: Nura, sembolü `NURA`, 18 ondalık basamak
+- Blok süresi: 3 saniye
+
+Köprünün Nura Chain üzerinde oluşturduğu iki sarmalanmış coin:
 
 - BNB: `0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc`
 - USDT: `0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC`
 
-Dolayısıyla ağa köprülenen değer her tokenin `totalSupply()` değeridir; sitenin kilitli toplam değeri hesaplama yolu da budur. Bu rakam Nura üzerinde basılan alacağı ölçer; teminata yalnızca köprü ödeme gücünü koruduğu ve bire bir desteklendiği sürece eşittir. Kaynak zincirdeki saklayıcı bakiyesi yetkili taraftır ve dikkatli bir okuyucunun denetlediği rakam odur.
+Nereye gidilir:
 
-## 8. Nura Chain üzerinde geliştirmek
-
-Bir Solidity araç zincirindeki hiçbir şey bu ağa özgü değildir. Bir dağıtım, Bölüm 3.4'teki RPC uç noktası ve zincir kimliğiyle tanımlanmış, gazı ödemeye yetecek NURA ile fonlanmış bir ağ girdisidir. İlk dağıtımdan önce üç sürtünme noktasını bilmekte yarar var.
-
-- Zincir kimliğini uç noktadan okuyun ve kullandığınız çerçevenin yapılandırmasıyla karşılaştırın. İkisi beklenenden daha sık uyuşmaz; genellikle yapılandırma başka bir projeden kopyalandığı için.
-- Ücretleri kütüphane tahmin etsin. Taban ücret ve öncelik ücreti çalışma zamanında okunabilir; sabitlenmiş bir gaz fiyatı, bir işlemin bloğa alınmadan beklemesinin en yaygın sebebidir.
-- Başka yerde dağıtılmış bir sözleşme burada dağıtılmış değildir. Bilerek deterministik bir dağıtıcı kullanılmadıkça yeniden dağıtmak yeni bir adres verir ve başka bir ağın sözleşmelerine ya da oracle'larına sabit kodlanmış her bağımlılık yeniden gözden geçirilmelidir.
-
-RPC uç noktası izin verici CORS başlıkları gönderir; böylece tarayıcıda çalışan bir sayfa arada bir sunucu olmadan doğrudan zincirden okuyabilir. Projenin blogunda bağlanmak, sözleşme dağıtmak ve ERC-20 çıkarmak için adım adım rehberler var.
-
-## 9. Güvenlik ve risk
-
-- **Kendi saklama bir sorumluluktur.** Kaybolmuş bir kurtarma ifadesi için ne bu ağda ne başka bir ağda bir geri kazanım yolu vardır ve bir işlem mühürlendikten sonra hiçbir taraf onu geri alamaz.
-- **Yanlış zincir kimliği, fonların kaybedilme yoludur.** Ağı bir cüzdana kaydetmeden önce `1020` değerini uç noktadan doğrulayın ve her sayfaya — bu sayfa dahil — denetlenecek bir iddia olarak bakın.
-- **Uyumluluk, ortak durum demek değildir.** Varlıklar aynı adrese gönderilerek zincirler arasında taşınmaz. BNB ya da USDT'yi ağa yalnızca Bölüm 7.4'teki köprü taşır ve yalnızca orada belirtilen sınırlar altında.
-- **Takas kotasyonu sığdır.** Tek bir küçük havuzdan okunan fiyat bir değerleme değildir ve tek bir işlemle oynatılabilir.
-- **Köprü saklama riski taşır.** Basılmış bir temsil, teminatı ancak kaynak taraftaki saklayıcı onu bire bir tuttuğu sürece eder.
-- **Bazı rakamlar yayımlanmış iddialardır.** Toplam arz ve Bölüm 5'teki dağılım koşulları RPC üzerinden doğrulanamaz. Projenin dağılım adreslerini yayımladığı yerlerde bakiyeleri Bölüm 5.3'teki çağrıyla okunabilir.
-- **Blok üretimi yoğunlaşmıştır.** Bölüm 3.3, gözlemlenen üretici kümesini açıkça belirtir; böylece okuyan kişi bunu sonradan keşfetmek yerine şimdi tartabilir.
-
-## 10. Sorumluluk reddi
-
-Bu belge ağı belirtilen revizyondaki haliyle anlatır. Bir teklif, bir çağrı ya da yatırım tavsiyesi değildir ve içindeki hiçbir şey NURA'nın gelecekteki fiyatı, likiditesi ya da erişilebilirliği hakkında bir söz olarak okunmamalıdır. Yayımlanmış iddia olarak işaretlenen rakamlar projenin beyanlarıdır; diğer her rakam gösterilen çağrılarla zincirden denetlenebilir. Sonraki revizyonlar bunun yerini alır ve belgenin başındaki revizyon numarası ile tarih, okuyanın elindekinin hangisi olduğunu belirtir.
-
-## 11. Kaynaklar
-
-- RPC uç noktası: `https://rpc.nurachain.net`
-- Blok gezgini: [Nura Explorer](https://explorer.nurachain.net)
-- Takas: [Nura Swap](https://swap.nurachain.net/)
-- Cüzdan sürümleri: [GitHub'da Nura Wallet](https://github.com/NuraChain/Wallet/releases)
-- Kaynak kodu: [GitHub'da NuraChain](https://github.com/NuraChain)
+- [Nura Explorer](https://explorer.nurachain.net), her şeye bakmak için
+- [Nura Swap](https://swap.nurachain.net/), coin değiştirmek için
+- [Nura Wallet indirmeleri](https://github.com/NuraChain/Wallet/releases), her sürüm ve platform
+- [GitHub'da Nura Chain](https://github.com/NuraChain), kaynak kodu
 - Topluluk: [Telegram](https://t.me/nurachain), [X](https://x.com/nurachainnet), [Discord](https://discord.gg/8BMAXTdXQg), [Instagram](https://www.instagram.com/nura.chain/)
-- Standartlar: [EIP-155](https://eips.ethereum.org/EIPS/eip-155) (yeniden oynatma koruması), [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) (ücret piyasası), [EIP-3085](https://eips.ethereum.org/EIPS/eip-3085) (cüzdana zincir ekleme), [EIP-6963](https://eips.ethereum.org/EIPS/eip-6963) (cüzdan keşfi)
-- Rehberler: [Nura Chain nedir](/blog/what-is-nura-chain), [RPC'ye bağlanmak](/blog/connect-to-nura-chain-rpc), [ağı cüzdana eklemek](/blog/add-nura-chain-to-your-wallet), [sözleşme dağıtmak](/blog/deploy-a-smart-contract-on-nura-chain), [arz ve dağılım](/blog/nura-coin-tokenomics)
+- Rehberler: [Nura Chain nedir](/blog/what-is-nura-chain), [ağı cüzdanınıza eklemek](/blog/add-nura-chain-to-your-wallet), [gezgini okumak](/blog/how-to-use-nura-chain-explorer), [arz ve dağılım](/blog/nura-coin-tokenomics) ve geliştiriciler için [ağa bağlanmak](/blog/connect-to-nura-chain-rpc) ile [sözleşme dağıtmak](/blog/deploy-a-smart-contract-on-nura-chain)
+
+## 11. Bu belgenin ne olduğuna dair bir not
+
+Bu belge ağı, en üstte gösterilen revizyon itibarıyla olduğu haliyle anlatır. Bir teklif, bir tavsiye ya da yatırım önerisi değildir; içindeki hiçbir şey NURA'nın ne edeceğine, alıp satmanın ne kadar kolay olacağına ya da projenin bundan sonra ne yapacağına dair bir söz değildir. Projenin sözü olarak tanımlanan rakamlar tam olarak odur; diğer her rakam yukarıdaki araçlarla denetlenebilir. Bilinmeye değer bir şeyi değiştirdiğimizde yeni bir revizyon yayımlarız; revizyon numarası ve tarihi hangisini okuduğunuzu söyler.
