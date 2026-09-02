@@ -7,11 +7,11 @@ import { feature, manifestOf, manifestScript, register } from '@azerothjs/http/a
 import { mountPages, type KitOptions, type PageRenderer } from '@azerothjs/kit';
 import { array } from '@azerothjs/schema';
 
-import type { BlogContent } from './blog/content.ts';
 import { pageCount, toCards, toDetail } from './blog/present.ts';
+import type { SiteContent } from './content.ts';
 import { createPriceGateway, type PriceGateway } from './market/price.ts';
 import { articleMarkup, injectArticle } from './seo/article.ts';
-import { injectMeta, isMissingPost, metaFor, postFor } from './seo/pages.ts';
+import { injectMeta, isMissingPost, metaFor, postFor, whitepaperFor } from './seo/pages.ts';
 import { buildSitemap } from './seo/sitemap.ts';
 import {
     nuraPrice,
@@ -19,8 +19,10 @@ import {
     postDetail,
     postPage,
     readQuery,
-    tagCount
+    tagCount,
+    whitepaperDetail
 } from './schemas.ts';
+import { PDF_ROUTE, toWhitepaper } from './whitepaper/content.ts';
 
 /**
  * The pages this process serves the shell for itself, head included.
@@ -38,11 +40,14 @@ const DEFAULT_LIMIT = 10;
 /** The language a reader gets when they ask for none - the same default the site falls to. */
 const DEFAULT_LOCALE = 'en';
 
-export interface ApiDeps
+/**
+ * Everything the api reads: the content, already off disk, and where the price comes from.
+ *
+ * `SiteContent` is the blog AND the whitepaper, in one object - see content.ts for why the two
+ * are never passed loose.
+ */
+export interface ApiDeps extends SiteContent
 {
-    /** The blog, already read off disk. Constructed once and shared; see blog/content.ts. */
-    store: BlogContent;
-
     /**
      * Where the NURA price comes from. Defaults to the live swap.
      *
@@ -66,7 +71,7 @@ export interface ApiDeps
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- the route literal IS the type; naming it would erase per-route inference
 export function createApi(deps: ApiDeps)
 {
-    const { store } = deps;
+    const { store, whitepaper } = deps;
     const market = deps.market ?? createPriceGateway();
 
     return {
@@ -116,6 +121,29 @@ export function createApi(deps: ApiDeps)
                 if (detail === null)
                 {
                     throw new NotFoundError('No such post.');
+                }
+
+                return detail;
+            })
+        })),
+
+        /**
+         * The whitepaper, in the reader's language or the nearest the document holds.
+         *
+         * Read-only and unguarded, like a post. One document, so there is no list and no slug -
+         * the locale is the only thing a caller chooses, and the same fallback policy a post
+         * follows decides what they get. The response names the PDF in the language served.
+         */
+        whitepaper: feature('/whitepaper', (routes) => ({
+            read: routes.get('/', { query: readQuery, output: whitepaperDetail }, ({ query }) =>
+            {
+                const detail = toWhitepaper(whitepaper, query.locale ?? DEFAULT_LOCALE);
+
+                // The loader refuses to start without every language, so this is unreachable
+                // in a booted process - but an empty document is a 404, not a blank page.
+                if (detail === null)
+                {
+                    throw new NotFoundError('No whitepaper.');
                 }
 
                 return detail;
@@ -183,6 +211,15 @@ export interface AppOptions extends ApiDeps
     siteUrl?: string;
 
     /**
+     * The directory holding the whitepaper PDFs, one per language; omit to serve none.
+     *
+     * A directory rather than the files, because `staticFiles` does the serving - and omitted by
+     * the suite, which describes its whitepaper inline and never reads a disk. `main.ts` passes
+     * `PDF_DIR` after checking every language's file is actually there.
+     */
+    pdfDir?: string;
+
+    /**
      * The built client + SSR renderer (production); omit in dev - vite serves the client.
      *
      * `manifest` is not among the options a caller supplies: it is projected from the api this
@@ -216,13 +253,26 @@ export function buildApp(options: AppOptions): App
      * Registered before `mountPages` for the same reason `/api` is: the kit's asset fallback
      * matches every path, and a static `sitemap.xml` in public/ would otherwise win.
      */
-    app.get('/sitemap.xml', () => text(buildSitemap(options.store, siteUrl), {
+    app.get('/sitemap.xml', () => text(buildSitemap(options, siteUrl), {
         headers: {
             'content-type': 'application/xml; charset=utf-8',
             // Crawlers re-read this often; an hour keeps it fresh without regenerating per hit.
             'cache-control': 'public, max-age=3600'
         }
     }));
+
+    /*
+     * The whitepaper downloads, under the same prefix as the page that describes them.
+     *
+     * Registered ahead of `mountPages` like `/assets` and `/sitemap.xml`: the kit claims
+     * `/whitepaper` by name and everything else through `/*path`, and this pattern is more
+     * specific than the fallback without colliding with the page. The default cache policy -
+     * revalidate every time - is the right one here, because a regenerated PDF keeps its name.
+     */
+    if (options.pdfDir !== undefined)
+    {
+        app.get(`${ PDF_ROUTE }/*path`, staticFiles(options.pdfDir));
+    }
 
     // Mounted LAST so nothing can shadow /api: the kit's asset fallback matches everything.
     if (options.pages !== undefined)
@@ -294,7 +344,7 @@ export function buildApp(options: AppOptions): App
             app.get(path, async () =>
             {
                 const shell = await landingShell();
-                const meta = metaFor(path, { store: options.store, siteUrl });
+                const meta = metaFor(path, { ...options, siteUrl });
 
                 // Null would mean this module has nothing to say about the path, which cannot
                 // happen for these two - but the shell is the right answer if it ever does.
@@ -305,7 +355,7 @@ export function buildApp(options: AppOptions): App
         mountPages(app, {
             ...options.pages,
             routes: options.pages.routes.filter((route) => !LANDING_PATHS.includes(route.path)),
-            renderer: withMeta(options.pages.renderer, options.store, siteUrl),
+            renderer: withMeta(options.pages.renderer, options, siteUrl),
             manifest
         });
     }
@@ -325,7 +375,7 @@ export function buildApp(options: AppOptions): App
  * null and the original result is returned as-is. A page whose head this module does not
  * understand keeps the one it already had.
  */
-function withMeta(renderer: PageRenderer | undefined, store: BlogContent, siteUrl: string): PageRenderer | undefined
+function withMeta(renderer: PageRenderer | undefined, content: SiteContent, siteUrl: string): PageRenderer | undefined
 {
     if (renderer === undefined)
     {
@@ -343,7 +393,7 @@ function withMeta(renderer: PageRenderer | undefined, store: BlogContent, siteUr
             return result;
         }
 
-        const deps = { store, siteUrl };
+        const deps = { store: content.store, whitepaper: content.whitepaper, siteUrl };
         const meta = metaFor(url, deps);
 
         if (meta === null)
@@ -368,11 +418,11 @@ function withMeta(renderer: PageRenderer | undefined, store: BlogContent, siteUr
          * never runs on a server, so before this the indexed article was a correct `<title>`
          * over an empty page - the head described something the body did not contain.
          *
-         * Only a post: `postFor` answers null for /blog and for everything else, and the index
-         * has nothing to server-render that the frame does not already carry.
+         * A post or the whitepaper: each resolver answers null for every other address, and
+         * the blog index has nothing to server-render that the frame does not already carry.
          */
         const html = injectMeta(result.html, meta);
-        const detail = postFor(url, deps);
+        const detail = postFor(url, deps) ?? whitepaperFor(url, deps);
 
         return {
             ...result,

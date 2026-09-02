@@ -106,6 +106,33 @@ export const readQuery = object({
 });
 
 /**
+ * The whitepaper as one reader sees it.
+ *
+ * The same served fields a post carries - which language was asked for, which was served, and
+ * every language it exists in - because the page shows the same fallback notice a post does. What
+ * replaces the slug and the tags is a revision, which is how a cited document says which one it
+ * is, and `pdf`: the site-relative path of the download in the language SERVED, so a reader shown
+ * the fallback downloads the file that matches the page rather than one in a language they
+ * cannot read.
+ */
+export const whitepaperDetail = object({
+    revision: string(),
+    publishedAt: string(),
+    updatedAt: string(),
+
+    locale: enumOf(POST_LOCALES),
+    requestedLocale: enumOf(POST_LOCALES),
+    translated: boolean(),
+    available: array(enumOf(POST_LOCALES)),
+
+    title: string(),
+    summary: string(),
+    body: string(),
+    pdf: string()
+});
+export type WhitepaperDetail = Infer<typeof whitepaperDetail>;
+
+/**
  * What one NURA is worth in USD, and when that was read.
  *
  * `at` is not decoration. The figure is served from a server-side memo that keeps answering

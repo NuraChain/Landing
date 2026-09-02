@@ -14,6 +14,7 @@ import { buildApp } from '../../src/app.ts';
 import { BlogContent, type LoadedPost, type PostRow, type TranslationRow } from '../../src/blog/content.ts';
 import type { PriceGateway } from '../../src/market/price.ts';
 import type { PostLocale } from '../../src/schemas.ts';
+import type { WhitepaperContent, WhitepaperTranslation } from '../../src/whitepaper/content.ts';
 
 export interface Harness
 {
@@ -27,6 +28,12 @@ export interface HarnessOptions
 {
     /** The blog this app serves. Defaults to a single published post in English. */
     posts?: LoadedPost[];
+
+    /** The whitepaper this app serves. Defaults to one English translation. */
+    whitepaper?: WhitepaperContent;
+
+    /** Where the PDFs are served from. Omitted by default: no spec reads a disk it did not write. */
+    pdfDir?: string;
 
     /**
      * The price source. Defaults to one that refuses, NOT to the live swap.
@@ -80,11 +87,38 @@ export const post = (
     translations
 });
 
+/** One language of the whitepaper, with everything a spec does not care about filled in. */
+export const chapter = (
+    locale: PostLocale,
+    overrides: Partial<WhitepaperTranslation> = {}
+): WhitepaperTranslation => ({
+    locale,
+    title: `Nura Chain Whitepaper (${ locale })`,
+    summary: 'The reference description of the network.',
+    body: '## 1. Introduction\n\nThe network seals a block every three seconds.',
+    ...overrides
+});
+
+/** The whole whitepaper. Same fixed instant as `post`, for the same reason. */
+export const whitepaper = (
+    overrides: Partial<WhitepaperContent> = {},
+    translations: WhitepaperTranslation[] = [chapter('en')]
+): WhitepaperContent => ({
+    revision: '1.0',
+    publishedAt: '2026-09-02T00:00:00.000Z',
+    updatedAt: '2026-09-02T00:00:00.000Z',
+    defaultLocale: 'en',
+    translations,
+    ...overrides
+});
+
 export function harness(options: HarnessOptions = {}): Harness
 {
     const store = new BlogContent(options.posts ?? [post()]);
     const app = buildApp({
         store,
+        whitepaper: options.whitepaper ?? whitepaper(),
+        pdfDir: options.pdfDir,
         dev: false,
         market: options.market ?? offlineMarket
     });

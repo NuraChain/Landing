@@ -8,6 +8,7 @@ import { fileSink } from '@azerothjs/logger/node';
 
 import { buildApp, createHandler, DEFAULT_SITE_URL } from './app.ts';
 import { BlogContent, loadArticles } from './blog/content.ts';
+import { loadWhitepaper, PDF_DIR, pdfStatus } from './whitepaper/content.ts';
 
 try
 {
@@ -60,8 +61,24 @@ const ssr = isProduction
  */
 const store = new BlogContent(loadArticles());
 
+/*
+ * The whitepaper, the same way - and its PDFs, which are derived from it by
+ * `npm run whitepaper:pdf` and committed beside it. A language with no PDF is a dead download
+ * link on every page, so it is a bad deploy and refused here; a STALE one still opens a real
+ * document, so it is logged and served while somebody regenerates it. The suite fails on both.
+ */
+const whitepaper = loadWhitepaper();
+const pdfs = pdfStatus(whitepaper);
+
+if (pdfs.missing.length > 0)
+{
+    throw new Error(`Whitepaper PDF missing for: ${ pdfs.missing.join(', ') } - run npm run whitepaper:pdf.`);
+}
+
 const app = buildApp({
     store,
+    whitepaper,
+    pdfDir: PDF_DIR,
     siteUrl: config.siteUrl,
     dev: !isProduction,
     observe: logRequests(log),
@@ -115,6 +132,11 @@ if (process.env.NODE_ENV === 'development')
         attachDevtools(served.server, { token });
         log.info('devtools bridge', { url: `ws://localhost:${ served.port }/__azeroth/devtools?token=${ token }` });
     }
+}
+
+if (pdfs.stale.length > 0)
+{
+    log.warn('whitepaper PDF is stale - run npm run whitepaper:pdf', { locales: pdfs.stale });
 }
 
 log.info('Listening', { url: `http://localhost:${ served.port }`, env: config.env, posts: store.list({ limit: 0, offset: 0 }).total });

@@ -5,7 +5,7 @@
  * is silent in the direction that matters: a post published and not added here is simply never
  * crawled. Reading the store means publishing IS listing, with nothing to remember.
  */
-import type { BlogContent } from '../blog/content.ts';
+import type { SiteContent } from '../content.ts';
 
 /**
  * How many rows one store read pulls back while walking the posts.
@@ -23,6 +23,9 @@ const CHUNK = 500;
  * serves it `noindex`, and a sitemap is a request TO index. Listing a url and then telling the
  * crawler to drop it is a contradiction reported as a sitemap error rather than quietly
  * obeyed. Both come back together the day the page has real copy.
+ *
+ * `/whitepaper` is not here either, but for the opposite reason: it carries a `lastmod` read
+ * from the content, so it is emitted below beside the posts rather than as a dateless constant.
  */
 const STATIC: ReadonlyArray<{ path: string; priority: string; frequency: string }> = [
     { path: '/', priority: '1.0', frequency: 'weekly' },
@@ -76,12 +79,23 @@ const entry = (item: Entry): string =>
  * routes.ts about what changing that would cost. Ten `xhtml:link` entries all pointing at the
  * same url would be a claim that ten pages exist where one does.
  */
-export function buildSitemap(store: BlogContent, siteUrl: string): string
+export function buildSitemap(content: SiteContent, siteUrl: string): string
 {
+    const { store, whitepaper } = content;
     const entries: string[] = STATIC.map((route) => entry({
         loc: `${ siteUrl }${ route.path === '/' ? '/' : route.path }`,
         changefreq: route.frequency,
         priority: route.priority
+    }));
+
+    // The document of record for the network, second only to the home page. Its `lastmod` is
+    // the head's `updatedAt`, so a revision that forgets to bump it goes uncrawled - the same
+    // deal every post makes.
+    entries.push(entry({
+        loc: `${ siteUrl }/whitepaper`,
+        lastmod: whitepaper.updatedAt,
+        changefreq: 'monthly',
+        priority: '0.9'
     }));
 
     for (let offset = 0; ; offset += CHUNK)

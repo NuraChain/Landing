@@ -9,7 +9,8 @@ import { BlogContent, loadArticles } from '../src/blog/content.ts';
 import { articleMarkup, injectArticle, renderArticle, safeHref } from '../src/seo/article.ts';
 import { postFor } from '../src/seo/pages.ts';
 import { POST_LOCALES } from '../src/schemas.ts';
-import { post, translation } from './support/fixtures.ts';
+import { loadWhitepaper, PDF_DIR, pdfFileFor, pdfStatus, toWhitepaper } from '../src/whitepaper/content.ts';
+import { harness, post, translation, whitepaper } from './support/fixtures.ts';
 
 const SITE = 'https://nurachain.net';
 
@@ -169,7 +170,7 @@ describe('the crawlable article', () =>
             translation('fa', { title: 'عنوان', body: 'متن' })
         ])]);
 
-        const markup = articleMarkup(postFor('/blog/persian', { store, siteUrl: SITE })!);
+        const markup = articleMarkup(postFor('/blog/persian', { store, whitepaper: whitepaper(), siteUrl: SITE })!);
 
         expect(markup).toContain('lang="fa"');
         expect(markup).toContain('dir="rtl"');
@@ -184,7 +185,7 @@ describe('the crawlable article', () =>
             translation('en', { title: 'A real title', body: '## A heading\n\nSome real prose.' })
         ])]);
 
-        const markup = articleMarkup(postFor('/blog/real', { store, siteUrl: SITE })!);
+        const markup = articleMarkup(postFor('/blog/real', { store, whitepaper: whitepaper(), siteUrl: SITE })!);
 
         expect(markup).toContain('<h1>A real title</h1>');
         expect(markup).toContain('<h2>A heading</h2>');
@@ -197,7 +198,7 @@ describe('the crawlable article', () =>
 
         for (const url of ['/', '/about', '/blog', '/blog?page=2', '/blog/never-written'])
         {
-            expect(postFor(url, { store, siteUrl: SITE }), url).toBeNull();
+            expect(postFor(url, { store, whitepaper: whitepaper(), siteUrl: SITE }), url).toBeNull();
         }
     });
 
@@ -220,5 +221,111 @@ describe('the crawlable article', () =>
 
         expect(out).toContain('$& and $` and $\'');
         expect(out).not.toContain('<div id="root">FRAME</div>FRAME');
+    });
+});
+
+describe('the repository whitepaper', () =>
+{
+    // Read once for the block: the loader throws with every missing path named if the cluster
+    // is incomplete, and that throw IS the first assertion.
+    const content = loadWhitepaper();
+    const english = content.translations.find((row) => row.locale === 'en')!;
+
+    /**
+     * What a translation may not change. Everything a reader cannot read past - the numbered
+     * outline, the code a reader pastes, the addresses a reader follows - has to be the same in
+     * every language, and a translator working in one file cannot see the other nine.
+     */
+    const shape = (body: string): { outline: string[]; fences: string[]; links: string[]; spans: string[] } =>
+    {
+        const outline = [...body.matchAll(/^(#{2,3}) (\d+(?:\.\d+)?)[. ]/gmu)].map((match) => `${ match[1] } ${ match[2] }`);
+        const fences = [...body.matchAll(/```[a-z]*\n([\s\S]*?)```/gu)].map((match) => match[1] ?? '');
+        const links = [...body.matchAll(/\]\(([^)]+)\)/gu)].map((match) => match[1] ?? '');
+        const spans = [...body.matchAll(/`([^`\n]+)`/gu)].map((match) => match[1] ?? '').sort();
+
+        return { outline, fences, links, spans };
+    };
+
+    it('loads in every language the site speaks', () =>
+    {
+        expect(content.translations.map((row) => row.locale)).toEqual([...POST_LOCALES]);
+
+        for (const row of content.translations)
+        {
+            expect(row.title.length, row.locale).toBeGreaterThan(0);
+            expect(row.summary.length, row.locale).toBeGreaterThan(0);
+            expect(row.body.length, row.locale).toBeGreaterThan(4000);
+        }
+
+        expect(Number.isNaN(Date.parse(content.publishedAt))).toBe(false);
+        expect(Number.isNaN(Date.parse(content.updatedAt))).toBe(false);
+    });
+
+    it('keeps every translation structurally identical to the English source', () =>
+    {
+        const reference = shape(english.body);
+
+        // Eleven numbered sections and eleven numbered subsections, two verbatim shell blocks,
+        // the same links in the same order, the same inline code. A translation that lost a
+        // section, translated a curl command or dropped a reference fails here by name.
+        expect(reference.outline).toHaveLength(22);
+        expect(reference.fences).toHaveLength(2);
+        expect(reference.links).toHaveLength(17);
+
+        for (const row of content.translations)
+        {
+            expect(shape(row.body), row.locale).toEqual(reference);
+        }
+    });
+
+    it('states the chain facts the site states, in every language', () =>
+    {
+        // The values a reader pastes stay Latin in every script, so they can be pinned as text.
+        // The figures themselves come from application/src/lib/content/site.ts, which is the
+        // one place the site is allowed to state them.
+        for (const row of content.translations)
+        {
+            for (const fact of ['`1020`', '`0x3fc`', 'https://rpc.nurachain.net', 'https://explorer.nurachain.net',
+                '0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc', '0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC'])
+            {
+                expect(row.body, `${ row.locale } should state ${ fact }`).toContain(fact);
+            }
+        }
+    });
+
+    it('has a PDF for every language, rendered from the markdown now on disk', () =>
+    {
+        // The downloads are derived and committed. A missing one is a dead link on every page; a
+        // stale one is a download that contradicts the page it was clicked on. Both mean the
+        // same thing: run `npm run whitepaper:pdf` and commit what it writes.
+        expect(pdfStatus(content)).toEqual({ missing: [], stale: [] });
+    });
+
+    it('serves each PDF from the app as a PDF', async () =>
+    {
+        const { get } = harness({ whitepaper: content, pdfDir: PDF_DIR });
+
+        for (const locale of ['en', 'fa'] as const)
+        {
+            const response = await get(`/whitepaper/${ pdfFileFor(locale) }`);
+            const head = new Uint8Array(await response.arrayBuffer()).slice(0, 5);
+
+            expect(response.status, locale).toBe(200);
+            expect(response.headers.get('content-type'), locale).toContain('application/pdf');
+            expect(new TextDecoder().decode(head), locale).toBe('%PDF-');
+        }
+    });
+
+    it('renders the crawler body without dropping the end of the document', () =>
+    {
+        const detail = toWhitepaper(content, content.defaultLocale)!;
+        const html = articleMarkup(detail);
+
+        expect(html).toContain('<h1>Nura Chain Whitepaper</h1>');
+        expect(html).toContain('<h2>1. Introduction</h2>');
+        expect(html).toContain('<h2>11. References</h2>');
+        // Fenced shell survives the renderer verbatim, escaped rather than parsed.
+        expect(html).toContain('eth_chainId');
+        expect(html).not.toContain('<script');
     });
 });

@@ -1,8 +1,8 @@
 /**
  * Which head each server-rendered page gets, and how it replaces the shell's.
  *
- * Four paths are handled: the two blog routes, which `routes.ts` pins to `render: 'server'`,
- * and the two landing pages, which stay `render: 'client'`.
+ * Five paths are handled: the two blog routes and `/whitepaper`, which `routes.ts` pins to
+ * `render: 'server'`, and the two landing pages, which stay `render: 'client'`.
  *
  * The landing pages are why this module's scope grew. The kit calls a renderer only for a
  * `'server'` route, so `/` and `/about` were served the shell untouched - which meant they
@@ -15,8 +15,9 @@
  * them - the same registration order `/sitemap.xml` and `/assets` already rely on.
  */
 import { toDetail } from '../blog/present.ts';
-import type { BlogContent } from '../blog/content.ts';
-import type { PostDetail } from '../schemas.ts';
+import type { SiteContent } from '../content.ts';
+import type { PostDetail, WhitepaperDetail } from '../schemas.ts';
+import { toWhitepaper } from '../whitepaper/content.ts';
 
 import { directionOf, renderMeta, type PageMeta } from './meta.ts';
 
@@ -100,9 +101,8 @@ const breadcrumbs = (trail: Array<{ name: string; url: string }>): Record<string
     }))
 });
 
-export interface SeoDeps
+export interface SeoDeps extends SiteContent
 {
-    store: BlogContent;
     /** The canonical origin, no trailing slash - every absolute url below is built from it. */
     siteUrl: string;
 }
@@ -211,6 +211,67 @@ export function metaFor(url: string, deps: SeoDeps): PageMeta | null
              */
             robots: 'noindex, follow',
             jsonLd: []
+        };
+    }
+
+    if (path === '/whitepaper')
+    {
+        const detail = whitepaperFor(url, deps);
+
+        // Unreachable while the loader refuses to start without every language, but the shell's
+        // head is the right answer if the document ever resolves to nothing.
+        if (detail === null)
+        {
+            return null;
+        }
+
+        const canonical = `${ siteUrl }/whitepaper`;
+
+        return {
+            title: `${ detail.title } — Nura Chain`,
+            description: detail.summary,
+            canonical,
+            // The document's own default language, for the same reason a post is: the renderer
+            // sees no reader. The switcher moves the rest client-side.
+            locale: detail.locale,
+            alternateLocales: detail.available,
+            image: `${ siteUrl }/icon.png`,
+            imageAlt: 'Nura Chain',
+            type: 'article',
+            article: {
+                publishedTime: detail.publishedAt,
+                modifiedTime: detail.updatedAt,
+                tags: ['whitepaper']
+            },
+            jsonLd: [
+                {
+                    '@context': 'https://schema.org',
+                    '@type': 'TechArticle',
+                    headline: detail.title,
+                    description: detail.summary,
+                    inLanguage: detail.locale,
+                    availableLanguage: detail.available,
+                    // Cited documents carry a version. It is the head's revision, verbatim.
+                    version: detail.revision,
+                    datePublished: detail.publishedAt,
+                    dateModified: detail.updatedAt,
+                    url: canonical,
+                    mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+                    // The download, named as an encoding of the same work rather than as a
+                    // separate page, so a crawler that indexes PDFs knows which page it belongs to.
+                    encoding: {
+                        '@type': 'MediaObject',
+                        encodingFormat: 'application/pdf',
+                        contentUrl: `${ siteUrl }${ detail.pdf }`
+                    },
+                    author: organization(siteUrl),
+                    publisher: organization(siteUrl)
+                },
+                breadcrumbs([
+                    { name: 'Home', url: `${ siteUrl }/` },
+                    { name: detail.title, url: canonical }
+                ])
+            ]
         };
     }
 
@@ -402,4 +463,20 @@ export function postFor(url: string, deps: SeoDeps): PostDetail | null
     const stored = deps.store.bySlug(slug);
 
     return stored === null ? null : toDetail(stored, stored.post.defaultLocale);
+}
+
+/**
+ * The whitepaper, in its own default language, for `/whitepaper` - or null for anything else.
+ *
+ * The same split as `postFor`, for the same reason: the head and the body both resolve through
+ * this one call, so the page cannot describe one revision and print another.
+ */
+export function whitepaperFor(url: string, deps: SeoDeps): WhitepaperDetail | null
+{
+    if (pathOf(url, deps.siteUrl) !== '/whitepaper')
+    {
+        return null;
+    }
+
+    return toWhitepaper(deps.whitepaper, deps.whitepaper.defaultLocale);
 }

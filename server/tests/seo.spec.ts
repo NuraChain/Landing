@@ -8,13 +8,21 @@
 import { describe, it, expect } from 'vitest';
 
 import { BlogContent, type LoadedPost } from '../src/blog/content.ts';
-import { injectMeta, isMissingPost, metaFor, excerpt, postFor } from '../src/seo/pages.ts';
+import { injectMeta, isMissingPost, metaFor, excerpt, postFor, whitepaperFor, type SeoDeps } from '../src/seo/pages.ts';
 import { buildSitemap } from '../src/seo/sitemap.ts';
-import { harness, post, translation } from './support/fixtures.ts';
+import { articleMarkup } from '../src/seo/article.ts';
+import { chapter, harness, post, translation, whitepaper } from './support/fixtures.ts';
 
 const SITE = 'https://nurachain.net';
 
 const storeWith = (...posts: LoadedPost[]): BlogContent => new BlogContent(posts);
+
+/** The deps every head is built from: this blog, the default whitepaper, the canonical origin. */
+const deps = (store: BlogContent): SeoDeps => ({ store, whitepaper: whitepaper(), siteUrl: SITE });
+
+/** The whole content a head or a sitemap is built from: these posts, and the default whitepaper. */
+const contentWith = (...posts: LoadedPost[]): { store: BlogContent; whitepaper: ReturnType<typeof whitepaper> } =>
+    ({ store: storeWith(...posts), whitepaper: whitepaper() });
 
 /** The shape the built index.html has: one title, one description, one head to replace. */
 const SHELL = `<!doctype html>
@@ -39,13 +47,13 @@ describe('which pages get a head of their own', () =>
 
         for (const path of ['/assets/index-abc123.js', '/favicon-32.png', '/nope'])
         {
-            expect(metaFor(path, { store, siteUrl: SITE })).toBeNull();
+            expect(metaFor(path, deps(store))).toBeNull();
         }
     });
 
     it('gives the home page its own canonical and structured data', () =>
     {
-        const meta = metaFor('/', { store: storeWith(), siteUrl: SITE });
+        const meta = metaFor('/', deps(storeWith()));
 
         // The trailing slash matters: the sitemap lists `${SITE}/`, and a canonical that
         // disagrees with the sitemap is a page arguing with itself.
@@ -59,8 +67,8 @@ describe('which pages get a head of their own', () =>
 
     it('gives the about page a head of its own, not a copy of the home page', () =>
     {
-        const home = metaFor('/', { store: storeWith(), siteUrl: SITE });
-        const about = metaFor('/about', { store: storeWith(), siteUrl: SITE });
+        const home = metaFor('/', deps(storeWith()));
+        const about = metaFor('/about', deps(storeWith()));
 
         // The defect this fixes: both paths were served the shell, so the site's two most
         // important addresses each declared themselves a duplicate of the other.
@@ -71,7 +79,7 @@ describe('which pages get a head of their own', () =>
 
     it('keeps the about page out of the index while it is still the starter template', () =>
     {
-        const meta = metaFor('/about', { store: storeWith(), siteUrl: SITE });
+        const meta = metaFor('/about', deps(storeWith()));
 
         // `follow`, not `nofollow`: the header and footer links on that page are real pages.
         expect(meta?.robots).toBe('noindex, follow');
@@ -83,8 +91,8 @@ describe('which pages get a head of their own', () =>
 
         // A draft resolves to null through `bySlug`, so the not-found page keeps the shell's
         // title rather than being described as an article that does not exist.
-        expect(metaFor('/blog/draft-only', { store, siteUrl: SITE })).toBeNull();
-        expect(metaFor('/blog/never-written', { store, siteUrl: SITE })).toBeNull();
+        expect(metaFor('/blog/draft-only', deps(store))).toBeNull();
+        expect(metaFor('/blog/never-written', deps(store))).toBeNull();
     });
 
     it('treats an undecodable slug as a miss instead of throwing', () =>
@@ -96,9 +104,9 @@ describe('which pages get a head of their own', () =>
 
         for (const path of ['/blog/%', '/blog/%E0%A4', '/blog/%zz'])
         {
-            expect(metaFor(path, { store, siteUrl: SITE }), path).toBeNull();
-            expect(isMissingPost(path, { store, siteUrl: SITE }), path).toBe(true);
-            expect(postFor(path, { store, siteUrl: SITE }), path).toBeNull();
+            expect(metaFor(path, deps(store)), path).toBeNull();
+            expect(isMissingPost(path, deps(store)), path).toBe(true);
+            expect(postFor(path, deps(store)), path).toBeNull();
         }
     });
 
@@ -110,7 +118,7 @@ describe('which pages get a head of their own', () =>
 
         for (const url of ['/blog', '/blog/', '/blog?page=3', '/blog?tag=evm&page=2'])
         {
-            const meta = metaFor(url, { store, siteUrl: SITE });
+            const meta = metaFor(url, deps(store));
 
             expect(meta?.canonical).toBe(`${ SITE }/blog`);
             expect(meta?.type).toBe('website');
@@ -124,10 +132,10 @@ describe('the soft-404 guard', () =>
     {
         const store = storeWith(post({ slug: 'real' }), post({ slug: 'hidden', status: 'draft' }));
 
-        expect(isMissingPost('/blog/never-written', { store, siteUrl: SITE })).toBe(true);
+        expect(isMissingPost('/blog/never-written', deps(store))).toBe(true);
         // A draft is not readable, so its url is not a page either.
-        expect(isMissingPost('/blog/hidden', { store, siteUrl: SITE })).toBe(true);
-        expect(isMissingPost('/blog/real', { store, siteUrl: SITE })).toBe(false);
+        expect(isMissingPost('/blog/hidden', deps(store))).toBe(true);
+        expect(isMissingPost('/blog/real', deps(store))).toBe(false);
     });
 
     it('never claims a non-post path is missing', () =>
@@ -138,7 +146,7 @@ describe('the soft-404 guard', () =>
 
         for (const path of ['/', '/about', '/blog', '/blog?page=2', '/favicon-32.png'])
         {
-            expect(isMissingPost(path, { store, siteUrl: SITE })).toBe(false);
+            expect(isMissingPost(path, deps(store))).toBe(false);
         }
     });
 });
@@ -151,7 +159,7 @@ describe('a post head', () =>
             translation('en', { title: 'Connecting to the Nura Chain RPC', summary: 'Chain ID 1020, over HTTPS.' })
         ]));
 
-        const meta = metaFor('/blog/nura-chain-rpc', { store, siteUrl: SITE })!;
+        const meta = metaFor('/blog/nura-chain-rpc', deps(store))!;
 
         expect(meta.title).toBe('Connecting to the Nura Chain RPC — Nura Chain');
         expect(meta.description).toBe('Chain ID 1020, over HTTPS.');
@@ -168,7 +176,7 @@ describe('a post head', () =>
             translation('fa', { title: 'نورا چین چیست', summary: 'خلاصه' })
         ]));
 
-        const meta = metaFor('/blog/persian-first', { store, siteUrl: SITE })!;
+        const meta = metaFor('/blog/persian-first', deps(store))!;
 
         expect(meta.locale).toBe('fa');
 
@@ -185,7 +193,7 @@ describe('a post head', () =>
             translation('tr', { title: 'Turkce' })
         ]));
 
-        const html = injectMeta(SHELL, metaFor('/blog/many', { store, siteUrl: SITE })!);
+        const html = injectMeta(SHELL, metaFor('/blog/many', deps(store))!);
 
         // The alternates are real: the switcher is client-side, so this url does serve them.
         expect(html).toContain('<meta property="og:locale" content="en_US"/>');
@@ -198,12 +206,83 @@ describe('a post head', () =>
     });
 });
 
+describe('the whitepaper head', () =>
+{
+    it('describes the document with its own canonical, its revision and its download', () =>
+    {
+        const content: SeoDeps = {
+            store: storeWith(),
+            whitepaper: whitepaper({ revision: '2.1' }, [
+                chapter('en', { title: 'Nura Chain Whitepaper', summary: 'The reference.' })
+            ]),
+            siteUrl: SITE
+        };
+
+        const meta = metaFor('/whitepaper', content)!;
+
+        expect(meta.title).toBe('Nura Chain Whitepaper — Nura Chain');
+        expect(meta.description).toBe('The reference.');
+        expect(meta.canonical).toBe(`${ SITE }/whitepaper`);
+        expect(meta.type).toBe('article');
+        expect(meta.robots).toBeUndefined();
+
+        // A cited document carries its version, and the PDF is declared as an encoding of the
+        // same work rather than as a page of its own.
+        const article = meta.jsonLd[0] as { '@type': string; version: string; encoding: { contentUrl: string } };
+
+        expect(article['@type']).toBe('TechArticle');
+        expect(article.version).toBe('2.1');
+        expect(article.encoding.contentUrl).toBe(`${ SITE }/whitepaper/nura-chain-whitepaper-en.pdf`);
+    });
+
+    it('is written in the document default language and names the others', () =>
+    {
+        const content: SeoDeps = {
+            store: storeWith(),
+            whitepaper: whitepaper({ defaultLocale: 'fa' }, [chapter('en'), chapter('fa', { title: 'وایت‌پیپر' })]),
+            siteUrl: SITE
+        };
+
+        const meta = metaFor('/whitepaper', content)!;
+
+        expect(meta.locale).toBe('fa');
+        expect(meta.title).toBe('وایت‌پیپر — Nura Chain');
+
+        const html = injectMeta(SHELL, meta);
+
+        expect(html).toContain('<html lang="fa" dir="rtl">');
+        expect(html).toContain('<meta property="og:locale:alternate" content="en_US"/>');
+    });
+
+    it('renders the body for a crawler from the same resolution as the head', () =>
+    {
+        // Head and body go through one call, so a page cannot describe one revision and print
+        // another. The query is dropped the way it is for the blog index.
+        const content = deps(storeWith());
+        const detail = whitepaperFor('/whitepaper?utm=x', content)!;
+
+        expect(detail.locale).toBe('en');
+        expect(articleMarkup(detail)).toContain('<h1>Nura Chain Whitepaper (en)</h1>');
+        expect(articleMarkup(detail)).toContain('<h2>1. Introduction</h2>');
+    });
+
+    it('says nothing about any other address, the downloads included', () =>
+    {
+        const content = deps(storeWith());
+
+        for (const path of ['/whitepaper/nura-chain-whitepaper-en.pdf', '/blog', '/', '/whitepapers'])
+        {
+            expect(whitepaperFor(path, content), path).toBeNull();
+        }
+    });
+});
+
 describe('replacing the shell head', () =>
 {
     it('leaves exactly one title and one description', () =>
     {
         const store = storeWith(post({ slug: 'one' }, [translation('en', { title: 'One' })]));
-        const html = injectMeta(SHELL, metaFor('/blog/one', { store, siteUrl: SITE })!);
+        const html = injectMeta(SHELL, metaFor('/blog/one', deps(store))!);
 
         // Two titles in a document is undefined behaviour every parser resolves differently.
         expect(html.match(/<title>/g)).toHaveLength(1);
@@ -222,7 +301,7 @@ describe('replacing the shell head', () =>
             summary: "It's a <b>summary</b> & nothing more"
         })]));
 
-        const html = injectMeta(SHELL, metaFor('/blog/hostile', { store, siteUrl: SITE })!);
+        const html = injectMeta(SHELL, metaFor('/blog/hostile', deps(store))!);
 
         // Nothing an author typed reaches the document as markup.
         expect(html).not.toContain('<script>alert(1)</script>');
@@ -239,7 +318,7 @@ describe('replacing the shell head', () =>
             title: 'A </script><img src=x onerror=alert(1)> title'
         })]));
 
-        const html = injectMeta(SHELL, metaFor('/blog/breakout', { store, siteUrl: SITE })!);
+        const html = injectMeta(SHELL, metaFor('/blog/breakout', deps(store))!);
         const block = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html);
 
         expect(block).not.toBeNull();
@@ -256,7 +335,7 @@ describe('replacing the shell head', () =>
         // `String.replace` reads `$&` in a REPLACEMENT string as the whole match. Every replace
         // in injectMeta takes a function for exactly this reason.
         const store = storeWith(post({ slug: 'dollar' }, [translation('en', { title: 'Cost $& value $1' })]));
-        const html = injectMeta(SHELL, metaFor('/blog/dollar', { store, siteUrl: SITE })!);
+        const html = injectMeta(SHELL, metaFor('/blog/dollar', deps(store))!);
 
         expect(html).toContain('<title>Cost $&amp; value $1 — Nura Chain</title>');
         expect(html.match(/<title>/g)).toHaveLength(1);
@@ -267,8 +346,7 @@ describe('the sitemap', () =>
 {
     it('lists the static routes and every published post', () =>
     {
-        const store = storeWith(post({ slug: 'live-one' }), post({ slug: 'live-two' }));
-        const xml = buildSitemap(store, SITE);
+        const xml = buildSitemap(contentWith(post({ slug: 'live-one' }), post({ slug: 'live-two' })), SITE);
 
         expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
         expect(xml).toContain(`<loc>${ SITE }/</loc>`);
@@ -281,19 +359,29 @@ describe('the sitemap', () =>
         expect(xml).toContain('</urlset>');
     });
 
+    it('lists the whitepaper with the lastmod its head declares', () =>
+    {
+        // Emitted beside the posts rather than as a dateless constant: a revision that forgets
+        // to bump `updatedAt` is one a crawler is never told to re-read.
+        const content = { store: storeWith(), whitepaper: whitepaper({ updatedAt: '2026-10-01T00:00:00.000Z' }) };
+        const xml = buildSitemap(content, SITE);
+
+        expect(xml).toContain(`<loc>${ SITE }/whitepaper</loc>`);
+        expect(xml).toContain('<lastmod>2026-10-01T00:00:00.000Z</lastmod>');
+    });
+
     it('reports each post lastmod from its own updatedAt', () =>
     {
         // The sitemap is the only consumer of `updatedAt`, so a post revised without touching
         // that field is one a crawler is never told to re-read.
-        const store = storeWith(post({ slug: 'revised', updatedAt: '2026-07-04T12:00:00.000Z' }));
+        const content = contentWith(post({ slug: 'revised', updatedAt: '2026-07-04T12:00:00.000Z' }));
 
-        expect(buildSitemap(store, SITE)).toContain('<lastmod>2026-07-04T12:00:00.000Z</lastmod>');
+        expect(buildSitemap(content, SITE)).toContain('<lastmod>2026-07-04T12:00:00.000Z</lastmod>');
     });
 
     it('never lists a draft', () =>
     {
-        const store = storeWith(post({ slug: 'secret', status: 'draft' }));
-        const xml = buildSitemap(store, SITE);
+        const xml = buildSitemap(contentWith(post({ slug: 'secret', status: 'draft' })), SITE);
 
         expect(xml).not.toContain('secret');
     });
@@ -302,11 +390,10 @@ describe('the sitemap', () =>
     {
         // The chunk is 500; this asserts the loop terminates and covers everything rather than
         // silently stopping at the first read - the failure mode a hard limit produces.
-        const store = storeWith(...Array.from({ length: 12 }, (_, at) => post({ slug: `post-${ at }` })));
-        const xml = buildSitemap(store, SITE);
+        const xml = buildSitemap(contentWith(...Array.from({ length: 12 }, (_, at) => post({ slug: `post-${ at }` }))), SITE);
 
-        // 12 posts plus the two static routes - `/` and `/blog`.
-        expect(xml.match(/<url>/g)).toHaveLength(12 + 2);
+        // 12 posts plus the two static routes - `/` and `/blog` - and the whitepaper.
+        expect(xml.match(/<url>/g)).toHaveLength(12 + 3);
     });
 
     it('is served as XML from the app', async () =>

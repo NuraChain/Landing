@@ -1,6 +1,18 @@
-import type { PostDetail } from '../schemas.ts';
+import type { PostLocale } from '../schemas.ts';
 
 import { attr as escapeHtml, directionOf } from './meta.ts';
+
+/**
+ * What one document needs to be rendered for a crawler. A post and the whitepaper both satisfy
+ * it, so `articleMarkup` renders either; nothing below reads a slug or a tag.
+ */
+export interface ArticleLike
+{
+    locale: PostLocale;
+    title: string;
+    body: string;
+    publishedAt: string | null;
+}
 
 /**
  * The article, as markup a crawler can read.
@@ -276,7 +288,7 @@ export function renderArticle(markdown: string): string
  * own direction every trailing comma lands at the wrong end of the line - the same reasoning,
  * and the same pair of attributes, as the browser component that replaces this.
  */
-export function articleMarkup(detail: PostDetail): string
+export function articleMarkup(detail: ArticleLike): string
 {
     const date = detail.publishedAt === null
         ? ''
