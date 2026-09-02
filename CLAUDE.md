@@ -183,10 +183,16 @@ never a runtime one. `main.ts` refuses to boot over a MISSING PDF and logs a STA
 `tests/content.spec.ts` fails on either. So: edit a body, bump `revision` and `updatedAt` in the
 head, run the generator, commit the lot. Forgetting is red, not silent.
 
+**It is written for a reader with no technical background, and it stays that way.** Plain
+words, short sentences, an analogy where one helps (the shared notebook, postage, the cloakroom
+ticket), no commands and no field names. The chain values a wallet asks for sit in one reference
+section at the end; anything a developer needs beyond that is a link to the blog, not a paragraph.
+
 Every figure a body states is bounded by `lib/content/site.ts` and by what the node answers over
-RPC - the consensus section says only what block headers show, with the date it was read. The
-same spec pins that every translation keeps the English outline, its code fences verbatim, and
-the same links in the same order, so a translator working in one file cannot lose a section.
+RPC - the block-production section says only what block headers show, with the date it was read.
+The same spec pins that every translation keeps the English outline, has no code fences, and
+carries the same links in the same order, so a translator working in one file cannot lose a
+section.
 
 ## Design system
 
