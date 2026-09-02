@@ -15,6 +15,7 @@ export const ar: Strings =
         explorer: 'المستكشف',
         social: 'المجتمع',
         download: 'تنزيل',
+        whitepaper: 'الورقة البيضاء',
         language: 'اللغة',
         skipToContent: 'الانتقال إلى المحتوى',
         openMenu: 'فتح القائمة',
@@ -179,6 +180,14 @@ export const ar: Strings =
         // Keyed by the ids in ROADMAP. Empty while ROADMAP is: a milestone added there
         // fails the build until its line exists in all ten tables.
         milestones: {}
+    },
+
+    whitepaper:
+    {
+        revision: 'المراجعة',
+        download: 'تنزيل ملف PDF',
+        downloadHint: 'الوثيقة كاملة، منسّقة للطباعة، باللغة التي تقرأ بها.',
+        failed: 'تعذّر تحميل الورقة البيضاء. أعد تحميل الصفحة للمحاولة مجددًا.'
     },
 
     explorer:

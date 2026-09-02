@@ -16,6 +16,12 @@ interface ButtonProps
     href?: string;
     /** Only meaningful alongside `href`. Adds the safe rel automatically. */
     external?: boolean;
+    /**
+     * Only meaningful alongside `href`: the file name to save the target as. Present means the
+     * link DOWNLOADS rather than navigates - the whitepaper's PDF. Same-origin only, which is
+     * what a browser honours the attribute for anyway.
+     */
+    download?: string;
     type?: 'button' | 'submit';
     disabled?: boolean;
     ariaLabel?: string;
@@ -56,6 +62,7 @@ export default component Button(props: ButtonProps)
             href={ href }
             class={ () => classes }
             aria-label={ props.ariaLabel }
+            download={ props.download }
             target={ props.external === true ? '_blank' : undefined }
             rel={ props.external === true ? 'noreferrer noopener' : undefined }
         >

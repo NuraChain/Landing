@@ -15,6 +15,7 @@ export const hi: Strings =
         explorer: 'एक्सप्लोरर',
         social: 'समुदाय',
         download: 'डाउनलोड',
+        whitepaper: 'व्हाइटपेपर',
         language: 'भाषा',
         skipToContent: 'मुख्य सामग्री पर जाएँ',
         openMenu: 'मेनू खोलें',
@@ -179,6 +180,14 @@ export const hi: Strings =
         // Keyed by the ids in ROADMAP. Empty while ROADMAP is: a milestone added there
         // fails the build until its line exists in all ten tables.
         milestones: {}
+    },
+
+    whitepaper:
+    {
+        revision: 'संशोधन',
+        download: 'PDF डाउनलोड करें',
+        downloadHint: 'पूरा दस्तावेज़, प्रिंट के लिए टाइपसेट, उसी भाषा में जो आप पढ़ रहे हैं।',
+        failed: 'व्हाइटपेपर लोड नहीं हो सका। दोबारा कोशिश करने के लिए पेज रीलोड करें।'
     },
 
     explorer:

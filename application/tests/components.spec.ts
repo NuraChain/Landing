@@ -89,6 +89,23 @@ describe('Button', () =>
         expect(container.querySelector('button')?.getAttribute('aria-label')).toBe('Close');
     });
 
+    // A download is a link with a file name, not a navigation - and it is only ever same-origin,
+    // so it never carries the new-tab rel.
+    it('downloads rather than navigates when given a file name', () =>
+    {
+        const { container } = renderTest(() =>
+            Button({ children: 'PDF', href: '/whitepaper/nura-chain-whitepaper-en.pdf', download: 'nura-chain-whitepaper-en.pdf' }));
+        const anchor = container.querySelector('a')!;
+
+        expect(anchor.getAttribute('download')).toBe('nura-chain-whitepaper-en.pdf');
+        expect(anchor.getAttribute('target')).toBeNull();
+        cleanup();
+
+        const plain = renderTest(() => Button({ children: 'Docs', href: '/docs' }));
+
+        expect(plain.container.querySelector('a')!.hasAttribute('download')).toBe(false);
+    });
+
     it('supports submit buttons without changing the default', () =>
     {
         const submit = renderTest(() => Button({ children: 'Send', type: 'submit' }));

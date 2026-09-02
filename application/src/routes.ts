@@ -8,6 +8,7 @@ import About from './pages/about.page.azeroth';
 import Blog from './pages/blog.page.azeroth';
 import Home from './pages/home.page.azeroth';
 import Post from './pages/post.page.azeroth';
+import Whitepaper from './pages/whitepaper.page.azeroth';
 
 /*
  * `render` is PINNED on every row, and the pin is the point.
@@ -51,5 +52,15 @@ export const routes: PageRoute[] = [
      * back here for it: no `hreflang`, because there is no other url to name.
      */
     { path: '/blog', component: Blog, render: 'server' },
-    { path: '/blog/:slug', component: Post, render: 'server' }
+    { path: '/blog/:slug', component: Post, render: 'server' },
+
+    /*
+     * The whitepaper is served the way a post is: the head from `seo/pages.ts`, the body from
+     * `seo/article.ts`, both resolved through one call in the document's own default language.
+     * It is the one page on the site a reader is most likely to cite, so it is the one that
+     * most needs to be indexed as the document rather than as a loading frame. The PDFs sit
+     * under the same prefix - `/whitepaper/<file>.pdf` - and are served by the server half
+     * ahead of the kit; see `PDF_ROUTE` in `server/src/whitepaper/content.ts`.
+     */
+    { path: '/whitepaper', component: Whitepaper, render: 'server' }
 ];

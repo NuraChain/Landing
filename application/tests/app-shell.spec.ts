@@ -74,6 +74,15 @@ describe('routing', () =>
         expect(container.querySelector('#tokenomics')).toBeNull();
     });
 
+    it('renders the whitepaper page at /whitepaper', () =>
+    {
+        const { container } = mount('/whitepaper');
+
+        // The document itself arrives on fetch; what the route owns is the frame around it.
+        expect(container.textContent).toContain(en.nav.whitepaper);
+        expect(container.querySelector('#tokenomics')).toBeNull();
+    });
+
     it('renders a 404 for an unknown path rather than a blank page', () =>
     {
         const { container } = mount('/nope');

@@ -70,6 +70,7 @@ export default component Footer()
                             { t().nav.explorer }
                         </a>
                         <Link to="/blog" class="mt-2 block text-muted hover:text-ink">{ t().blog.all }</Link>
+                        <Link to="/whitepaper" class="mt-2 block text-muted hover:text-ink">{ t().nav.whitepaper }</Link>
                     </div>
                 </nav>
             </div>

@@ -15,6 +15,7 @@ export const ru: Strings =
         explorer: 'Обозреватель',
         social: 'Сообщество',
         download: 'Скачать',
+        whitepaper: 'Белая книга',
         language: 'Язык',
         skipToContent: 'Перейти к содержимому',
         openMenu: 'Открыть меню',
@@ -179,6 +180,14 @@ export const ru: Strings =
         // Keyed by the ids in ROADMAP. Empty while ROADMAP is: a milestone added there
         // fails the build until its line exists in all ten tables.
         milestones: {}
+    },
+
+    whitepaper:
+    {
+        revision: 'Редакция',
+        download: 'Скачать PDF',
+        downloadHint: 'Полный документ, свёрстанный для печати, на языке, который вы читаете.',
+        failed: 'Не удалось загрузить белую книгу. Перезагрузите страницу, чтобы попробовать снова.'
     },
 
     explorer:

@@ -15,6 +15,7 @@ export const zh: Strings =
         explorer: '浏览器',
         social: '社区',
         download: '下载',
+        whitepaper: '白皮书',
         language: '语言',
         skipToContent: '跳到正文',
         openMenu: '打开菜单',
@@ -179,6 +180,14 @@ export const zh: Strings =
         // Keyed by the ids in ROADMAP. Empty while ROADMAP is: a milestone added there
         // fails the build until its line exists in all ten tables.
         milestones: {}
+    },
+
+    whitepaper:
+    {
+        revision: '修订版',
+        download: '下载 PDF',
+        downloadHint: '完整文档，已为打印排版，语言与你正在阅读的一致。',
+        failed: '白皮书未能加载。请刷新页面重试。'
     },
 
     explorer:

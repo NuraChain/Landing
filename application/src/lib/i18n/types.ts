@@ -27,6 +27,8 @@ export interface Strings
         explorer: string;
         social: string;
         download: string;
+        /** The whitepaper route - a nav entry, and the eyebrow label above the document's title. */
+        whitepaper: string;
         /** The language picker: the trigger's accessible name and the modal's title. */
         language: string;
         skipToContent: string;
@@ -263,6 +265,23 @@ export interface Strings
             next: string;
         };
         milestones: Record<string, string>;
+    };
+
+    /**
+     * The whitepaper page's own chrome. The document itself is content, served from
+     * `server/content/whitepaper/` in the reader's language, so nothing of its text lives here -
+     * only the labels around it and the download control.
+     */
+    whitepaper:
+    {
+        /** Prefixes the revision number: "Revision 1.0". */
+        revision: string;
+        /** The download control's label, top and bottom of the page. */
+        download: string;
+        /** Under the heading of the download panel at the foot of the document. */
+        downloadHint: string;
+        /** Raised when the document could not be fetched at all. */
+        failed: string;
     };
 
     explorer:

@@ -15,6 +15,7 @@ export const fa: Strings =
         explorer: 'کاوشگر',
         social: 'انجمن',
         download: 'دانلود',
+        whitepaper: 'وایت‌پیپر',
         language: 'زبان',
         skipToContent: 'رفتن به محتوای اصلی',
         openMenu: 'باز کردن منو',
@@ -179,6 +180,14 @@ export const fa: Strings =
         // Keyed by the ids in ROADMAP. Empty while ROADMAP is: a milestone added there
         // fails the build until its line exists in all ten tables.
         milestones: {}
+    },
+
+    whitepaper:
+    {
+        revision: 'ویرایش',
+        download: 'دانلود PDF',
+        downloadHint: 'سند کامل، صفحه‌آرایی‌شده برای چاپ، به زبانی که می‌خوانید.',
+        failed: 'وایت‌پیپر بارگذاری نشد. صفحه را دوباره بارگذاری کنید.'
     },
 
     explorer:

@@ -15,6 +15,7 @@ export const tr: Strings =
         explorer: 'Gezgin',
         social: 'Topluluk',
         download: 'İndir',
+        whitepaper: 'Teknik doküman',
         language: 'Dil',
         skipToContent: 'İçeriğe atla',
         openMenu: 'Menüyü aç',
@@ -179,6 +180,14 @@ export const tr: Strings =
         // Keyed by the ids in ROADMAP. Empty while ROADMAP is: a milestone added there
         // fails the build until its line exists in all ten tables.
         milestones: {}
+    },
+
+    whitepaper:
+    {
+        revision: 'Revizyon',
+        download: 'PDF\'i indir',
+        downloadHint: 'Belgenin tamamı, baskı için dizilmiş, okuduğunuz dilde.',
+        failed: 'Teknik doküman yüklenemedi. Yeniden denemek için sayfayı yenileyin.'
     },
 
     explorer:

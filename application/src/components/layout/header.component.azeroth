@@ -1,6 +1,6 @@
 import { For, Link, Show } from 'azerothjs';
 
-import { Blocks, Check, CircleDollarSign, Languages, Menu, Moon, Newspaper, Search, Sun, Users, Wallet, X } from 'lucide';
+import { Blocks, Check, CircleDollarSign, FileText, Languages, Menu, Moon, Newspaper, Search, Sun, Users, Wallet, X } from 'lucide';
 
 import { LOCALES, nativeName, useLocale } from '../../stores/locale';
 import { captureOverlay } from '../../lib/overlay';
@@ -198,6 +198,16 @@ export default component Header()
                 >
                     { t().blog.all }
                 </Link>
+
+                { /* The second route in the bar. Same treatment as the blog, and `end` is off
+                     for the same reason: the PDFs live under this path too. */ }
+                <Link
+                    to="/whitepaper"
+                    class="rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-elevated hover:text-ink aria-[current=page]:text-ink"
+                    activeClass="is-current"
+                >
+                    { t().nav.whitepaper }
+                </Link>
             </nav>
 
             { /* Both of these are `md` and up, and the drawer carries them below that. The
@@ -315,6 +325,16 @@ export default component Header()
                             >
                                 { icon(Newspaper, 'size-[18px] shrink-0') }
                                 <span>{ t().blog.all }</span>
+                            </Link>
+
+                            <Link
+                                to="/whitepaper"
+                                class="flex items-center gap-3 rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink aria-[current=page]:text-ink"
+                                activeClass="is-current"
+                                onClick={ () => jump() }
+                            >
+                                { icon(FileText, 'size-[18px] shrink-0') }
+                                <span>{ t().nav.whitepaper }</span>
                             </Link>
                         </div>
 

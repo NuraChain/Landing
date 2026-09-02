@@ -1,0 +1,168 @@
+import { Download } from 'lucide';
+
+import { client, type WhitepaperDetail } from '../api';
+import { directionOf, useLocale } from '../stores/locale';
+
+import Markdown from '../components/content/markdown.component.azeroth';
+import TranslationNotice from '../components/content/translation-notice.component.azeroth';
+import Banner from '../components/ui/banner.component.azeroth';
+import Button from '../components/ui/button.component.azeroth';
+import Skeleton from '../components/ui/skeleton.component.azeroth';
+import { icon } from '../components/icons/icon';
+
+/**
+ * The whitepaper: one document, read in the reader's language or the nearest the document holds.
+ *
+ * The same shape as a post, on purpose - the server decides which translation is served and this
+ * page renders that and says which of the fallback's three steps happened - with one addition.
+ * The document is also a PDF, one per language, and the download is offered twice: once beside
+ * the title, for the reader who came for the file, and once at the foot of the text, for the
+ * reader who finished it. Both point at the PDF in the language SERVED, which the response
+ * names, so the page and the file can never be in different languages.
+ */
+export default component Whitepaper()
+{
+    const { t, locale } = useLocale();
+
+    state paper = null as WhitepaperDetail | null;
+    state failed = false;
+
+    /** Dates go through Intl in the reader's locale - no hand formatting, years included. */
+    const day = (iso: string): string =>
+        new Intl.DateTimeFormat(locale(), { dateStyle: 'long' }).format(new Date(iso));
+
+    /** The name the file lands under in a downloads folder: the last segment of its path. */
+    const fileName = (path: string): string => path.slice(path.lastIndexOf('/') + 1);
+
+    // Keyed on the language: switching re-asks, because which translation is served is decided
+    // server-side. `Promise.resolve().then(...)` rather than a bare call, so a client that
+    // refuses synchronously - no manifest, no route - lands in the failed state below instead
+    // of throwing out of the effect and leaving the page blank.
+    effect
+    {
+        let live = true;
+        const wanted = locale();
+
+        Promise.resolve()
+            .then(() => client.whitepaper.read({ query: { locale: wanted } }))
+            .then((found) =>
+            {
+                if (live)
+                {
+                    paper = found;
+                    failed = false;
+                }
+            })
+            .catch(() =>
+            {
+                if (live)
+                {
+                    failed = true;
+                    paper = null;
+                }
+            });
+
+        cleanup
+        {
+            live = false;
+        }
+    }
+
+    { /* One measure with the rest of the site - see the note on the blog index. The PROSE is
+         narrowed again further down: 4xl is the page's edge, not a line length to read at. */ }
+    <article class="mx-auto flex max-w-4xl flex-col gap-6 px-5 py-16 sm:py-20">
+        <header class="flex flex-col gap-3">
+            { /* The rule above the heading is the SectionHeading motif, drawn here by hand: that
+                 component numbers a landing section, and a route is not one of those. */ }
+            <span class="h-px w-full bg-line" aria-hidden="true"></span>
+            <p class="font-label text-xs font-medium uppercase tracking-[0.12em] text-muted">{ t().nav.whitepaper }</p>
+
+            { /* A title, a meta line and a lede - the shape of the head that is loading, so the
+                 page does not jump when it lands. */ }
+            <Show when={ paper === null && !failed }>
+                <div class="flex flex-col gap-4" aria-hidden="true">
+                    <Skeleton class="h-10 w-3/4" />
+                    <Skeleton class="h-4 w-1/3" />
+                    <Skeleton class="h-4 w-2/3" />
+                </div>
+            </Show>
+
+            <Show when={ paper !== null }>
+            { () =>
+                <div class="flex flex-col gap-3">
+                    { /* The title is in the DOCUMENT's language, so it carries the document's
+                         direction - the same one the body below gets. See the post page. */ }
+                    <h1
+                        class="font-display text-[clamp(1.9rem,5vw,2.8rem)] font-bold leading-tight tracking-tight text-ink"
+                        lang={ paper!.locale }
+                        dir={ directionOf(paper!.locale) }
+                    >
+                        { paper!.title }
+                    </h1>
+
+                    { /* The revision and the date are Latin numeric runs inside a possibly
+                         mirrored line, so each carries its own isolate on an INNER element. */ }
+                    <p class="flex flex-wrap items-center gap-x-3 gap-y-1 font-label text-xs uppercase tracking-[0.12em] text-faint">
+                        <span>{ t().whitepaper.revision } <bdi dir="ltr" class="font-mono">{ paper!.revision }</bdi></span>
+                        <span>{ t().blog.updated } <bdi dir="ltr" class="font-mono">{ day(paper!.updatedAt) }</bdi></span>
+                    </p>
+
+                    <p class="max-w-lg text-muted" lang={ paper!.locale } dir={ directionOf(paper!.locale) }>{ paper!.summary }</p>
+
+                    { /* The compact copy of the download, for the reader who came for the file
+                         and should not have to scroll two thousand words to find it. */ }
+                    <div class="mt-2">
+                        <Button href={ paper!.pdf } download={ fileName(paper!.pdf) } variant="secondary">
+                            { icon(Download, 'size-[18px]') }
+                            { t().whitepaper.download }
+                        </Button>
+                    </div>
+                </div>
+            }
+            </Show>
+        </header>
+
+        { /* A failure is NOT an empty document: the reader is told, and can reload. */ }
+        <Show when={ () => failed }>
+            <Banner tone="danger">{ t().whitepaper.failed }</Banner>
+        </Show>
+
+        <Show when={ paper !== null }>
+        { () =>
+            <div class="flex flex-col gap-8">
+                <Show when={ !paper!.translated }>
+                    <TranslationNotice available={ paper!.available } />
+                </Show>
+
+                { /* The body is set in the language it was WRITTEN in, which is not always the
+                     document's - see the post page for why the direction rides on it. */ }
+                { /* `max-w-[68ch]`: the page is 4xl like every other, but prose is not read at
+                     that width. */ }
+                <div class="max-w-[68ch]" lang={ paper!.locale } dir={ directionOf(paper!.locale) }>
+                    <Markdown source={ paper!.body } />
+                </div>
+
+                { /* The download proper, at the foot of the text. A square panel, like the
+                     landing sections, so it reads as the document's own colophon rather than as
+                     another paragraph. The heading is an h2: the body's own headings are h2/h3
+                     and this closes the outline at the same level rather than skipping one. */ }
+                <section class="flex flex-col gap-4 border border-line-strong bg-surface p-6 sm:p-8">
+                    <h2 class="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">{ t().whitepaper.download }</h2>
+                    <p class="max-w-lg text-muted">{ t().whitepaper.downloadHint }</p>
+                    <p class="flex flex-wrap items-center gap-x-3 gap-y-1 font-label text-xs uppercase tracking-[0.12em] text-faint">
+                        <span>PDF</span>
+                        <span>{ t().whitepaper.revision } <bdi dir="ltr" class="font-mono">{ paper!.revision }</bdi></span>
+                        <bdi dir="ltr" class="font-mono">{ day(paper!.updatedAt) }</bdi>
+                    </p>
+                    <div>
+                        <Button href={ paper!.pdf } download={ fileName(paper!.pdf) } size="lg" shape="square">
+                            { icon(Download, 'size-[18px]') }
+                            { t().whitepaper.download }
+                        </Button>
+                    </div>
+                </section>
+            </div>
+        }
+        </Show>
+    </article>
+}

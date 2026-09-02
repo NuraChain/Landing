@@ -15,6 +15,7 @@ export const fr: Strings =
         explorer: 'Explorateur',
         social: 'Communauté',
         download: 'Télécharger',
+        whitepaper: 'Livre blanc',
         language: 'Langue',
         skipToContent: 'Aller au contenu',
         openMenu: 'Ouvrir le menu',
@@ -179,6 +180,14 @@ export const fr: Strings =
         // Keyed by the ids in ROADMAP. Empty while ROADMAP is: a milestone added there
         // fails the build until its line exists in all ten tables.
         milestones: {}
+    },
+
+    whitepaper:
+    {
+        revision: 'Révision',
+        download: 'Télécharger le PDF',
+        downloadHint: 'Le document complet, mis en page pour l\'impression, dans la langue que vous lisez.',
+        failed: 'Le livre blanc n\'a pas pu être chargé. Rechargez la page pour réessayer.'
     },
 
     explorer:

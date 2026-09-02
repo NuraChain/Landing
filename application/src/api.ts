@@ -15,7 +15,8 @@ export type {
     PostDetail,
     PostLocale,
     PostPage,
-    TagCount
+    TagCount,
+    WhitepaperDetail
 } from '../../server/src/schemas.ts';
 
 /**

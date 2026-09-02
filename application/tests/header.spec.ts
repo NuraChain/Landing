@@ -302,6 +302,22 @@ describe('header navigation', () =>
         }
     });
 
+    it('links the whitepaper route from the bar and from the drawer', () =>
+    {
+        // A route, like the blog, so it is a <Link> - and it has to be reachable at every
+        // width, which means the drawer carries it as well as the bar.
+        const { container } = mount();
+
+        expect([...container.querySelectorAll('nav a')].map((a) => a.getAttribute('href'))).toContain('/whitepaper');
+
+        fire(byLabel(container, en.nav.openMenu)!, 'click');
+
+        const row = [...drawer()!.querySelectorAll('a')].find((a) => a.getAttribute('href') === '/whitepaper');
+
+        expect(row).toBeDefined();
+        expect(row!.textContent).toContain(en.nav.whitepaper);
+    });
+
     it('roots the section anchors once the visitor is off the landing page', () =>
     {
         // From /blog a bare `#chain` points at nothing in the document being shown, and would

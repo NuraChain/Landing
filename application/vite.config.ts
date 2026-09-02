@@ -22,7 +22,11 @@ export default defineConfig({
         // client itself, from one origin, so neither of these exists there.
         proxy: {
             '/api': 'http://localhost:5000',
-            '/_image': 'http://localhost:5000'
+            '/_image': 'http://localhost:5000',
+            // The whitepaper PDFs are content, served by the server half from
+            // server/content/whitepaper/pdf. A regex rather than the `/whitepaper` prefix,
+            // because the bare path is the PAGE and vite has to keep serving that itself.
+            '^/whitepaper/.+\\.pdf$': 'http://localhost:5000'
         }
     },
 
