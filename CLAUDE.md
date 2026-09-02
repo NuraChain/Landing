@@ -162,6 +162,32 @@ Twitter, JSON-LD - and `seo/article.ts` renders the markdown into the same docum
   indexable addresses would want the locale in the path; see the comment in `routes.ts`.
 - A slug that resolves to nothing is a real 404, never a soft one.
 
+## The whitepaper
+
+`/whitepaper`, `render: 'server'` like a post, with one PDF per language under
+`/whitepaper/nura-chain-whitepaper-<locale>.pdf`.
+
+**It is content, not copy.** `server/content/whitepaper/` holds one `.md` per language plus
+`whitepaper.ts`, the typed head - title and summary per locale, a `revision`, `publishedAt` and
+`updatedAt`. `src/whitepaper/content.ts` reads it at boot, refuses a missing language, and
+resolves a reader through the SAME `pick` the blog uses (`blog/present.ts`), so the two cannot
+fall back differently. `GET /api/whitepaper?locale=` serves it; the page renders it through the
+same `Markdown` component a post uses and shares its `TranslationNotice`.
+
+**The PDFs are derived and committed.** `npm run whitepaper:pdf` renders every `<locale>.md`
+through `seo/article.ts` - the renderer a crawler is served - and prints it with Playwright's
+Chromium into `content/whitepaper/pdf/`, beside a `manifest.json` recording the sha256 of the
+markdown each file came from. Chromium is what gets Persian and Arabic shaped, Han and Devanagari
+set in a real face, and page breaks that keep a heading with its text; it is a dev dependency and
+never a runtime one. `main.ts` refuses to boot over a MISSING PDF and logs a STALE one;
+`tests/content.spec.ts` fails on either. So: edit a body, bump `revision` and `updatedAt` in the
+head, run the generator, commit the lot. Forgetting is red, not silent.
+
+Every figure a body states is bounded by `lib/content/site.ts` and by what the node answers over
+RPC - the consensus section says only what block headers show, with the date it was read. The
+same spec pins that every translation keeps the English outline, its code fences verbatim, and
+the same links in the same order, so a translator working in one file cannot lose a section.
+
 ## Design system
 
 All tokens live at the top of `src/styles.css`, declared per `[data-theme]` for
