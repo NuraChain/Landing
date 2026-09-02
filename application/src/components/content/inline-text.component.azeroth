@@ -29,9 +29,14 @@ export default component InlineText(props: { nodes: Inline[] })
                  paragraph's direction, not the span's, so `personal_*` renders as `*personal_`
                  and a braced JSON fragment turns itself inside out. The attribute is what
                  isolates it: HTML gives any element with `dir` a `unicode-bidi: isolate`, so
-                 the run orders on its own and cannot leak into the sentence around it. */ }
+                 the run orders on its own and cannot leak into the sentence around it.
+
+                 `wrap-anywhere` because a code span has no break opportunity of its own: a
+                 42-character contract address in the whitepaper measured 366px on a 390px
+                 phone, and the whole page scrolled sideways to fit it. A `pre` block scrolls
+                 inside itself; an inline span has nothing to scroll and has to break. */ }
             <Show when={ node.kind === 'code' }>
-                <code dir="ltr" class="rounded bg-elevated px-1.5 py-0.5 font-mono text-[0.9em]">{ node.kind === 'code' ? node.text : '' }</code>
+                <code dir="ltr" class="rounded bg-elevated px-1.5 py-0.5 font-mono text-[0.9em] wrap-anywhere">{ node.kind === 'code' ? node.text : '' }</code>
             </Show>
             { /* Every outbound link carries the safe rel - the rule the rest of the site already
                  holds, and a post body is the one place a url arrives from outside the repo.
