@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.2] - 2026-09-10
+
+### Added
+
+- **The pre-paint script's own locale resolution is under test.** `index.html` re-implements
+  the `navigator.languages` walk that settles a first-time visitor's language, and only its
+  three lists were ever checked against the store's - the walk itself, the half that decides
+  what the first frame says, ran in no spec. It now resolves every locale the store supports
+  to the direction the store assigns it, and falls back to English for an unmatched or absent
+  `navigator.languages`. It runs in a `vm` rather than against the suite's own document, so a
+  spec resolving Persian cannot leave the next one mirrored.
+
+### Changed
+
+- TypeScript to 7.0 and Vite to 8.2, with seven other npm packages; `actions/checkout`,
+  `actions/setup-node` and `actions/upload-artifact` to v7 (Dependabot groups).
+
 ## [1.7.1] - 2026-09-01
 
 ### Added
