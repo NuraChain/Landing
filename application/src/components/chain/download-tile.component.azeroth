@@ -1,0 +1,95 @@
+import type { Download } from '../../lib/content/site';
+
+import { platformIcon } from '../icons/platform-icon';
+
+import { useLocale } from '../../stores/locale';
+
+/**
+ * One platform in the wallet's download grid: a link when there is a build, a statement when
+ * there is not.
+ *
+ * THE ELEMENT CHANGES, not just its styling. A row with no build used to render as
+ * `<a aria-disabled="true">` with no href, which is a link to nowhere dressed up as a disabled
+ * one - an anchor without an href has no link role, takes no focus and answers no keyboard, so
+ * the ARIA attribute was describing a control that did not exist. Link checkers read it as an
+ * empty destination, which is how this was found. A `<div>` says the true thing: iOS and macOS
+ * are not yet downloads, they are two names with "Coming soon" under them.
+ *
+ * Nothing replaces the `aria-disabled`. `disabled` is a state a control can be IN, and there is
+ * no control here to be in it; the translated "Coming soon" beside the label is the whole
+ * message, and it is read out in document order by anything that reaches it.
+ *
+ * A ROW WITH NO BUILD IS DIMMED WITH TOKENS, NEVER WITH OPACITY - see `quiet` below.
+ *
+ * Not `Card`, which is the other component with this link/not-a-link switch: this tile is a
+ * flex row of an icon and two lines, and Card is a padded `--surface` panel. Reusing it would
+ * change how the grid looks to avoid twenty lines.
+ */
+export default component DownloadTile(props: { entry: Download })
+{
+    const { t } = useLocale();
+
+    /**
+     * `w-full` because the `<li>` around this is the grid cell, not the tile - without it the
+     * six tiles size to their own labels and the grid stops lining up.
+     */
+    derived classes = 'flex w-full items-center gap-3 border border-line px-4 py-3 text-start transition-colors '
+        // `bg-bg` sinks a row with no build INTO the panel instead of sitting on it: the block
+        // around this grid is `bg-surface`, so a `bg-surface` tile is level with it and a
+        // `--bg` one reads as a well. That is where the "not yet" now comes from - it used to
+        // come from `opacity-55`, which cost the text its contrast. See the note on the label.
+        + (props.entry.url === null ? 'bg-bg' : 'bg-surface hover:border-line-strong hover:bg-elevated');
+
+    <Show
+        when={ () => props.entry.url ?? undefined }
+        fallback={ () =>
+        <div class={ () => classes }>
+            { /* No brand colour on a row that is not a download: a full-strength mark here
+                 would read as the one thing you CAN click. */ }
+            <span class="shrink-0 text-faint">{ platformIcon(props.entry.id) }</span>
+            <span class="min-w-0">
+                { /*
+                     THE DIM IS `--muted`, NOT AN OPACITY, and that is the whole reason this
+                     line is not `text-ink` like the live one.
+
+                     The tile used to carry `opacity-55`, which put this label at 3.98:1 and the
+                     "Coming soon" under it at 2.48:1 - both below the 4.5:1 floor. axe never
+                     reported it, because the color-contrast rule EXEMPTS anything marked
+                     `aria-disabled="true"` under the WCAG carve-out for inactive controls, and
+                     the tile was wearing that attribute. Take the attribute off, as this
+                     component does, and the failure it was hiding is real and visible.
+
+                     Opacity cannot be rescued here: `--faint` needs about 90% before it clears
+                     the floor on `--surface`, which is no dim at all. `--muted` and `--faint`
+                     are measured against every surface (see the notes on both in styles.css),
+                     so stating the dim as a token is the only version that is quieter AND
+                     still legible.
+                  */ }
+                <span class="block text-sm font-medium text-muted">{ () => props.entry.label }</span>
+                { /* Translated copy, so it keeps the page direction - unlike the note on a live
+                     row, which is a Latin format string and has to be pinned. */ }
+                <span class="block text-xs text-faint">{ () => t().wallet.comingSoon }</span>
+            </span>
+        </div>
+    }
+        let={ href }
+    >
+        <a href={ href } class={ () => classes }>
+            <span class="shrink-0 text-muted" style={ `color: var(--brand-${ props.entry.id })` }>
+                { platformIcon(props.entry.id) }
+            </span>
+            <span class="min-w-0">
+                <span class="block text-sm font-medium text-ink">{ () => props.entry.label }</span>
+                { /* The note is a Latin format string, so Persian needs it pinned LTR: bidi
+                     treats a leading "." as neutral and flips it to the far end, rendering
+                     ".deb · x64" as "deb · x64.". The dir goes on an INLINE wrapper, not on the
+                     block above - `text-start` resolves against each element's own direction,
+                     so an ltr block would align the note to the opposite edge from the label
+                     sitting over it. */ }
+                <span class="block text-xs text-faint">
+                    <span dir="ltr">{ () => props.entry.note }</span>
+                </span>
+            </span>
+        </a>
+    </Show>
+}

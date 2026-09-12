@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderTest, cleanup } from '@azerothjs/testing';
 
 import App from '../src/App.azeroth';
+import { DOWNLOADS } from '../src/lib/content/site';
 import { resetNetworkStats } from '../src/lib/network';
 import { useLocale } from '../src/stores/locale';
 import { en } from '../src/lib/i18n/en';
@@ -212,15 +213,61 @@ describe('link safety', () =>
         }
     });
 
-    // A disabled download tile must not be a live link to nowhere.
+    /*
+     * A platform with no build is not an anchor at all.
+     *
+     * It used to be `<a aria-disabled="true">` with no href, which reads to a link checker as
+     * an empty destination and to assistive tech as nothing at all - an anchor without an href
+     * has no link role and takes no focus, so the attribute described a control that did not
+     * exist. The assertion is written against DOWNLOADS rather than against whatever the markup
+     * happens to render, so it keeps meaning the day iOS ships and the counts change.
+     */
     it('renders unreleased platforms as inert tiles, not dead links', () =>
     {
         const { container } = mount('/');
+        const rows = [...container.querySelectorAll('#wallet-platforms > li')];
+        const unreleased = DOWNLOADS.filter((entry) => entry.url === null);
 
-        for (const tile of container.querySelectorAll('#wallet a[aria-disabled="true"]'))
+        expect(unreleased.length).toBeGreaterThan(0);
+        // Every platform still gets a row - the point is that they are all on one footing.
+        expect(rows).toHaveLength(DOWNLOADS.length);
+
+        DOWNLOADS.forEach((entry, index) =>
         {
-            expect(tile.getAttribute('href')).toBeNull();
-            expect(tile.textContent).toContain(en.wallet.comingSoon);
+            // The tile itself, not the `<li>` the grid needs around it.
+            const tile = rows[index].firstElementChild!;
+
+            expect(tile.textContent, entry.id).toContain(entry.label);
+
+            if (entry.url === null)
+            {
+                expect(tile.tagName, `${ entry.label } must not be an anchor`).not.toBe('A');
+                expect(tile.textContent, entry.id).toContain(en.wallet.comingSoon);
+            }
+            else
+            {
+                expect(tile.tagName, `${ entry.label } must be a link`).toBe('A');
+                expect(tile.getAttribute('href'), entry.id).toBe(entry.url);
+            }
+        });
+    });
+
+    // The defect the rule above exists to prevent, stated directly: no anchor anywhere on the
+    // landing page may carry an empty, missing or placeholder destination.
+    it('gives every anchor on the page a real destination', () =>
+    {
+        const { container } = mount('/');
+        const anchors = [...container.querySelectorAll('a')];
+
+        expect(anchors.length).toBeGreaterThan(0);
+
+        for (const anchor of anchors)
+        {
+            const href = anchor.getAttribute('href');
+
+            expect(href, `"${ anchor.textContent?.trim() }" has no href`).toBeTruthy();
+            expect(href, `"${ anchor.textContent?.trim() }" points nowhere`).not.toBe('#');
+            expect(href!.toLowerCase().startsWith('javascript:'), href!).toBe(false);
         }
     });
 });
