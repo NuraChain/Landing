@@ -81,6 +81,29 @@ export function excerpt(body: string): string
     return `${ (lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trimEnd() }…`;
 }
 
+/**
+ * The card a shared link renders as, for every page that has no picture of its own.
+ *
+ * `/icon.png` used to do this job and it is the wrong shape for it: 512x512, square, where
+ * Facebook, LinkedIn, Slack and X all lay out at roughly 1.91:1 and every one of them crops or
+ * letterboxes anything else. A square logo in a wide slot is either pillarboxed on grey or has
+ * its top and bottom cut off, depending on the reader's client - and below 600px wide, X
+ * demotes the card to the small `summary` layout outright.
+ *
+ * The file is DERIVED and committed: `npm run og:image` renders it from the site's own tokens
+ * and typeface - see scripts/og-image.ts, the same Chromium the whitepaper PDFs come out of.
+ * It stays `/icon.png` in the JSON-LD `logo` below, which genuinely does want the square mark.
+ */
+const SOCIAL_IMAGE = { path: '/og-image.png', width: 1200, height: 630, alt: 'Nura Chain' } as const;
+
+/** The four image fields of a page that has no picture of its own, spread into its meta. */
+const socialImage = (siteUrl: string): Pick<PageMeta, 'image' | 'imageAlt' | 'imageWidth' | 'imageHeight'> => ({
+    image: `${ siteUrl }${ SOCIAL_IMAGE.path }`,
+    imageAlt: SOCIAL_IMAGE.alt,
+    imageWidth: SOCIAL_IMAGE.width,
+    imageHeight: SOCIAL_IMAGE.height
+});
+
 /** The publisher every schema below points at. There is no author system, so it is also the author. */
 const organization = (siteUrl: string): Record<string, unknown> => ({
     '@type': 'Organization',
@@ -167,8 +190,7 @@ export function metaFor(url: string, deps: SeoDeps): PageMeta | null
             canonical: `${ siteUrl }/`,
             locale: 'en',
             alternateLocales: [],
-            image: `${ siteUrl }/icon.png`,
-            imageAlt: 'Nura Chain',
+            ...socialImage(siteUrl),
             type: 'website',
             jsonLd: [
                 {
@@ -194,8 +216,7 @@ export function metaFor(url: string, deps: SeoDeps): PageMeta | null
             canonical: `${ siteUrl }/about`,
             locale: 'en',
             alternateLocales: [],
-            image: null,
-            imageAlt: '',
+            ...socialImage(siteUrl),
             type: 'website',
             /*
              * NOINDEX, and it comes off the moment this page says something about Nura Chain.
@@ -235,8 +256,7 @@ export function metaFor(url: string, deps: SeoDeps): PageMeta | null
             // sees no reader. The switcher moves the rest client-side.
             locale: detail.locale,
             alternateLocales: detail.available,
-            image: `${ siteUrl }/icon.png`,
-            imageAlt: 'Nura Chain',
+            ...socialImage(siteUrl),
             type: 'article',
             article: {
                 publishedTime: detail.publishedAt,
@@ -283,8 +303,7 @@ export function metaFor(url: string, deps: SeoDeps): PageMeta | null
             canonical: `${ siteUrl }/blog`,
             locale: 'en',
             alternateLocales: [],
-            image: null,
-            imageAlt: '',
+            ...socialImage(siteUrl),
             type: 'website',
             jsonLd: [
                 {
@@ -340,8 +359,14 @@ export function metaFor(url: string, deps: SeoDeps): PageMeta | null
         canonical,
         locale: detail.locale,
         alternateLocales: detail.available,
-        image,
-        imageAlt: detail.title,
+        /*
+         * The post's own cover when it has one, the site card when it does not - never nothing.
+         * A post with no cover used to fall to the small `summary` card, so a link to an
+         * article shared into Slack or X rendered as a line of grey text beside a blank square
+         * while the home page beside it rendered a picture. The dimensions go with the site
+         * card only: a committed cover is whatever shape somebody committed.
+         */
+        ...(image === null ? socialImage(siteUrl) : { image, imageAlt: detail.title }),
         type: 'article',
         article: {
             publishedTime: detail.publishedAt,

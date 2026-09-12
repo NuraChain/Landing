@@ -49,6 +49,16 @@ export interface PageMeta
     alternateLocales: PostLocale[];
     image: string | null;
     imageAlt: string;
+    /**
+     * The preview image's intrinsic size, when it is known.
+     *
+     * Only the site's own social card can state these - a post's cover is whatever somebody
+     * committed. They are worth stating where they are known because Facebook, LinkedIn and
+     * Slack lay the card out from these numbers BEFORE the image finishes downloading; without
+     * them the first render of a shared link is a collapsed box that pops open a moment later.
+     */
+    imageWidth?: number;
+    imageHeight?: number;
     type: 'website' | 'article';
     /**
      * The `robots` directive, when the page wants one. Omitted for everything that should be
@@ -162,8 +172,17 @@ export function renderMeta(meta: PageMeta): string
     {
         parts.push(tag('property', 'og:image', meta.image));
         parts.push(tag('property', 'og:image:alt', meta.imageAlt));
+
+        if (meta.imageWidth !== undefined && meta.imageHeight !== undefined)
+        {
+            parts.push(tag('property', 'og:image:width', String(meta.imageWidth)));
+            parts.push(tag('property', 'og:image:height', String(meta.imageHeight)));
+        }
+
         parts.push(tag('name', 'twitter:card', 'summary_large_image'));
         parts.push(tag('name', 'twitter:image', meta.image));
+        // Twitter reads its own alt and ignores og:image:alt, so the same string is said twice.
+        parts.push(tag('name', 'twitter:image:alt', meta.imageAlt));
     }
     else
     {

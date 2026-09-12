@@ -27,6 +27,7 @@
         "coverage": "npm run coverage --workspace application",
         "qa:visual": "node scripts/visual-qa.mjs",
         "whitepaper:pdf": "node scripts/whitepaper-pdf.ts",
+        "og:image": "node scripts/og-image.ts",
         "service:install": "bash scripts/service-install.sh",
         "service:start": "bash scripts/service-start.sh",
         "service:stop": "bash scripts/service-stop.sh",

@@ -126,6 +126,45 @@ describe('which pages get a head of their own', () =>
     });
 });
 
+describe('the social card', () =>
+{
+    /*
+     * Every page that has no picture of its own shares one 1200x630 card. It used to be
+     * /icon.png - 512x512, square - which every card layout in use either pillarboxes or crops,
+     * and which is small enough that X demotes the preview to its text-only `summary` form.
+     */
+    it('is the wide card, at a size the layout can be built from', () =>
+    {
+        const store = storeWith();
+
+        for (const path of ['/', '/about', '/blog', '/whitepaper'])
+        {
+            const meta = metaFor(path, deps(store))!;
+
+            expect(meta.image, path).toBe(`${ SITE }/og-image.png`);
+            expect(meta.imageWidth, path).toBe(1200);
+            expect(meta.imageHeight, path).toBe(630);
+        }
+
+        const html = injectMeta(SHELL, metaFor('/', deps(store))!);
+
+        expect(html).toContain('<meta name="twitter:card" content="summary_large_image"/>');
+        expect(html).toContain('<meta property="og:image:width" content="1200"/>');
+        expect(html).toContain('<meta property="og:image:height" content="630"/>');
+    });
+
+    // A post with no cover used to fall to the small card, so an article shared alongside the
+    // home page rendered as a line of grey text beside a blank square.
+    it('backs a post that has no cover of its own', () =>
+    {
+        const store = storeWith(post({ slug: 'no-cover' }));
+        const meta = metaFor('/blog/no-cover', deps(store))!;
+
+        expect(meta.image).toBe(`${ SITE }/og-image.png`);
+        expect(injectMeta(SHELL, meta)).toContain('<meta name="twitter:card" content="summary_large_image"/>');
+    });
+});
+
 describe('the soft-404 guard', () =>
 {
     it('marks a post address that resolves to nothing', () =>
