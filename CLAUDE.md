@@ -194,6 +194,27 @@ The same spec pins that every translation keeps the English outline, has no code
 carries the same links in the same order, so a translator working in one file cannot lose a
 section.
 
+## The head, and the social card
+
+`index.html` carries the head every path starts from - title, description, `robots`, the
+favicons, the apple-touch-icon and the manifest. `seo/pages.ts` REPLACES the first three for
+the five paths it owns, and `injectMeta` strips each of them from the shell before splicing
+its own in.
+
+- **The `robots` line is stated, not omitted, and there must be exactly one per document.**
+  Conflicting directives resolve to the MOST RESTRICTIVE, so a shell saying `index, follow`
+  beside `/about`'s `noindex` de-indexes whatever it lands on, and the served markup looks
+  right either way. Adding a directive means adding a strip in `injectMeta`.
+- **The manifest is `public/manifest.json`, not `.webmanifest`.** `staticFiles` maps
+  extensions to Content-Types from a fixed table that has no entry for `.webmanifest`, so that
+  name serves `application/octet-stream` and every browser drops the manifest without a word.
+  Its colours are `--bg`, the same value the dark `theme-color` states.
+- **`public/og-image.png` is derived and committed**, like the whitepaper PDFs.
+  `npm run og:image` renders it through the same Playwright Chromium, from the site's own
+  string table, `lib/content/site.ts` constants and dark-theme tokens. 1200x630, because every
+  card layout in use lays out at ~1.91:1 and crops or letterboxes anything else. Change the
+  size in `scripts/og-image.ts` and `SOCIAL_IMAGE` in `seo/pages.ts` together.
+
 ## Design system
 
 All tokens live at the top of `src/styles.css`, declared per `[data-theme]` for
@@ -295,6 +316,15 @@ Load the **`accessibility-audit`** skill for review work.
 
 - **Native semantics over ARIA.** Do not add ARIA speculatively — most ARIA in
   the wild makes things worse. A `<button>` beats `<div role="button">`.
+  `aria-disabled` also SILENCES axe: the color-contrast rule exempts anything wearing
+  it, under the WCAG carve-out for inactive controls. The download grid's coming-soon
+  tiles hid a 2.48:1 failure behind it for as long as they claimed to be disabled links.
+  A thing that is not a control does not get told it is a disabled one.
+- **Dim with a token, never with `opacity`.** `--muted` and `--faint` are measured
+  against every surface; an opacity multiplies whatever is underneath and nothing
+  re-measures it. `--faint` needs ~90% before it clears 4.5:1 on `--surface`, which is
+  no dim at all — so a dimmed ROW dims its background (`bg-bg` sinks a tile into a
+  `bg-surface` panel), not its text.
 - Icon-only controls carry `aria-label`; the icons themselves are `aria-hidden`.
 - One `h1` per document (the hero). Sections use `h2` via `SectionHeading`.
 - The skip link is the first tab stop and targets `#main`.

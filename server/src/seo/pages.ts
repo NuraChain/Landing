@@ -436,6 +436,14 @@ const TITLE = /[ \t]*<title>[\s\S]*?<\/title>[ \t]*\r?\n?/i;
  * tag removes the whole line rather than leaving a blank one behind in served markup.
  */
 const DESCRIPTION = /[ \t]*<meta\s+name="description"[^>]*>[ \t]*\r?\n?/i;
+/*
+ * The shell states `index, follow` outright rather than leaving the directive absent, so it
+ * has to come out here the same way the title does - `renderMeta` always writes one. A
+ * document carrying two is resolved by taking the MOST RESTRICTIVE of them, and that is the
+ * dangerous direction: leave this out and /about's `noindex` is the one that survives, on a
+ * page whose served markup looks entirely correct.
+ */
+const ROBOTS = /[ \t]*<meta\s+name="robots"[^>]*>[ \t]*\r?\n?/i;
 const HTML_OPEN = /<html\b[^>]*>/i;
 
 /**
@@ -456,6 +464,7 @@ export function injectMeta(html: string, meta: PageMeta): string
         // that every parser resolves differently, and the shell's is the generic one.
         .replace(TITLE, () => '')
         .replace(DESCRIPTION, () => '')
+        .replace(ROBOTS, () => '')
         /*
          * The served document declares the post's own language. The pre-paint script in
          * index.html overwrites both attributes from localStorage a moment later, so a visitor

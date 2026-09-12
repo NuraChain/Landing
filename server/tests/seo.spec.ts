@@ -24,16 +24,25 @@ const deps = (store: BlogContent): SeoDeps => ({ store, whitepaper: whitepaper()
 const contentWith = (...posts: LoadedPost[]): { store: BlogContent; whitepaper: ReturnType<typeof whitepaper> } =>
     ({ store: storeWith(...posts), whitepaper: whitepaper() });
 
-/** The shape the built index.html has: one title, one description, one head to replace. */
+/**
+ * The shape the built index.html has: one title, one description, one robots directive, one
+ * head to replace. The robots line matters here - the shell states `index, follow` outright
+ * rather than leaving it absent, so every one of these must be taken back out on the way past.
+ */
 const SHELL = `<!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8"/>
         <title>Nura Chain — an open and decentralized blockchain</title>
         <meta name="description" content="the generic one"/>
+        <meta name="robots" content="index, follow"/>
     </head>
     <body><div id="root"></div></body>
 </html>`;
+
+/** Every `content` a `<meta name="robots">` in the document declares, in document order. */
+const robotsIn = (html: string): string[] =>
+    [...html.matchAll(/<meta\s+name="robots"[^>]*content="([^"]*)"/gu)].map((match) => match[1]);
 
 describe('which pages get a head of their own', () =>
 {
@@ -123,6 +132,37 @@ describe('which pages get a head of their own', () =>
             expect(meta?.canonical).toBe(`${ SITE }/blog`);
             expect(meta?.type).toBe('website');
         }
+    });
+});
+
+describe('the robots directive', () =>
+{
+    /*
+     * The dangerous arm, and the reason the shell's line is stripped rather than left alone.
+     *
+     * Conflicting directives in one document are resolved by taking the MOST RESTRICTIVE, so a
+     * shell saying `index, follow` and a page saying `noindex` do not cancel out - the noindex
+     * wins, everywhere, on a page whose markup looks entirely correct. Leave the strip out and
+     * /about quietly de-indexes the site.
+     */
+    it('leaves exactly one in the document, and it is the page\'s own', () =>
+    {
+        const store = storeWith();
+
+        expect(robotsIn(SHELL)).toEqual(['index, follow']);
+        expect(robotsIn(injectMeta(SHELL, metaFor('/about', deps(store))!))).toEqual(['noindex, follow']);
+        expect(robotsIn(injectMeta(SHELL, metaFor('/', deps(store))!))).toEqual(['index, follow']);
+    });
+
+    // An indexable page says so rather than saying nothing. `metaFor` still leaves `robots`
+    // undefined for it - the default is applied when the head is written, not before.
+    it('states the default for a page that asks for nothing', () =>
+    {
+        const store = storeWith(post({ slug: 'ordinary' }));
+        const meta = metaFor('/blog/ordinary', deps(store))!;
+
+        expect(meta.robots).toBeUndefined();
+        expect(robotsIn(injectMeta(SHELL, meta))).toEqual(['index, follow']);
     });
 });
 

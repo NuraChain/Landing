@@ -1,0 +1,19 @@
+{
+    "id": "/",
+    "name": "Nura Chain",
+    "short_name": "Nura",
+    "description": "Nura Chain is an open and decentralized blockchain. Chain ID, RPC endpoint, block explorer, tokenomics, and the Nura Wallet for every device.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "minimal-ui",
+    "background_color": "#070b12",
+    "theme_color": "#070b12",
+    "lang": "en",
+    "dir": "ltr",
+    "categories": ["finance", "utilities"],
+    "icons": [
+        { "src": "/favicon-32.png", "sizes": "32x32", "type": "image/png" },
+        { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+        { "src": "/icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    ]
+}

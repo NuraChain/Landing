@@ -5,12 +5,40 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <title>Nura Chain — an open and decentralized blockchain</title>
         <meta name="description" content="Nura Chain is an open and decentralized blockchain. Chain ID, RPC endpoint, block explorer, tokenomics, and the Nura Wallet for every device."/>
-        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f8fa"/>
-        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b1118"/>
+
+        <!-- Explicit rather than absent. A crawler treats a missing directive as `index, follow`
+             already, so this states the default it would assume - but an auditor reading the
+             served markup cannot tell "indexable" from "somebody forgot", and neither can the
+             next person editing this file. The one page that wants something else is /about,
+             which is `noindex, follow` until it says anything about Nura Chain; its directive
+             is written by server/src/seo/pages.ts, which STRIPS this line before adding its
+             own. Two robots tags in one document is how a page ends up silently de-indexed. -->
+        <meta name="robots" content="index, follow"/>
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7f9fb"/>
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#070b12"/>
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/>
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"/>
         <link rel="icon" type="image/png" sizes="512x512" href="/icon.png"/>
         <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+
+        <!-- The install and share identity: name, icons and colours for "Add to Home screen",
+             the Android splash screen and the app switcher. JSON carries no comments, so the
+             two decisions in it are recorded here.
+
+             `.json`, not the conventional `.webmanifest`: the server maps an extension to a
+             Content-Type from a fixed table (@azerothjs/http staticFiles) and `.webmanifest`
+             is not in it, so that name would be served `application/octet-stream` and every
+             browser would reject the manifest without a word. `application/json` IS a JSON
+             MIME type, which is all the spec's processing step asks for.
+
+             `display: minimal-ui`, not `standalone`. This is a content site - the blog, the
+             whitepaper and six outbound download links - and `standalone` takes away back,
+             forward and reload from a reader who has just followed one. `minimal-ui` keeps
+             them and still drops the address bar.
+
+             `background_color` and `theme_color` are `--bg` from styles.css, the same value
+             the dark `theme-color` above states. All three have to move together. -->
+        <link rel="manifest" href="/manifest.json"/>
         <link rel="stylesheet" href="/src/styles.css"/>
 
         <!-- Runs BEFORE first paint, which is the entire point: resolving the theme in the

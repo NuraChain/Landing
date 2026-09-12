@@ -61,9 +61,13 @@ export interface PageMeta
     imageHeight?: number;
     type: 'website' | 'article';
     /**
-     * The `robots` directive, when the page wants one. Omitted for everything that should be
-     * indexed - an absent tag and `index, follow` mean the same thing to a crawler, and the
-     * absent one cannot be got wrong.
+     * The `robots` directive, when the page wants something other than the default.
+     *
+     * Left undefined by everything that should be indexed; {@link DEFAULT_ROBOTS} is then
+     * written instead. A crawler reads an absent tag and `index, follow` identically, so this
+     * is not about the crawler - it is about the served markup being readable. An auditor, or
+     * the next person to edit a head, cannot tell "indexable" from "nobody thought about it"
+     * when the tag is simply missing.
      */
     robots?: string;
     article?: ArticleMeta;
@@ -105,6 +109,14 @@ export function ldJson(value: unknown): string
         .replaceAll('&', '\\u0026');
 }
 
+/**
+ * The directive a page gets when it asks for nothing special.
+ *
+ * Also the literal `index.html` carries, and the two must agree: `injectMeta` strips the
+ * shell's line before splicing this one in, so a document ends up with exactly one.
+ */
+export const DEFAULT_ROBOTS = 'index, follow';
+
 /** One `<meta>` line, or nothing when the value is empty - an empty tag is worse than none. */
 const tag = (kind: 'name' | 'property', key: string, value: string): string =>
     value === '' ? '' : `<meta ${ kind }="${ attr(key) }" content="${ attr(value) }"/>`;
@@ -131,12 +143,9 @@ export function renderMeta(meta: PageMeta): string
         tag('property', 'og:locale', TERRITORY[meta.locale])
     ];
 
-    if (meta.robots !== undefined)
-    {
-        // Second in the document, right after <title>, so a crawler that stops reading the
-        // head early has still seen it.
-        parts.splice(1, 0, tag('name', 'robots', meta.robots));
-    }
+    // Second in the document, right after <title>, so a crawler that stops reading the head
+    // early has still seen it. Always emitted: see DEFAULT_ROBOTS.
+    parts.splice(1, 0, tag('name', 'robots', meta.robots ?? DEFAULT_ROBOTS));
 
     /*
      * `og:locale:alternate` is honest here in a way `hreflang` would not be. It says "this same
