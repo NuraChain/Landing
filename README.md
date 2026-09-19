@@ -39,6 +39,8 @@ is no second port to keep in sync.
 | `npm run check` | typecheck and lint, both workspaces, in one pass |
 | `npm run build` | client bundle, SSR bundle |
 | `npm start` | run the built site (honours `PORT`) |
+| `npm run qa:visual` | layout, direction and axe, across 3 viewports and both directions |
+| `npm run qa:browser` | the served head, negotiation, hydration and 404s, in Chromium and Firefox |
 
 ## The blog
 

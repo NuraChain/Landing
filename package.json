@@ -29,6 +29,7 @@
         "test:server": "npm test --workspace server",
         "coverage": "npm run coverage --workspace application",
         "qa:visual": "node scripts/visual-qa.mjs",
+        "qa:browser": "node scripts/browser-qa.mjs",
         "whitepaper:pdf": "node scripts/whitepaper-pdf.ts",
         "og:image": "node scripts/og-image.ts",
         "service:install": "bash scripts/service-install.sh",

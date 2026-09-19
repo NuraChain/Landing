@@ -6,13 +6,14 @@
 // direction actually flipping, and the axe rule set. Screenshots are the evidence you read
 // AFTER something fails, not the check itself.
 //
-//   npm run qa:visual                      # against http://127.0.0.1:3000
-//   npm run qa:visual -- --url http://...  # against anything else
+//   npm run qa:visual                          # Chromium, against http://127.0.0.1:3000
+//   npm run qa:visual -- --url http://...      # against anything else
+//   npm run qa:visual -- --browser all         # Chromium AND Firefox
 //
 // Requires `npm run dev` (one process, one origin) or a production `npm start` to already
 // be serving.
 import { mkdir, writeFile } from 'node:fs/promises';
-import { chromium } from 'playwright';
+import { launchBrowser } from './browsers.mjs';
 import AxeBuilder from '@axe-core/playwright';
 
 /** The three sizes the site is designed against; the mobile one is an iPhone 14/15 class. */
@@ -126,12 +127,33 @@ const layoutProblems = async (page) => page.evaluate(() =>
     };
 });
 
-const run = async () =>
-{
-    await mkdir(OUT_DIR, { recursive: true });
+/**
+ * Which engines this run drives.
+ *
+ * Chromium alone by default, so the everyday invocation stays quick; `--browser all` adds
+ * Firefox, which is where a layout written against one engine's defaults tends to break.
+ */
+const ENGINES = ['chromium', 'firefox'];
+const WANTED = arg('--browser', 'chromium');
 
-    const browser = await chromium.launch();
-    const summary = [];
+/** Every scenario, in one engine. Findings and the summary rows are shared across engines. */
+const runEngine = async (engine, summary) =>
+{
+    let browser;
+
+    try
+    {
+        const launched = await launchBrowser(engine);
+
+        browser = launched.browser;
+        console.log(`> ${ engine }: ${ launched.using }`);
+    }
+    catch (error)
+    {
+        record('FAIL', engine, `could not launch: ${ error.message }`);
+
+        return;
+    }
 
     try
     {
@@ -139,7 +161,7 @@ const run = async () =>
         {
             for (const viewport of VIEWPORTS)
             {
-                const scenario = `${ direction.dir }-${ viewport.name }`;
+                const scenario = `${ engine }-${ direction.dir }-${ viewport.name }`;
                 const context = await browser.newContext({
                     viewport: { width: viewport.width, height: viewport.height },
                     deviceScaleFactor: 1
@@ -276,6 +298,18 @@ const run = async () =>
     finally
     {
         await browser.close();
+    }
+};
+
+const run = async () =>
+{
+    await mkdir(OUT_DIR, { recursive: true });
+
+    const summary = [];
+
+    for (const engine of (WANTED === 'all' ? ENGINES : [WANTED]))
+    {
+        await runEngine(engine, summary);
     }
 
     console.table(summary);

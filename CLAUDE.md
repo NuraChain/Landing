@@ -478,23 +478,55 @@ choreography. Two things deliberately do NOT:
 
 The distinction is worth holding: suppress what moves on its own, keep what follows a hand.
 
-## Visual QA workflow
+## Browser QA workflow
+
+Two scripts, both driving real browsers against a running server. Run them against
+`npm run dev` while working, and against a production `npm start` before shipping - the
+second is the one that exercises the built bundle, the prerender output and the real cache
+headers.
 
 ```bash
-npm run dev                                     # one process, one origin: http://127.0.0.1:3000
-npm run qa:visual -- --url http://127.0.0.1:3000/
+npm run dev                                          # one process, one origin: http://127.0.0.1:3000
+npm run qa:visual  -- --url http://127.0.0.1:3000/   # how it LOOKS
+npm run qa:browser -- --url http://127.0.0.1:3000/   # what it DOES
 ```
 
-For every scenario (3 viewports x 2 directions) it asserts the document
-direction flipped, detects horizontal scroll and elements escaping the viewport
-(ignoring anything an ancestor legitimately clips), runs the axe WCAG 2.1 AA
-rule set, and writes a screenshot plus `report.json` to `artifacts/visual-qa/`.
+**`qa:visual`** — for every scenario (3 viewports x 2 directions) it asserts the document
+direction flipped, detects horizontal scroll and elements escaping the viewport (ignoring
+anything an ancestor legitimately clips), runs the axe WCAG 2.1 AA rule set, and writes a
+screenshot plus `report.json` to `artifacts/visual-qa/`. Chromium by default;
+`--browser all` adds Firefox and prefixes every scenario and screenshot with the engine.
 
-Warnings do not fail the run; a real regression exits non-zero.
+**`qa:browser`** — the behaviour contract, in Chromium AND Firefox, which nothing else covers:
+the document served with JavaScript DISABLED (one title, one description, one robots
+directive, a canonical, the article's own `<h2>`, JSON-LD that parses), the language the
+server negotiated from a header and from a cookie, real 404s, hydration with no console error
+and no refetch in both themes, the head following a client-side navigation and coming back on
+Back, and a language switch writing the cookie and re-stamping the document.
 
-**Then look at the screenshots.** The assertions catch overflow and contrast.
-They do not catch a heading colliding with an icon or Persian text wrapping
-badly — only your eyes do.
+Both take `--browser chromium|firefox|all`. `scripts/browsers.mjs` launches them and falls
+back to an installed Chrome or Edge when Playwright's own Chromium build is not on disk,
+saying which binary it used - a download that will not run is not a reason to skip an engine.
+
+**`qa:browser` runs inside the site's own rate limit, and that is a design constraint rather
+than a detail.** The limiter wraps the whole app at 200 requests a minute per address, so a
+cold page load spends a dozen of the budget on its own assets - and a run that walks twenty
+pages twice spends all of it, after which every later check reports a missing element and the
+site looks broken rather than throttled. Three things keep it under: the checks that only
+PARSE served markup fetch the document and nothing else, the light-theme pass visits one page
+rather than all of them, and the interactive checks share one warm context. A 429 is also
+reported as itself, once, naming the budget - so if the run is ever extended and tips over,
+the output says so instead of lying. Measured at 195 requests for both engines.
+
+It also blocks every request that leaves the origin. The landing page reads live figures from
+the RPC, the explorer and a price feed; letting a QA run depend on three third parties being
+up is the same mistake the suites avoid by stubbing `fetch`. Network-level console noise from
+those blocked requests is filtered by SHAPE, since Chromium reports them with no url.
+
+Warnings do not fail either run; a real regression exits non-zero.
+
+**Then look at the screenshots.** The assertions catch overflow and contrast. They do not
+catch a heading colliding with an icon or Persian text wrapping badly — only your eyes do.
 
 ## Testing
 
