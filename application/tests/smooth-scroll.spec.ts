@@ -16,7 +16,10 @@ const frame = (count = 1): void =>
         const due = queue;
 
         queue = [];
-        for (const cb of due) { cb(0); }
+        for (const cb of due)
+        {
+            cb(0);
+        }
     }
 };
 
@@ -52,7 +55,10 @@ beforeEach(() =>
     Object.defineProperty(window, 'innerHeight', { configurable: true, value: 900 });
     Object.defineProperty(window, 'scrollY', { configurable: true, get: () => scrolled });
     Object.defineProperty(document.documentElement, 'scrollHeight', { configurable: true, get: () => pageHeight });
-    vi.stubGlobal('scrollTo', (_x: number, y: number): void => { scrolled = y; });
+    vi.stubGlobal('scrollTo', (_x: number, y: number): void =>
+    {
+        scrolled = y;
+    });
 });
 
 afterEach(() =>
