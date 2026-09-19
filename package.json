@@ -41,6 +41,7 @@
         "service:uninstall": "bash scripts/service-uninstall.sh"
     },
     "devDependencies": {
-        "@azerothjs/cli": "2.1.0"
+        "@azerothjs/cli": "2.1.0",
+        "@vitest/coverage-v8": "^5.0.0"
     }
 }
