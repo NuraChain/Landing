@@ -1,4 +1,4 @@
-import { Link, type NavigateTarget } from 'azerothjs';
+import { Link, useNumberFormat, type NavigateTarget } from 'azerothjs';
 
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide';
 
@@ -90,12 +90,12 @@ export default component Pagination(props:
     onChange?: (page: number) => void;
 })
 {
-    const { t, locale } = useLocale();
+    const { t } = useLocale();
 
     derived slots = pageWindow(props.page, props.pages);
 
     /** Digits in the reader's own numerals - a Persian pager should not count in Latin. */
-    const number = (value: number): string => new Intl.NumberFormat(locale()).format(value);
+    const number = useNumberFormat();
 
     /*
      * One control, either element.

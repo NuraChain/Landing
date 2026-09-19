@@ -1,4 +1,4 @@
-import { For, Show } from 'azerothjs';
+import { For, Show, useNumberFormat } from 'azerothjs';
 
 import { Info } from 'lucide';
 
@@ -32,15 +32,15 @@ const HUES: string[] = ['#22a89b', '#c07f26', '#6b8afd', '#e15a7c', '#a274d6', '
 
 export default component TokenomicsSection()
 {
-    const { locale, t } = useLocale();
+    const { t } = useLocale();
 
     state active = null as string | null;
     state openNote = null as string | null;
 
     // Locale-aware grouping, so Persian gets Persian digits and separators for free.
-    const number = (value: number): string => new Intl.NumberFormat(locale()).format(value);
+    const number = useNumberFormat();
     const percent = (value: number): string =>
-        new Intl.NumberFormat(locale(), { style: 'percent', maximumFractionDigits: 1 }).format(value / 100);
+        number(value / 100, { style: 'percent', maximumFractionDigits: 1 });
 
     /**
      * Tokens an allocation stands for: percent of the one real supply figure in site.ts.

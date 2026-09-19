@@ -1,4 +1,4 @@
-import { For, Link } from 'azerothjs';
+import { For, Link, useNumberFormat } from 'azerothjs';
 
 import { EXPLORER_URL, SOCIALS, SWAP_URL } from '../../lib/content/site';
 
@@ -12,15 +12,15 @@ export default component Footer()
 {
     const sectionHref = useSectionHref();
 
-    const { locale, t } = useLocale();
+    const { t } = useLocale();
+    const number = useNumberFormat();
 
-    // Every other figure on the site goes through `Intl.NumberFormat`, so a raw template
+    // Every other figure on the site goes through the reader's own numerals, so a raw template
     // literal here was the one number that stayed in Latin digits - "2026" sitting in a
     // Persian sentence beside a Persian-digit supply figure three sections up. Grouping is
-    // off because a year is not a quantity: the default would render it "۲٬۰۲۶".
+    // off because a year is an IDENTIFIER, not a quantity: the default renders it "۲٬۰۲۶".
     const year = new Date().getFullYear();
-    const yearLabel = (): string =>
-        new Intl.NumberFormat(locale(), { useGrouping: false }).format(year);
+    const yearLabel = (): string => number(year, { useGrouping: false });
 
     <footer class="border-t border-line">
         <div class="px-5 pt-14 pb-10">

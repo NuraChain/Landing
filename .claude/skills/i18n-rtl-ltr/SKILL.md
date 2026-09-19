@@ -76,9 +76,26 @@ the split; `pages/blog.page.azeroth` repeats it inside a flex child.
 
 ## Numbers
 
-**Every number goes through `Intl.NumberFormat(locale())`.** No hand formatting, no template
-interpolation of a raw figure - including years, which the footer formats with
-`{ useGrouping: false }` so the copyright line does not read "۲٬۰۲۶".
+**Every number and date goes through the framework's bound formatters.** `useNumberFormat()`
+and `useDateFormat()` from `azerothjs`, called once during component setup and used as plain
+functions afterwards:
+
+```ts
+const number = useNumberFormat();
+const date = useDateFormat();
+
+number(supply);                                  // ۱٬۲۳۴٬۵۶۷ for a Persian reader
+number(value, { style: 'currency', currency: 'USD' });
+date(post.publishedAt, { dateStyle: 'medium' }); // Jalali for fa, from Intl, with no table here
+```
+
+They follow the locale signal, so a switch reformats a figure without the component knowing it
+held one, and they cache per (locale, options) - a `new Intl.NumberFormat(locale())` per call
+does not, and the ticker and the network tiles format on every frame.
+
+No hand formatting, no template interpolation of a raw figure - including years, which the
+footer formats with `{ useGrouping: false }` so the copyright line does not read "۲٬۰۲۶": a
+year is an identifier, not a quantity.
 
 Persian and Arabic render Arabic-Indic digits, and no Latin monospace face carries them.
 That is why `--mono` is redefined under `:lang(fa)` / `:lang(ar)` to **append** Vazirmatn -

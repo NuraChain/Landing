@@ -1,4 +1,4 @@
-import { For, Show } from 'azerothjs';
+import { For, Show, useDateFormat, useNumberFormat } from 'azerothjs';
 
 import { ArrowLeftRight, Blocks, CircleAlert, CircleDollarSign, ExternalLink, Lock } from 'lucide';
 
@@ -34,7 +34,7 @@ import { useLocale } from '../stores/locale';
  */
 export default component NetworkSection()
 {
-    const { locale, t } = useLocale();
+    const { t } = useLocale();
 
     state height = null as number | null;
     state heightFailed = false;
@@ -52,25 +52,25 @@ export default component NetworkSection()
     state priceFailed = false;
     state showPriceNote = false;
 
-    const number = (value: number): string => new Intl.NumberFormat(locale()).format(value);
+    const number = useNumberFormat();
+    const time = useDateFormat();
 
     /**
      * Cents below a thousand dollars, none above it. A TVL of $4,182,905.31 does not need
      * its cents, but $0 and $12.40 read as broken without them.
      */
-    const money = (value: number): string => new Intl.NumberFormat(locale(), {
+    const money = (value: number): string => number(value, {
         style: 'currency',
         currency: 'USD',
         maximumFractionDigits: value >= 1000 ? 0 : 2
-    }).format(value);
+    });
 
     /**
      * Token amounts, which are not money and must not be rounded like it: a bridge holding
      * 0.004 BNB is holding something, and `maximumFractionDigits: 2` would render it as
      * zero. Six digits is where 18-decimal dust stops being worth a line in a summary.
      */
-    const amount = (value: number): string =>
-        new Intl.NumberFormat(locale(), { maximumFractionDigits: 6 }).format(value);
+    const amount = (value: number): string => number(value, { maximumFractionDigits: 6 });
 
     /**
      * A price, which needs a different rule from either of the two above.
@@ -82,15 +82,14 @@ export default component NetworkSection()
      * exists to keep. One rule each side of the boundary, and the boundary is where the
      * two disagree.
      */
-    const usd = (value: number): string => new Intl.NumberFormat(locale(), {
+    const usd = (value: number): string => number(value, {
         style: 'currency',
         currency: 'USD',
         ...(value < 1 ? { maximumSignificantDigits: 4 } : { maximumFractionDigits: 2 })
-    }).format(value);
+    });
 
     /** Clock time, for the "last read" line. The date is never in question - it is today. */
-    const clock = (value: Date): string =>
-        new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' }).format(value);
+    const clock = (value: Date): string => time(value, { hour: '2-digit', minute: '2-digit' });
 
     /**
      * An em-dash once a read has failed, an ellipsis while the first one is still out. The

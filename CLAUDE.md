@@ -371,8 +371,13 @@ layout work.
   never on the block carrying `text-start`: `start` resolves against the
   element's own direction, so an `ltr` block inside an RTL row aligns to the
   opposite edge from its label.
-- **Every number goes through `Intl.NumberFormat(locale())`.** No hand
-  formatting, including years.
+- **Every number and date goes through the framework's bound formatters** -
+  `useNumberFormat()` and `useDateFormat()` from `azerothjs`, called once during setup and
+  used as plain functions. They follow the locale signal, so a language switch reformats a
+  figure without the component knowing it held one, and they cache per (locale, options),
+  which a `new Intl.NumberFormat(...)` per call does not - the ticker and the network tiles
+  format on every frame. No hand formatting, including years: a year takes
+  `{ useGrouping: false }`, because it is an identifier rather than a quantity.
 - **Mirror only direction-of-travel icons.** Outbound `↗` markers mirror with
   `rtl:-scale-x-100`; the hero's onward arrow rotates. Brand marks, logos and
   flags never mirror.

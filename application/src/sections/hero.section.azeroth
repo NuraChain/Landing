@@ -1,4 +1,4 @@
-import { For } from 'azerothjs';
+import { For, useNumberFormat } from 'azerothjs';
 
 import { ArrowRight } from 'lucide';
 
@@ -31,12 +31,12 @@ const BLOCK_TIME = CHAIN.find((fact) => fact.key === 'blockTime')?.value ?? '3s'
 
 export default component HeroSection()
 {
-    const { locale, t } = useLocale();
+    const { t } = useLocale();
 
     state block = null as number | null;
     state blockFailed = false;
 
-    const number = (value: number): string => new Intl.NumberFormat(locale()).format(value);
+    const number = useNumberFormat();
 
     /** Same grammar as the network tiles: an ellipsis while asking, an em-dash once failed. */
     const blockFigure = (): string => block === null ? (blockFailed ? '—' : '…') : number(block);

@@ -1,4 +1,4 @@
-import { Link, useParams } from 'azerothjs';
+import { Link, useDateFormat, useParams } from 'azerothjs';
 
 import type { PostDetail } from '../api';
 import { NETWORK_NAME, SITE_URL } from '../lib/content/site';
@@ -37,8 +37,8 @@ export default component Post()
     // reported there; this page's job is not to tell the two apart for the reader.
     derived missing = article.error() !== null;
 
-    const day = (iso: string | null): string =>
-        iso === null ? '' : new Intl.DateTimeFormat(locale(), { dateStyle: 'long' }).format(new Date(iso));
+    const date = useDateFormat();
+    const day = (iso: string | null): string => (iso === null ? '' : date(iso, { dateStyle: 'long' }));
 
     /*
      * The head, from the same resolution the body renders.

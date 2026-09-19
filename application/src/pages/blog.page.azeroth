@@ -1,4 +1,4 @@
-import { Link, useQuery, type NavigateTarget } from 'azerothjs';
+import { Link, useDateFormat, useNumberFormat, useQuery, type NavigateTarget } from 'azerothjs';
 
 import { blogQuery } from '../lib/blog-query';
 import { BLOG_DESCRIPTION, BLOG_TITLE } from '../lib/content/page-copy';
@@ -42,7 +42,7 @@ const COUNT_OFF = 'text-faint';
  */
 export default component Blog()
 {
-    const { t, locale } = useLocale();
+    const { t } = useLocale();
     const query = useQuery();
 
     const index = useLocalizedLoader<BlogIndex>();
@@ -119,11 +119,11 @@ export default component Blog()
      * The tags endpoint has always returned `{ tag, count }` and the page printed only the
      * tag - so how much sits behind each filter was fetched on every load and thrown away.
      */
-    const count = (value: number): string => new Intl.NumberFormat(locale()).format(value);
+    const count = useNumberFormat();
 
     /** Dates go through Intl in the reader's locale - no hand formatting, years included. */
-    const day = (iso: string | null): string =>
-        iso === null ? '' : new Intl.DateTimeFormat(locale(), { dateStyle: 'medium' }).format(new Date(iso));
+    const date = useDateFormat();
+    const day = (iso: string | null): string => (iso === null ? '' : date(iso, { dateStyle: 'medium' }));
 
     { /* `max-w-4xl` and `py-16 sm:py-20`: the same measure and the same rhythm every landing
          section uses, so the page keeps one left edge as a reader moves between them. */ }

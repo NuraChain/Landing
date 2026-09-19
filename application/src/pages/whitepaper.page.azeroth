@@ -1,3 +1,5 @@
+import { useDateFormat } from 'azerothjs';
+
 import { Download } from 'lucide';
 
 import type { WhitepaperDetail } from '../api';
@@ -36,8 +38,8 @@ export default component Whitepaper()
     derived failed = loaded.error() !== null;
 
     /** Dates go through Intl in the reader's locale - no hand formatting, years included. */
-    const day = (iso: string): string =>
-        new Intl.DateTimeFormat(locale(), { dateStyle: 'long' }).format(new Date(iso));
+    const date = useDateFormat();
+    const day = (iso: string): string => date(iso, { dateStyle: 'long' });
 
     /** The name the file lands under in a downloads folder: the last segment of its path. */
     const fileName = (path: string): string => path.slice(path.lastIndexOf('/') + 1);
