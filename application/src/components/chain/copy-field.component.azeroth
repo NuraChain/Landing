@@ -6,6 +6,7 @@ import { useToasts } from '../../stores/toasts';
 import { icon } from '../icons/icon';
 
 import IconButton from '../ui/icon-button.component.azeroth';
+import Tooltip from '../ui/tooltip.component.azeroth';
 
 /**
  * A value with a copy button that confirms itself.
@@ -93,14 +94,27 @@ export default component CopyField(props:
             </a>
         </Show>
 
+        { /* The label this control already carries, shown to the eye that cannot hear it.
+
+             This is the site's most repeated icon-only button - once per row of the chain
+             card, so five or six times on one screen - and a bare clipboard glyph is the
+             kind of thing a reader is sure about only after clicking it once. The bubble
+             also carries the OUTCOME: it swaps to "Copied" with the tick, which is what
+             turns a silent success into a stated one for a mouse user whose pointer is
+             already on the button.
+
+             `describe={false}`: the string IS the button's accessible name, so the bubble is
+             `aria-hidden` and a screen reader is not read the same words twice. */ }
         <Show when={ () => props.copyable !== false }>
-            <IconButton
-                label={ copied ? props.copiedLabel : props.copyLabel }
-                tone="faint"
-                onClick={ () => void run() }
-            >
-                { () => copied ? icon(Check, 'size-[18px] text-accent') : icon(Copy, 'size-[18px]') }
-            </IconButton>
+            <Tooltip label={ copied ? props.copiedLabel : props.copyLabel } describe={ false } class="flex">
+                <IconButton
+                    label={ copied ? props.copiedLabel : props.copyLabel }
+                    tone="faint"
+                    onClick={ () => void run() }
+                >
+                    { () => copied ? icon(Check, 'size-[18px] text-accent') : icon(Copy, 'size-[18px]') }
+                </IconButton>
+            </Tooltip>
         </Show>
     </div>
 }
