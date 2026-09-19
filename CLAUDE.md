@@ -577,6 +577,15 @@ nothing binds a port, touches the disk or reaches the network, so a red build is
 change. `tests/content.spec.ts` is the one exception and reads the repository's own cluster on
 purpose: that it loads in all ten languages IS the assertion.
 
+**Neither half trusts a spec to remember that.** The server harness defaults its price gateway
+to one that always refuses; `tests/setup.ts` does the same for the browser half's `fetch`, and
+a spec that forgets to stub fails by name instead of opening a socket. That default is not
+decoration: `api.ts` falls back to `GET /api/_manifest` when a page carries no embedded
+manifest, which in a spec is always, and a relative url resolves against the happy-dom
+environment's origin — `http://localhost:3000`, the port `npm run dev` listens on. Every run
+of the browser half reached for it, and when a dev server happened to be up it got a real
+answer, so the suite behaved differently depending on what else was running.
+
 **Both halves lean on module-level singletons, so `npm run test:shuffle` is a gate**: a test
 that only passes in declaration order will fail for somebody else at random. Run it from the
 workspace scripts, never a bare `npx vitest` — there is no vitest config at the repository
