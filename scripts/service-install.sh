@@ -41,8 +41,9 @@ done
 
 # Production environment.
 if [ ! -f "$SERVER_DIR/.env" ]; then
-  echo "warning: server/.env is missing - production will not boot without ADMIN_KEY in it" >&2
-  echo "         copy server/.env.example and run 'npm run admin:key'" >&2
+  echo "warning: server/.env is missing - the process will boot on defaults" >&2
+  echo "         copy server/.env.example: a unit behind nginx needs TRUST_PROXY, and SITE_URL" >&2
+  echo "         is what every canonical tag, Open Graph url and sitemap entry is built from" >&2
 fi
 
 # systemd does not create log directories automatically.
