@@ -1,4 +1,4 @@
-import { For, Link, Show } from 'azerothjs';
+import { For, Link, Show, type Child } from 'azerothjs';
 
 import { Blocks, Check, CircleDollarSign, FileText, Languages, Menu, Moon, Newspaper, Search, Sun, Users, Wallet, X } from 'lucide';
 
@@ -10,7 +10,6 @@ import { withThemeTransition } from '../../lib/theme-transition';
 import IconButton from '../ui/icon-button.component.azeroth';
 import Tooltip from '../ui/tooltip.component.azeroth';
 import { useTheme } from '../../stores/theme';
-import type { Theme } from '../../stores/theme';
 
 import { flagSrc, preloadFlags } from '../icons/flag-icon';
 import { icon } from '../icons/icon';
@@ -21,7 +20,24 @@ type SectionId = 'wallet' | 'tokenomics' | 'chain' | 'explorer' | 'social';
 // fails to assign and collapses the row parameter to `unknown`.
 const SECTIONS: SectionId[] = ['wallet', 'tokenomics', 'chain', 'explorer', 'social'];
 
-const GLYPH: Record<Theme, typeof Moon> = { dark: Moon, light: Sun };
+/**
+ * Both theme glyphs, always rendered; CSS shows the one that matches.
+ *
+ * Picking the glyph from `theme()` at render time would put a different ELEMENT in the
+ * document on each side of hydration: the server renders the store's default (Moon, one
+ * path) and a light-theme reader's browser builds Sun (nine children), which is a structural
+ * mismatch - the whole server render is discarded and the page is rebuilt client-side, for
+ * every reader who prefers light.
+ *
+ * So the markup is theme-independent and `styles.css` hides the inactive one off
+ * `[data-theme]`, which the pre-paint script sets before the first paint. The label beside it
+ * is an attribute binding, which is re-applied reactively and needs none of this.
+ */
+const themeGlyphs = (size: string): Child[] =>
+[
+    icon(Moon, `theme-glyph-dark ${ size }`),
+    icon(Sun, `theme-glyph-light ${ size }`)
+];
 
 /**
  * One glyph per drawer row. Drawn from the vocabulary the sections themselves already use -
@@ -233,7 +249,7 @@ export default component Header()
                     class="theme-trigger"
                     onClick={ () => withThemeTransition(() => cycle()) }
                 >
-                    { () => icon(GLYPH[theme()], 'size-[18px]') }
+                    { themeGlyphs('size-[18px]') }
                 </IconButton>
             </Tooltip>
 
@@ -365,7 +381,7 @@ export default component Header()
                                     class="theme-trigger flex items-center gap-3 rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink"
                                     onClick={ () => withThemeTransition(() => cycle()) }
                                 >
-                                    { () => icon(GLYPH[theme()], 'size-[18px] shrink-0') }
+                                    { themeGlyphs('size-[18px] shrink-0') }
                                     <span class="flex-1 text-start">{ t().theme.label }</span>
                                     <span class="text-sm text-faint">{ () => t().theme[theme()] }</span>
                                 </button>

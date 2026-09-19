@@ -1,6 +1,7 @@
 import { Download } from 'lucide';
 
-import { client, type WhitepaperDetail } from '../api';
+import type { WhitepaperDetail } from '../api';
+import { useLocalizedLoader } from '../lib/localized-loader';
 import { directionOf, useLocale } from '../stores/locale';
 
 import Markdown from '../components/content/markdown.component.azeroth';
@@ -24,8 +25,13 @@ export default component Whitepaper()
 {
     const { t, locale } = useLocale();
 
-    state paper = null as WhitepaperDetail | null;
-    state failed = false;
+    // The document arrives WITH the page: the route's loader fetches it before the render, so
+    // the text a crawler indexes and a reader without JavaScript gets is the whitepaper rather
+    // than a loading frame, and the browser adopts it instead of re-asking.
+    const loaded = useLocalizedLoader<WhitepaperDetail>();
+
+    derived paper = loaded.data() ?? null;
+    derived failed = loaded.error() !== null;
 
     /** Dates go through Intl in the reader's locale - no hand formatting, years included. */
     const day = (iso: string): string =>
@@ -33,40 +39,6 @@ export default component Whitepaper()
 
     /** The name the file lands under in a downloads folder: the last segment of its path. */
     const fileName = (path: string): string => path.slice(path.lastIndexOf('/') + 1);
-
-    // Keyed on the language: switching re-asks, because which translation is served is decided
-    // server-side. `Promise.resolve().then(...)` rather than a bare call, so a client that
-    // refuses synchronously - no manifest, no route - lands in the failed state below instead
-    // of throwing out of the effect and leaving the page blank.
-    effect
-    {
-        let live = true;
-        const wanted = locale();
-
-        Promise.resolve()
-            .then(() => client.whitepaper.read({ query: { locale: wanted } }))
-            .then((found) =>
-            {
-                if (live)
-                {
-                    paper = found;
-                    failed = false;
-                }
-            })
-            .catch(() =>
-            {
-                if (live)
-                {
-                    failed = true;
-                    paper = null;
-                }
-            });
-
-        cleanup
-        {
-            live = false;
-        }
-    }
 
     { /* One measure with the rest of the site - see the note on the blog index. The PROSE is
          narrowed again further down: 4xl is the page's edge, not a line length to read at. */ }
@@ -79,7 +51,7 @@ export default component Whitepaper()
 
             { /* A title, a meta line and a lede - the shape of the head that is loading, so the
                  page does not jump when it lands. */ }
-            <Show when={ paper === null && !failed }>
+            <Show when={ loaded.loading() }>
                 <div class="flex flex-col gap-4" aria-hidden="true">
                     <Skeleton class="h-10 w-3/4" />
                     <Skeleton class="h-4 w-1/3" />

@@ -427,6 +427,19 @@
     --drawer-from: -100%;
 }
 
+/* The theme toggle renders BOTH glyphs and CSS shows the one that applies.
+
+   Choosing the glyph in the component would put a different element in the document on each
+   side of hydration - the server renders the default theme's, a light-theme reader's browser
+   builds the other - and that mismatch throws the whole server render away. `data-theme` is
+   on the root before the first paint (the pre-paint script in index.html), so the right glyph
+   is the only one ever painted. */
+[data-theme='dark'] .theme-glyph-light,
+[data-theme='light'] .theme-glyph-dark
+{
+    display: none;
+}
+
 /* Touch targets, enforced globally for the same reason as reduced-motion below: a section
    written later cannot forget a rule it never had to remember. 36px is comfortable under a
    mouse and a miss under a thumb, so a coarse pointer gets 44px regardless of what the

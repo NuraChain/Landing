@@ -5,8 +5,14 @@
 // client boots from a manifest that is read once at import, before any spec can seed it, so on
 // this side of the wire the honest thing to test is the page's contract with `client`, not the
 // bytes it would have sent.
+//
+// The page is mounted through a REAL router now, because it reads its document from the route's
+// loader rather than fetching in an effect. That is the shape production runs: the loader calls
+// the client, the resource carries the answer, and `<Routes>` dispatches the component. Mounting
+// the component bare would leave `useLoader()` with no router to resolve and throw.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderTest, cleanup } from '@azerothjs/testing';
+import { RouterProvider, Routes, createMemoryHistory, createRouter } from 'azerothjs';
 
 const { read } = vi.hoisted(() => ({ read: vi.fn() }));
 
@@ -14,6 +20,8 @@ vi.mock('../src/api', () => ({ client: { whitepaper: { read } } }));
 
 import Whitepaper from '../src/pages/whitepaper.page.azeroth';
 import type { WhitepaperDetail } from '../src/api';
+import { loadWhitepaper } from '../src/lib/loaders';
+import { readerLocale } from '../src/lib/reader-locale';
 import { useLocale } from '../src/stores/locale';
 import { en } from '../src/lib/i18n/en';
 
@@ -32,7 +40,30 @@ const detail = (overrides: Partial<WhitepaperDetail> = {}): WhitepaperDetail => 
     ...overrides
 });
 
-/** Lets the read settle: the effect asks on a microtask and the page renders on the answer. */
+/**
+ * The page at its own address, with the route table's own loader.
+ *
+ * The row is declared here rather than imported from `routes.ts` so this spec mounts ONE page
+ * instead of the whole site - but the loader is the real one, so what the page receives is
+ * what production hands it.
+ */
+const mount = (): ReturnType<typeof renderTest> =>
+{
+    const router = createRouter({
+        routes: [{
+            path: '/whitepaper',
+            component: Whitepaper,
+            loader: ({ request }) => loadWhitepaper(readerLocale(request))
+        }],
+        history: createMemoryHistory('/whitepaper')
+    });
+
+    // The children are a THUNK: an eager child is built before the provider publishes its
+    // context, and the page resolves its router during construction.
+    return renderTest(() => RouterProvider({ router, children: () => Routes({}) }));
+};
+
+/** Lets the loader settle: it resolves on a microtask and the page renders on the answer. */
 const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
 beforeEach(() =>
@@ -53,7 +84,7 @@ describe('the whitepaper page', () =>
     {
         read.mockResolvedValue(detail());
 
-        const { container } = renderTest(() => Whitepaper({}));
+        const { container } = mount();
 
         await settle();
 
@@ -69,7 +100,7 @@ describe('the whitepaper page', () =>
     {
         read.mockResolvedValue(detail({ pdf: '/whitepaper/nura-chain-whitepaper-fa.pdf' }));
 
-        const { container } = renderTest(() => Whitepaper({}));
+        const { container } = mount();
 
         await settle();
 
@@ -94,9 +125,9 @@ describe('the whitepaper page', () =>
 
     it('says when the reader is looking at a fallback, and lists what the document holds', async () =>
     {
-        read.mockResolvedValue(detail({ requestedLocale: 'tr', translated: false, available: ['en', 'fa'] }));
+        read.mockResolvedValue(detail({ requestedLocale: 'en', translated: false, available: ['en', 'fa'] }));
 
-        const { container } = renderTest(() => Whitepaper({}));
+        const { container } = mount();
 
         await settle();
 
@@ -111,7 +142,7 @@ describe('the whitepaper page', () =>
     {
         read.mockRejectedValue(new Error('down'));
 
-        const { container } = renderTest(() => Whitepaper({}));
+        const { container } = mount();
 
         await settle();
 
@@ -122,14 +153,15 @@ describe('the whitepaper page', () =>
 
     it('lands in the failed state when the client refuses synchronously', async () =>
     {
-        // With no manifest the typed client throws at the CALL rather than rejecting. The
-        // effect must not throw out of itself over that, or the page is blank with no message.
+        // With no manifest the typed client throws at the CALL rather than rejecting. A loader
+        // that throws synchronously is judged exactly as one that rejects, so the page shows
+        // its failure state rather than the whole render dying.
         read.mockImplementation(() =>
         {
             throw new Error('no manifest');
         });
 
-        const { container } = renderTest(() => Whitepaper({}));
+        const { container } = mount();
 
         await settle();
 
@@ -140,10 +172,13 @@ describe('the whitepaper page', () =>
     {
         read.mockResolvedValue(detail());
 
-        renderTest(() => Whitepaper({}));
+        mount();
 
         await settle();
 
+        // Which translation is served is the SERVER's decision, so a switch is a new request
+        // rather than a re-render - and the language is not one of the loader's own inputs,
+        // which is exactly what `useLocalizedLoader` exists to watch.
         useLocale().choose('fa');
 
         await settle();

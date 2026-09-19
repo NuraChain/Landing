@@ -1,6 +1,8 @@
 import { siDiscord, siGithub, siInstagram, siTelegram, siX, siYoutube } from 'simple-icons';
 import type { SimpleIcon } from 'simple-icons';
 
+import type { Child } from 'azerothjs';
+
 import { svgMark } from './icon';
 import type { SocialId } from '../../lib/content/site';
 
@@ -28,7 +30,7 @@ const MARK: Record<SocialId, SimpleIcon> =
  * both themes. Dark in particular needs full-strength ink; GitHub's own
  * near-black would vanish into that background.
  */
-export const brandIcon = (id: SocialId, className = 'size-[18px]'): SVGElement | null =>
+export const brandIcon = (id: SocialId, className = 'size-[18px]'): Child =>
 {
     return svgMark(MARK[id].path, className);
 };

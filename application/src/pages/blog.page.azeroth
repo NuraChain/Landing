@@ -1,6 +1,8 @@
 import { Link, useQuery, type NavigateTarget } from 'azerothjs';
 
-import { client, type PostCard, type TagCount } from '../api';
+import { blogQuery } from '../lib/blog-query';
+import type { BlogIndex } from '../lib/loaders';
+import { useLocalizedLoader } from '../lib/localized-loader';
 import { directionOf, useLocale } from '../stores/locale';
 
 import Banner from '../components/ui/banner.component.azeroth';
@@ -29,47 +31,37 @@ const COUNT_OFF = 'text-faint';
 /**
  * The blog index.
  *
- * Fetched in `effect` rather than at module scope, which is what keeps it browser-only: this
- * route server-renders, and the server has no reader whose language it could resolve against.
- * The markup below is what SSR emits; the list arrives on hydration.
+ * The list arrives WITH the document: `routes.ts` declares the loader, so a direct load is
+ * answered with the cards already in it - which is what a crawler and a reader with no
+ * JavaScript get - and the browser adopts that rather than fetching the same page again.
+ * The loader re-runs on its own when the url's page or tag changes, and
+ * `useLocalizedLoader` re-asks on a language switch, which is the one input it cannot key on.
  */
 export default component Blog()
 {
     const { t, locale } = useLocale();
     const query = useQuery();
 
-    state posts = null as PostCard[] | null;
-    state tags = [] as TagCount[];
-    state failed = false;
-    state pageCount = 1;
+    const index = useLocalizedLoader<BlogIndex>();
+
+    derived posts = index.data()?.rows ?? null;
+    derived tags = index.data()?.tags ?? [];
+    derived pageCount = index.data()?.pages ?? 1;
     /** Everything published, for the count on the unfiltered chip. */
-    state publishedCount = 0;
+    derived publishedCount = index.data()?.published ?? 0;
+    derived failed = index.error() !== null;
 
     /*
      * The page and the tag live in the URL, not in state.
      *
      * So page two can be linked, bookmarked and followed by a crawler back through older
      * posts, and so Back steps through the pages rather than leaving the blog entirely. It
-     * also means there is one source of truth for both: the address bar.
-     *
-     * A `Query` value is `string | string[]` - a repeated `?page=1&page=2` arrives as an array
-     * - so everything read out of it is narrowed and clamped before it is sent anywhere.
+     * also means there is one source of truth for both: the address bar - and the LOADER
+     * reads it through the same `blogQuery`, so the request and the rendered pager cannot
+     * disagree about which page this is.
      */
-    const one = (value: string | string[] | undefined): string | null =>
-    {
-        const first = Array.isArray(value) ? value[0] : value;
-
-        return first === undefined || first === '' ? null : first;
-    };
-
-    const tag = (): string | null => one(query().tag);
-
-    const page = (): number =>
-    {
-        const raw = Number(one(query().page));
-
-        return Number.isSafeInteger(raw) && raw >= 1 ? raw : 1;
-    };
+    const tag = (): string | null => blogQuery(query()).tag;
+    const page = (): number => blogQuery(query()).page;
 
     /** Where a given page lives. Page one drops the parameter, so `/blog` stays canonical. */
     const at = (to: number): NavigateTarget =>
@@ -101,62 +93,6 @@ export default component Blog()
     /** Dates go through Intl in the reader's locale - no hand formatting, years included. */
     const day = (iso: string | null): string =>
         iso === null ? '' : new Intl.DateTimeFormat(locale(), { dateStyle: 'medium' }).format(new Date(iso));
-
-    // Re-runs when the language changes, and when the URL does: which translation a card
-    // carries is decided by the server, so a language switch is a new request rather than a
-    // re-render of stale copy.
-    effect
-    {
-        let live = true;
-        const wanted = locale();
-        const only = tag();
-        const which = page();
-
-        client.blog.list({ query: { locale: wanted, page: which, ...(only === null ? {} : { tag: only }) } })
-            .then((found) =>
-            {
-                if (live)
-                {
-                    posts = found.rows;
-                    pageCount = found.pages;
-                    failed = false;
-
-                    // Only when nothing is filtered: with a tag applied this is that tag's
-                    // count, which is already on its own chip.
-                    if (only === null)
-                    {
-                        publishedCount = found.total;
-                    }
-                }
-            })
-            .catch(() =>
-            {
-                if (live)
-                {
-                    failed = true;
-                    posts = [];
-                }
-            });
-
-        cleanup
-        {
-            live = false;
-        }
-    }
-
-    effect
-    {
-        let live = true;
-
-        client.blog.tags()
-            .then((rows) => { if (live) { tags = rows; } })
-            .catch(() => { /* A missing filter row costs nothing; the list below still reads. */ });
-
-        cleanup
-        {
-            live = false;
-        }
-    }
 
     { /* `max-w-4xl` and `py-16 sm:py-20`: the same measure and the same rhythm every landing
          section uses, so the page keeps one left edge as a reader moves between them. */ }
@@ -212,7 +148,10 @@ export default component Blog()
         { /* Shaped like the cards that are coming, rather than the word "Loading": the row
              heights are known, so the page can hold its layout instead of collapsing and
              pushing the footer up for a moment. Repeated by hand - see Skeleton. */ }
-        <Show when={ posts === null }>
+        { /* `loading()` is "nothing to show yet", not "fetching": a language switch refetches
+             with the list still on screen, and replacing it with grey boxes for a round trip
+             would be a worse answer than letting the cards change under the reader. */ }
+        <Show when={ index.loading() }>
             <div class="flex flex-col gap-4" aria-hidden="true">
                 <Skeleton class="h-28 w-full" />
                 <Skeleton class="h-28 w-full" />

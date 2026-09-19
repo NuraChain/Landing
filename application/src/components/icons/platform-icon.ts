@@ -1,6 +1,8 @@
 import { siAndroid, siApple, siLinux } from 'simple-icons';
 import type { SimpleIcon } from 'simple-icons';
 
+import type { Child } from 'azerothjs';
+
 import { svgMark } from './icon';
 import type { PlatformId } from '../../lib/content/site';
 
@@ -41,7 +43,7 @@ const MARK: Record<PlatformId, SimpleIcon | string> =
  * black - while Linux yellow lands at 1.59:1 against white. Each token therefore carries a
  * per-theme step of the same hue, every one measured past 3:1. See styles.css.
  */
-export const platformIcon = (id: PlatformId, className = 'size-5'): SVGElement | null =>
+export const platformIcon = (id: PlatformId, className = 'size-5'): Child =>
 {
     return svgMark(typeof MARK[id] === 'string' ? MARK[id] : MARK[id].path, className);
 };

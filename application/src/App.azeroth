@@ -1,4 +1,4 @@
-import { RouterProvider, Routes, createMemoryHistory, createRouter } from 'azerothjs';
+import { RouterProvider, Routes, createMemoryHistory, createRouter, type LoaderHandoff } from 'azerothjs';
 
 import Footer from './components/layout/footer.component.azeroth';
 import Header from './components/layout/header.component.azeroth';
@@ -12,13 +12,19 @@ import { routes } from './routes.ts';
  * The shell. Header and skip link sit outside `<Routes>` because they persist across the
  * legal pages the footer links to; only the page body swaps.
  */
-export default component App(props: { url?: string })
+/*
+ * Both props are the SSR seam and the browser passes neither: `url` pins a memory history to
+ * the address being rendered, and `handoff` seeds the loader data the server already fetched,
+ * so a hydrating page adopts it instead of asking for the same thing a second time.
+ */
+export default component App(props: { url?: string; handoff?: LoaderHandoff })
 {
     const { t } = useLocale();
 
     const router = createRouter({
         routes,
-        history: props.url !== undefined ? createMemoryHistory(props.url) : undefined
+        history: props.url !== undefined ? createMemoryHistory(props.url) : undefined,
+        initialLoaderData: props.handoff
     });
 
     <RouterProvider router={ router }>

@@ -1,6 +1,7 @@
-import { Link, useParams } from 'azerothjs';
+import { Link } from 'azerothjs';
 
-import { client, type PostDetail } from '../api';
+import type { PostDetail } from '../api';
+import { useLocalizedLoader } from '../lib/localized-loader';
 import { directionOf, useLocale } from '../stores/locale';
 
 import Markdown from '../components/content/markdown.component.azeroth';
@@ -14,54 +15,27 @@ import Skeleton from '../components/ui/skeleton.component.azeroth';
  * The language a reader gets is the SERVER's decision - their own if the post has it, the post's
  * default if not, anything it holds otherwise. This page's job is to render that and to be
  * honest about which of the three happened.
+ *
+ * The article arrives with the DOCUMENT. `routes.ts` declares the loader, so the text is
+ * fetched before the render on a direct load - a crawler and a reader with no JavaScript get
+ * the whole post rather than a skeleton - and it rides the handoff into the browser, which
+ * draws it without asking again. `useLocalizedLoader` re-asks on a language switch, which is
+ * the one input a loader cannot key on.
  */
 export default component Post()
 {
-    const params = useParams();
     const { t, locale } = useLocale();
 
-    state post = null as PostDetail | null;
-    state missing = false;
+    const article = useLocalizedLoader<PostDetail>();
+
+    derived post = article.data() ?? null;
+    // A loader that failed OR declared the slug missing: either way there is nothing to read,
+    // and the empty state below says so. A real fault is already a 500 on the server and is
+    // reported there; this page's job is not to tell the two apart for the reader.
+    derived missing = article.error() !== null;
 
     const day = (iso: string | null): string =>
         iso === null ? '' : new Intl.DateTimeFormat(locale(), { dateStyle: 'long' }).format(new Date(iso));
-
-    // Keyed on the slug AND the language: switching language re-asks, because which translation
-    // this post resolves to is decided server-side and cannot be recomputed in the browser.
-    effect
-    {
-        let live = true;
-        const slug = params().slug ?? '';
-        const wanted = locale();
-
-        if (slug === '')
-        {
-            return;
-        }
-
-        client.blog.one({ params: { slug }, query: { locale: wanted } })
-            .then((found) =>
-            {
-                if (live)
-                {
-                    post = found;
-                    missing = false;
-                }
-            })
-            .catch(() =>
-            {
-                if (live)
-                {
-                    missing = true;
-                    post = null;
-                }
-            });
-
-        cleanup
-        {
-            live = false;
-        }
-    }
 
     { /* One measure with the rest of the site - see the note on the index. The PROSE is
          narrowed again further down: 4xl is the page's edge, not a line length to read at. */ }
@@ -73,7 +47,11 @@ export default component Post()
 
         { /* A title, a meta line and a few paragraphs - the shape of the article that is
              loading, so the page does not jump when it lands. */ }
-        <Show when={ post === null && !missing }>
+        { /* `loading()` is "nothing to show yet", which is not the same as "fetching": a
+             language switch refetches with the old article still on screen, and flashing a
+             skeleton over text the reader is in the middle of would be a worse answer than
+             letting the words change under them a moment later. */ }
+        <Show when={ article.loading() }>
             <div class="flex flex-col gap-4" aria-hidden="true">
                 <Skeleton class="h-10 w-3/4" />
                 <Skeleton class="h-4 w-1/3" />

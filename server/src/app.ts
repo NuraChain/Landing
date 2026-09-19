@@ -1,9 +1,6 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
-
-import { App, HttpError, NotFoundError, html, json, pipeline, rateLimit, requestId, securityHeaders, text, type ErrorObserver, type RequestObserver, type WebHandler } from '@azerothjs/http';
+import { App, HttpError, NotFoundError, json, pipeline, rateLimit, requestId, securityHeaders, text, type ErrorObserver, type RequestObserver, type WebHandler } from '@azerothjs/http';
 import { staticFiles } from '@azerothjs/http/node';
-import { feature, manifestOf, manifestScript, register } from '@azerothjs/http/api';
+import { feature, manifestOf, register } from '@azerothjs/http/api';
 import { mountPages, type KitOptions, type PageRenderer } from '@azerothjs/kit';
 import { array } from '@azerothjs/schema';
 import type { LocaleConfig } from 'azerothjs';
@@ -11,8 +8,7 @@ import type { LocaleConfig } from 'azerothjs';
 import { pageCount, toCards, toDetail } from './blog/present.ts';
 import type { SiteContent } from './content.ts';
 import { createPriceGateway, type PriceGateway } from './market/price.ts';
-import { articleMarkup, injectArticle } from './seo/article.ts';
-import { injectMeta, isMissingPost, metaFor, postFor, whitepaperFor } from './seo/pages.ts';
+import { injectMeta, metaFor } from './seo/pages.ts';
 import { buildSitemap } from './seo/sitemap.ts';
 import {
     nuraPrice,
@@ -25,16 +21,6 @@ import {
     whitepaperDetail
 } from './schemas.ts';
 import { PDF_ROUTE, toWhitepaper } from './whitepaper/content.ts';
-
-/**
- * The pages this process serves the shell for itself, head included.
- *
- * They are `render: 'client'` in `routes.ts` and stay that way - the browser still renders
- * their bodies. This list is only about which half of the process writes their `<head>`, and
- * it must match the `'client'` rows in that table: a path here that the table does not carry
- * would serve a page the client router cannot route.
- */
-const LANDING_PATHS: readonly string[] = ['/', '/about'];
 
 /** How many posts a blog index page holds when the caller does not say. */
 const DEFAULT_LIMIT = 10;
@@ -332,67 +318,19 @@ export function buildApp(options: AppOptions): App
     if (options.pages !== undefined)
     {
         /*
-         * The landing pages, served with a head of their own.
+         * Every page goes through the kit now, `/` and `/about` included.
          *
-         * `/` and `/about` are `render: 'client'`, and the kit calls a renderer only for a
-         * `'server'` route - so `mountPages` hands them the shell verbatim and `withMeta` below
-         * never sees them. That left the site's two most important addresses sharing one title
-         * and one description, with no canonical, no Open Graph and no structured data.
-         *
-         * These two paths are TAKEN OUT of the table handed to `mountPages` rather than
-         * registered ahead of it. `/sitemap.xml` and the PDFs can sit in front of the kit
-         * because the kit never claims those exact patterns - it claims `/*path`, and a more
-         * specific route wins. `/` and `/about` it claims by name, and this router answers a
-         * duplicate pattern with `Route conflict` at startup rather than by preferring one.
-         * Removing them is also the more honest description of what happens: for a `'client'`
-         * route the kit only serves the shell, which is precisely what the handler below does,
-         * with the head filled in.
-         *
-         * This changes the HEAD only. The body is still the shell, so the browser renders these
-         * two pages exactly as it did - none of the client-only work in the stores or the
-         * network section is dragged onto a server, which is the trade routes.ts weighed and
-         * declined.
+         * Those two used to be pulled OUT of this table and answered by a handler of their own,
+         * because they were `render: 'client'` and the kit hands a client route the shell
+         * verbatim - so they shared index.html's single title and had no head worth reading.
+         * They are `render: 'server'` in `routes.ts` today, which means the kit renders them,
+         * `withMeta` below writes their head like any other page, and the special case is gone
+         * along with the shell cache it needed.
          */
-        const { clientDir = '', shell } = options.pages;
-        const manifest = manifestOf(api);
-
-        /*
-         * The shell, read once and kept. Same order the kit looks in - a built client may ship
-         * `shell.html` beside `index.html` - and the manifest script is spliced in exactly as
-         * `mountPages` would, so hydration on these two paths still costs no round trip. A
-         * mount handed the shell as text (no built client) serves that text.
-         */
-        let shellCache: Promise<string> | null = null;
-
-        const landingShell = (): Promise<string> =>
-        {
-            shellCache ??= (shell === undefined
-                ? readFile(join(clientDir, 'shell.html'), 'utf8')
-                    .catch(() => readFile(join(clientDir, 'index.html'), 'utf8'))
-                : Promise.resolve(shell))
-                .then((page) => page.replace('</head>', () => `${ manifestScript(manifest) }</head>`));
-
-            return shellCache;
-        };
-
-        for (const path of LANDING_PATHS)
-        {
-            app.get(path, async () =>
-            {
-                const shell = await landingShell();
-                const meta = metaFor(path, { ...options, siteUrl });
-
-                // Null would mean this module has nothing to say about the path, which cannot
-                // happen for these two - but the shell is the right answer if it ever does.
-                return html(meta === null ? shell : injectMeta(shell, meta));
-            });
-        }
-
         mountPages(app, {
             ...options.pages,
-            routes: options.pages.routes.filter((route) => !LANDING_PATHS.includes(route.path)),
             renderer: withMeta(options.pages.renderer, options, siteUrl),
-            manifest,
+            manifest: manifestOf(api),
             locales: LOCALES
         });
     }
@@ -438,35 +376,26 @@ function withMeta(renderer: PageRenderer | undefined, content: SiteContent, site
         if (meta === null)
         {
             /*
-             * A post address that resolves to nothing is served as a real 404.
+             * Nothing to say about this address, so the shell's own head stands.
              *
-             * The app renders its own not-found state either way, so the page a visitor sees is
-             * unchanged - what changes is the status line above it. It used to be 200, which is
-             * a soft 404: a crawler is told "this is a page" and indexes the generic shell
-             * title, so every mistyped or retired post url becomes a duplicate of the home page
-             * in the index. The status is the only thing that distinguishes them.
+             * The soft-404 patch that used to live here is gone: a post address that resolves
+             * to nothing is a `notFound()` thrown by the route's LOADER, which the kit answers
+             * as a real 404 - decided by the same lookup that fetches the article, rather than
+             * by this wrapper inspecting the url a second time and reaching its own verdict.
              */
-            return isMissingPost(url, deps) ? { ...result, status: 404 } : result;
+            return result;
         }
 
         /*
-         * The head, then the BODY.
+         * The head only. The BODY is the page's own.
          *
-         * A post route renders its text into the document here rather than leaving the frame's
-         * loading skeleton for a crawler to index. The page fetches inside an `effect`, which
-         * never runs on a server, so before this the indexed article was a correct `<title>`
-         * over an empty page - the head described something the body did not contain.
-         *
-         * A post or the whitepaper: each resolver answers null for every other address, and
-         * the blog index has nothing to server-render that the frame does not already carry.
+         * This used to render the article into the document as well, because the page fetched
+         * inside an `effect` - which never runs on a server - so a crawler was served a correct
+         * `<title>` over a loading skeleton. Each page declares a route LOADER now, so the text
+         * is fetched before the render and the page's own `Markdown` component puts it in the
+         * document, on both sides, from one implementation.
          */
-        const html = injectMeta(result.html, meta);
-        const detail = postFor(url, deps) ?? whitepaperFor(url, deps);
-
-        return {
-            ...result,
-            html: detail === null ? html : injectArticle(html, articleMarkup(detail))
-        };
+        return { ...result, html: injectMeta(result.html, meta) };
     };
 }
 
