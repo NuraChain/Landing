@@ -212,12 +212,8 @@ type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K>
  */
 export type PagesOptions = DistributiveOmit<KitOptions, 'manifest'>;
 
-export interface AppOptions extends ApiDeps
+export interface RegisterOptions
 {
-    dev: boolean;
-    observe?: RequestObserver;
-    onError?: ErrorObserver;
-
     /** Canonical origin, no trailing slash. Defaults to {@link DEFAULT_SITE_URL}. */
     siteUrl?: string;
 
@@ -229,27 +225,24 @@ export interface AppOptions extends ApiDeps
      * `PDF_DIR` after checking every language's file is actually there.
      */
     pdfDir?: string;
-
-    /**
-     * The built client + SSR renderer (production); omit in dev - vite serves the client.
-     *
-     * `manifest` is not among the options a caller supplies: it is projected from the api this
-     * function just registered, so the embedded copy and the served one cannot disagree.
-     */
-    pages?: PagesOptions;
 }
 
-export function buildApp(options: AppOptions): App
+/**
+ * Every route that is NOT a page: the api and its manifest, the sitemap, the PDFs.
+ *
+ * The kit's dev session registers this on the App it serves and `buildApp` on the production
+ * one, so the two cannot drift - a route added here exists in both. Everything here sits ahead
+ * of any page mount for the reason `mountPages` documents: its `/*path` fallback matches every
+ * path, and the first match wins.
+ */
+export function registerApi(app: App, api: Api, content: SiteContent, options: RegisterOptions = {}): void
 {
-    const app = new App({ dev: options.dev, observe: options.observe, onError: options.onError });
-    const api = createApi(options);
-
     app.get('/api/healthz', () => json({ ok: true, at: new Date().toISOString() }));
 
     register(app, api);
 
-    // The typed client's runtime half. Production also embeds it into each served page, so
-    // hydration costs no round trip; this endpoint is what a plain vite dev page falls back to.
+    // The typed client's runtime half. A served page embeds it too, so hydration costs no round
+    // trip; this endpoint is what a page without the splice falls back to.
     app.get('/api/_manifest', () => json(manifestOf(api)));
 
     const siteUrl = (options.siteUrl ?? DEFAULT_SITE_URL).replace(/\/+$/, '');
@@ -257,14 +250,12 @@ export function buildApp(options: AppOptions): App
     /*
      * Generated per request rather than written to a file at build.
      *
-     * Posts are published from the dashboard at runtime, so a sitemap baked at build time is
-     * stale the moment anybody writes anything - and stale in the silent direction, where the
-     * new post is simply never crawled. This reads the store, so publishing IS listing.
-     *
-     * Registered before `mountPages` for the same reason `/api` is: the kit's asset fallback
-     * matches every path, and a static `sitemap.xml` in public/ would otherwise win.
+     * The store is read once at boot, so a sitemap built from it lists exactly what this process
+     * serves - where a `sitemap.xml` committed under public/ would go stale in the silent
+     * direction, the first time a post landed without it. Reading the store means publishing IS
+     * listing.
      */
-    app.get('/sitemap.xml', () => text(buildSitemap(options, siteUrl), {
+    app.get('/sitemap.xml', () => text(buildSitemap(content, siteUrl), {
         headers: {
             'content-type': 'application/xml; charset=utf-8',
             // Crawlers re-read this often; an hour keeps it fresh without regenerating per hit.
@@ -275,15 +266,50 @@ export function buildApp(options: AppOptions): App
     /*
      * The whitepaper downloads, under the same prefix as the page that describes them.
      *
-     * Registered ahead of `mountPages` like `/sitemap.xml`: the kit claims
-     * `/whitepaper` by name and everything else through `/*path`, and this pattern is more
-     * specific than the fallback without colliding with the page. The default cache policy -
-     * revalidate every time - is the right one here, because a regenerated PDF keeps its name.
+     * The kit claims `/whitepaper` by name and everything else through `/*path`, and this
+     * pattern is more specific than the fallback without colliding with the page. The default
+     * cache policy - revalidate every time - is the right one here, because a regenerated PDF
+     * keeps its name.
      */
     if (options.pdfDir !== undefined)
     {
         app.get(`${ PDF_ROUTE }/*path`, staticFiles(options.pdfDir));
     }
+}
+
+export interface AppOptions extends ApiDeps, RegisterOptions
+{
+    dev: boolean;
+    observe?: RequestObserver;
+    onError?: ErrorObserver;
+
+    /**
+     * A prebuilt api, when the caller already holds one.
+     *
+     * `main.ts` builds the ONE api whose price memo serves the process and hands it here in
+     * production and to the kit's dev session in development. The suite leaves it out and this
+     * function builds its own over the content it was given.
+     */
+    api?: Api;
+
+    /**
+     * The built client + SSR renderer (production); omit in dev - the kit's dev session mounts
+     * the pages on an App of its own, over the same route table and renderer.
+     *
+     * `manifest` is not among the options a caller supplies: it is projected from the api this
+     * function just registered, so the embedded copy and the served one cannot disagree.
+     */
+    pages?: PagesOptions;
+}
+
+export function buildApp(options: AppOptions): App
+{
+    const app = new App({ dev: options.dev, observe: options.observe, onError: options.onError });
+    const api = options.api ?? createApi(options);
+
+    registerApi(app, api, options, options);
+
+    const siteUrl = (options.siteUrl ?? DEFAULT_SITE_URL).replace(/\/+$/, '');
 
     // Mounted LAST so nothing can shadow /api: the kit's asset fallback matches everything.
     // The kit also serves `/assets` itself, `public, max-age=31536000, immutable` - vite's

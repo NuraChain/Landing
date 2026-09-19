@@ -20,7 +20,7 @@ forming conclusions:
 
 ```bash
 npm run dev
-npm run qa:visual -- --url http://localhost:<port>/
+npm run qa:visual -- --url http://127.0.0.1:3000/
 ```
 
 It produces `artifacts/visual-qa/report.json` plus six screenshots (three

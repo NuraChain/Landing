@@ -77,7 +77,7 @@ hero's onward arrow rotates. Brand marks, platform logos and flags never mirror.
 
 ```bash
 npm run test:i18n        # string tables, direction, the pre-paint script
-npm run qa:visual -- --url http://localhost:<port>/
+npm run qa:visual -- --url http://127.0.0.1:3000/
 ```
 
 `qa:visual` drives `en`/ltr and `fa`/rtl across all three viewports and asserts the document

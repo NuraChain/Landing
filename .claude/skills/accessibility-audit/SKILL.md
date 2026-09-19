@@ -74,8 +74,8 @@ mid-visit keeps what they loaded with. `createScope`'s `mediaQueries: { reducedM
 ## The audit run
 
 ```bash
-npm run dev                                     # note the port; 4000 may be taken
-npm run qa:visual -- --url http://localhost:<port>/
+npm run dev                                     # one process, one origin: http://127.0.0.1:3000
+npm run qa:visual -- --url http://127.0.0.1:3000/
 ```
 
 `scripts/visual-qa.mjs` drives 3 viewports x 2 directions (1440x900, 1024x768, 390x844;

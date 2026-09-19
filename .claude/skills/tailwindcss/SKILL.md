@@ -83,8 +83,8 @@ Mirror direction-of-travel icons only (`rtl:-scale-x-100`). Never brand marks, l
 ## Before you claim it works
 
 ```bash
-npm run dev                                     # note the port; 4000 may be taken
-npm run qa:visual -- --url http://localhost:<port>/
+npm run dev                                     # one process, one origin: http://127.0.0.1:3000
+npm run qa:visual -- --url http://127.0.0.1:3000/
 ```
 
 3 viewports x 2 directions: direction flip, horizontal-scroll and escaped-element detection,

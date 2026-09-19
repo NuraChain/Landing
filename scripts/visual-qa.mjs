@@ -6,10 +6,11 @@
 // direction actually flipping, and the axe rule set. Screenshots are the evidence you read
 // AFTER something fails, not the check itself.
 //
-//   npm run qa:visual                      # against http://localhost:4000
+//   npm run qa:visual                      # against http://127.0.0.1:3000
 //   npm run qa:visual -- --url http://...  # against anything else
 //
-// Requires the dev server (or a preview build) to already be serving.
+// Requires `npm run dev` (one process, one origin) or a production `npm start` to already
+// be serving.
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import AxeBuilder from '@axe-core/playwright';
@@ -34,7 +35,7 @@ const arg = (flag, fallback) =>
     return index === -1 ? fallback : process.argv[index + 1];
 };
 
-const URL_UNDER_TEST = arg('--url', 'http://localhost:4000/');
+const URL_UNDER_TEST = arg('--url', 'http://127.0.0.1:3000/');
 const OUT_DIR = arg('--out', 'artifacts/visual-qa');
 
 /**

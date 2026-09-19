@@ -7,6 +7,16 @@ two right-to-left, two themes, live chain figures read in the browser.
 and the process that serves the built bundles. Paths below are relative to whichever
 half they belong to - a bare `src/` in this file means `application/src/`.
 
+**One process, one origin — in development as well as production.** The root manifest declares
+`"azeroth": { "dev": "server" }`, so `npm run dev` starts the server half ALONE and the kit runs
+vite inside it (`@azerothjs/kit/dev`, wired in `server/src/main.ts`). The pages, the api, the
+PDFs and the HMR socket all answer on `http://127.0.0.1:3000`. There is no second port, no
+proxy block in `application/vite.config.ts` (the session refuses one at startup) and no `dev`
+script in either half - the root is the one entry point. `vite` is a devDependency of the
+SERVER half at the application's range, because that is the copy the session loads; a
+production image built with `npm ci --omit=dev` still carries none. `HOST=0.0.0.0` in
+`server/.env` opens dev to another device.
+
 Everything below describes what is actually in this repository. If a rule here
 disagrees with the code, the code is the source of truth — fix the note.
 
@@ -44,7 +54,9 @@ And of `server/src/`:
 
 ```
 schemas.ts     every wire shape, declared once; the browser's types are inferred from it
-app.ts         createApi/buildApp - features, guards, and the kit's page mount
+app.ts         createApi/registerApi/buildApp - features, guards, and the kit's page mount
+deploy-env.ts  two lines `npm start` imports first: NODE_ENV defaults to production for the
+               RUNTIME's own dev flag, which is read before .env is ever loaded
 blog/content.ts the blog, read off disk at boot - loadArticles + an in-memory index
 blog/present.ts the fallback policy - which translation a given reader is served
 market/price.ts the ONE outbound call this half makes - see below
@@ -86,6 +98,13 @@ than `/api`, so a cold page load spends a dozen of the budget on its own assets 
 `/assets` is served immutable and why the pipeline is exported rather than inlined in
 `main.ts`: `tests/edge-pipeline.spec.ts` drives the composed handler, and every other spec
 drives `app.handle`, where these edges do not exist.
+
+**`registerApi` is the one list of routes that are not pages** - the api, its manifest, the
+sitemap, the PDFs. The dev session registers it on the App it serves and `buildApp` on the
+production one, so a route added to one exists in both; `tests/app.spec.ts` drives it on a bare
+App. Keep `rateLimit` in the exported pipeline and out of `app.use`: an in-process api call from
+a page loader enters at `app.handle`, where the limiter's default key has no peer to read and
+answers 500.
 
 There is **no** Storybook, no component library, no CSS-in-JS and no state
 manager. Do not add one to solve a problem the existing pieces already solve.
@@ -416,8 +435,8 @@ The distinction is worth holding: suppress what moves on its own, keep what foll
 ## Visual QA workflow
 
 ```bash
-npm run dev                                     # note the port; 4000 may be taken
-npm run qa:visual -- --url http://localhost:<port>/
+npm run dev                                     # one process, one origin: http://127.0.0.1:3000
+npm run qa:visual -- --url http://127.0.0.1:3000/
 ```
 
 For every scenario (3 viewports x 2 directions) it asserts the document

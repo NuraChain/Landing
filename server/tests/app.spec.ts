@@ -6,7 +6,52 @@
 // later commit could break without any page looking wrong.
 import { describe, it, expect } from 'vitest';
 
-import { harness } from './support/fixtures.ts';
+import { App } from '@azerothjs/http';
+
+import { createApi, registerApi } from '../src/app.ts';
+import { harness, post, whitepaper } from './support/fixtures.ts';
+import { BlogContent } from '../src/blog/content.ts';
+
+describe('the routes that are not pages', () =>
+{
+    /*
+     * `registerApi` is the contract between the two boots: the kit's dev session registers it
+     * on the App it serves and `buildApp` on the production one. A route added to one and not
+     * the other is the divergence this exists to prevent - so it is asserted against a bare
+     * App, the way the dev session gets it.
+     */
+    const bare = (): App =>
+    {
+        const app = new App({ dev: false });
+        const content = { store: new BlogContent([post()]), whitepaper: whitepaper() };
+
+        registerApi(app, createApi(content), content);
+
+        return app;
+    };
+
+    it('serves the api, its manifest and the sitemap on an App that mounts no pages', async () =>
+    {
+        const app = bare();
+        const get = (path: string): Promise<Response> => app.handle(new Request(`http://local${ path }`));
+
+        expect((await get('/api/healthz')).status).toBe(200);
+        expect((await get('/api/_manifest')).status).toBe(200);
+        expect((await get('/api/blog/')).status).toBe(200);
+
+        const sitemap = await get('/sitemap.xml');
+
+        expect(sitemap.status).toBe(200);
+        expect(await sitemap.text()).toContain('/blog/nura-mainnet-is-live');
+    });
+
+    it('serves no PDFs when no directory is named', async () =>
+    {
+        // The suite never reads a disk it did not write, so `pdfDir` is omitted - and an
+        // omitted directory must mean "no route", not "a route that throws".
+        expect((await bare().handle(new Request('http://local/whitepaper/nura-chain-whitepaper-en.pdf'))).status).toBe(404);
+    });
+});
 
 describe('the server shell', () =>
 {
