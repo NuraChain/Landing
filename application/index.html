@@ -2,7 +2,13 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8"/>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <!-- `viewport-fit=cover` lets the page paint into the notch and the home-indicator
+             area instead of being letterboxed by the browser's own safe insets. That is the
+             half that makes a page feel like an app rather than a document in a frame - and it
+             is only safe because styles.css then pads the sticky header, the drawer and the
+             toast rail with `env(safe-area-inset-*)`. Take one without the other and content
+             sits under the notch. -->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
         <title>Nura Chain — an open and decentralized blockchain</title>
         <meta name="description" content="Nura Chain is an open and decentralized blockchain. Chain ID, RPC endpoint, block explorer, tokenomics, and the Nura Wallet for every device."/>
 

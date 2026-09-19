@@ -320,13 +320,35 @@ not a component. Check `src/components/` before writing UI.
 
 ## Responsive
 
-Target viewports, the ones `npm run qa:visual` drives:
+**Mobile-first, and literally so**: a base class list is the phone layout and `sm:` / `md:` /
+`lg:` only ever add to it. There is not one `max-*` variant in the codebase, and a new one
+would be the wrong direction - write the small screen, then widen it.
+
+Target viewports, the ones `npm run qa:visual` drives, smallest first:
 
 ```
-desktop  1440 x 900
+small     320 x 568    iPhone SE - the narrowest viewport any current phone reports
+mobile    390 x 844    iPhone 14/15 class
+tabletp   768 x 1024   tablet portrait: the DRAWER still applies here
 tablet   1024 x 768
-mobile    390 x 844
+desktop  1440 x 900
+wide     1920 x 1080
 ```
+
+**The header's desktop layout starts at `lg` (64rem), not `md`.** Its full nav measures
+861px, so shown at 48rem it pushed the header 93px past a tablet-portrait viewport and the
+whole page scrolled sideways - found by adding 768 to the matrix above. Tablet portrait keeps
+the drawer, which is what a tablet does natively anyway. The `matchMedia` in
+`header.component.azeroth` that closes the drawer on rotation MUST match those `lg:` variants.
+
+**Native feel is four global rules in `styles.css`, not per-component work.** `viewport-fit=cover`
+in `index.html` lets the page paint into the notch, and `body` then carries
+`env(safe-area-inset-*)` so nothing sits under it; the drawer and the toast rail add their own,
+DELIBERATELY PHYSICAL, because a notch is a fact about hardware rather than about reading
+direction. Controls get `-webkit-tap-highlight-color: transparent`, `touch-action:
+manipulation` and `user-select: none` - the grey tap flash, the double-tap zoom delay and a
+long-press selecting a button's label are the three defaults that give a web page away. Text
+is untouched: an address, a chain id or a paragraph must still be selectable.
 
 Prefer `gap-*` over margins on children — `gap` is direction-neutral, so it
 survives RTL without a second rule.

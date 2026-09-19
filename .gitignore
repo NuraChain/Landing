@@ -19,3 +19,11 @@ artifacts/
 # The sqlite database and its write-ahead log: content, written at runtime and restored from a
 # backup, never from the repository.
 .data/
+
+# Browser screenshots. `artifacts/` above holds the ones `qa:visual` writes; these are the
+# ad-hoc ones a Playwright session drops wherever it was pointed - evidence for a person
+# looking at a change, never part of the source.
+*.png
+!application/public/*.png
+!server/content/**/*.png
+.playwright-mcp/
