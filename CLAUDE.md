@@ -32,8 +32,8 @@ disagrees with the code, the code is the source of truth — fix the note.
 | Language | TypeScript, strict |
 | Styling | **Tailwind CSS v4**, CSS-first config in `src/styles.css` (`@theme inline`). There is no `tailwind.config.js` |
 | Build | Vite 8 |
-| Tests | Vitest 4 + happy-dom, through the real compiler |
-| Browser QA | Playwright + axe, via `npm run qa:visual` |
+| Tests | Vitest 5 + happy-dom, through the real compiler |
+| Browser QA | Playwright, Chromium and Firefox: `npm run qa:visual` (layout, direction, axe) and `npm run qa:browser` (head, negotiation, hydration, loaders, 404s) |
 | Server | **`@azerothjs/http`** + `@azerothjs/kit`, no database, Vitest in-process |
 
 Layout of `application/src/`:
@@ -46,7 +46,7 @@ stores/           locale and theme, each a createStore singleton
 lib/              content/site.ts (every fact the site states), content/page-copy.ts,
                   head.ts (each page's <head>), loaders.ts + blog-query.ts + reader-locale.ts
                   + localized-loader.ts (the route data layer), network.ts, wallet.ts,
-                  nura-link.ts, markdown.ts, overlay.ts, section-href.ts, i18n/
+                  nura-link.ts, markdown.ts, overlay.ts, smooth-scroll.ts, i18n/
 api.ts            the typed client - the ONLY file that crosses into server/, and with types only
 routes.ts         the one route table, read by the client router, the SSR entry and the kit
 styles.css        the design system
@@ -591,11 +591,18 @@ the provider publishes its context.
 
 Measure before changing; an optimisation with no before/after number is a guess.
 
-- The landing page is one document; sections are anchors, not routes. `/about` and `/blog`
-  are real routes, so a link to a SECTION from one of them has to be rooted -
-  `lib/section-href.ts` returns a bare `#chain` at home and `/#chain` everywhere else, and
-  a plain `<a href="/#chain">` on the landing page itself would reload the page it is
-  already showing.
+- **The landing page is one document; sections are anchors, not routes - so every link to a
+  section goes through `components/ui/section-link.component.azeroth`, never a bare `<a>`.**
+  At home it renders `href="#chain"`, which is the form `lib/smooth-scroll.ts` delegates on,
+  and leaves the click to Lenis. From `/blog`, `/about` or `/whitepaper` it renders
+  `href="/#chain"` and takes the click itself: a plain anchor to a rooted hash is a
+  cross-document navigation the router does not intercept, so it tore the document down and
+  built it again - a fresh request, a bundle parse and a re-hydration - to reach a heading.
+  It navigates with `scroll: false` and calls `scrollToSection`, which HOLDS the target for
+  a few frames rather than aiming once: the router's own hash scroll fires while the
+  document is still the size of the page being left, and a scroll past its end is clamped
+  silently. `tests/section-link.spec.ts` pins both halves. A `<For>` row needs a wrapping
+  element around it - a component's root is a fragment to the reconciler.
 - The server caches nothing the browser needs to re-cache. Repeated node reads are memoised
   server-side; do not add a second layer in the browser without a measurement.
 - Vite hashes asset filenames, so `/assets` is served `immutable` for a year - by the kit

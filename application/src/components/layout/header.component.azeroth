@@ -4,10 +4,10 @@ import { Blocks, Check, CircleDollarSign, FileText, Languages, Menu, Moon, Newsp
 
 import { LOCALES, nativeName, useLocale } from '../../stores/locale';
 import { captureOverlay } from '../../lib/overlay';
-import { useSectionHref } from '../../lib/section-href';
 import { withThemeTransition } from '../../lib/theme-transition';
 
 import IconButton from '../ui/icon-button.component.azeroth';
+import SectionLink from '../ui/section-link.component.azeroth';
 import Tooltip from '../ui/tooltip.component.azeroth';
 import { useTheme } from '../../stores/theme';
 
@@ -146,8 +146,6 @@ export default component Header()
         cleanup { wide.removeEventListener('change', sync); }
     }
 
-    const sectionHref = useSectionHref();
-
     const label = (id: SectionId): string => t().nav[id];
 
     { /* The bar is a floating card, so the surface - border, background, blur - moves to
@@ -182,22 +180,28 @@ export default component Header()
             class={ () => 'mx-auto flex h-16 max-w-6xl items-center gap-3 rounded-2xl border px-5 transition-colors duration-300 '
                 + (scrolled ? 'border-line bg-bg/85 backdrop-blur-lg' : 'border-line/60 bg-surface/60 backdrop-blur-md') }
         >
-            <a href={ () => sectionHref('top') } class="me-auto flex items-center gap-2 text-base font-semibold tracking-tight text-ink">
+            <SectionLink id="top" class="me-auto flex items-center gap-2 text-base font-semibold tracking-tight text-ink">
                 { /* Decorative: `alt=""` on purpose, because the brand name sits right
                      beside it inside the same link. A real alt here would make a screen
                      reader announce the name twice. */ }
                 <img src="/icon.png" alt="" width="28" height="28" class="size-7 rounded-lg" />
                 { t().brand }
-            </a>
+            </SectionLink>
 
             <nav class="hidden items-center gap-1 lg:flex" aria-label={ t().nav.wallet }>
+                { /* The row wrapper is the reconciler's requirement, not a layout choice: a
+                     <For> row must be exactly ONE host element, and a component's root is a
+                     fragment as far as the compiler can see. The <div> is the flex item the
+                     <a> used to be, and the link fills it. */ }
                 <For each={ SECTIONS } key={ (id) => id } let={ id }>
-                    <a
-                        href={ () => sectionHref(id) }
-                        class="rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-elevated hover:text-ink"
-                    >
-                        { label(id) }
-                    </a>
+                    <div>
+                        <SectionLink
+                            id={ id }
+                            class="block rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-elevated hover:text-ink"
+                        >
+                            { label(id) }
+                        </SectionLink>
+                    </div>
                 </For>
 
                 { /* The one nav entry that is a ROUTE rather than an anchor, so it is a <Link>.
@@ -269,12 +273,12 @@ export default component Header()
                 </IconButton>
             </Tooltip>
 
-            <a
-                href={ () => sectionHref('wallet') }
+            <SectionLink
+                id="wallet"
                 class="hidden h-9 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-hover sm:flex"
             >
                 { t().nav.download }
-            </a>
+            </SectionLink>
 
             <IconButton
                 label={ menuOpen ? t().nav.closeMenu : t().nav.openMenu }
@@ -326,15 +330,20 @@ export default component Header()
                              The group drops the nav's `gap-1` on purpose: a gap would leave
                              each rule floating in the space instead of dividing two rows. */ }
                         <div class="flex flex-col divide-y divide-line">
+                            { /* Wrapped for the same reason as the bar's rows: one host
+                                 element per <For> row. `divide-y` draws between these
+                                 wrappers now, which is the same line in the same place. */ }
                             <For each={ SECTIONS } key={ (id) => id } let={ id }>
-                                <a
-                                    href={ () => sectionHref(id) }
-                                    class="flex items-center gap-3 rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink"
-                                    onClick={ () => jump() }
-                                >
-                                    { icon(SECTION_GLYPH[id], 'size-[18px] shrink-0') }
-                                    <span>{ label(id) }</span>
-                                </a>
+                                <div>
+                                    <SectionLink
+                                        id={ id }
+                                        class="flex items-center gap-3 rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink"
+                                        onClick={ () => jump() }
+                                    >
+                                        { icon(SECTION_GLYPH[id], 'size-[18px] shrink-0') }
+                                        <span>{ label(id) }</span>
+                                    </SectionLink>
+                                </div>
                             </For>
 
                             <Link
@@ -366,13 +375,13 @@ export default component Header()
                              content outgrows the panel, where a distributed `justify-` would
                              still be trying to spread space that is no longer there. */ }
                         <div class="mt-auto flex flex-col gap-1 pt-6">
-                            <a
-                                href={ () => sectionHref('wallet') }
+                            <SectionLink
+                                id="wallet"
                                 class="flex h-12 items-center justify-center rounded-xl bg-accent font-semibold text-accent-ink"
                                 onClick={ () => jump() }
                             >
                                 { t().nav.download }
-                            </a>
+                            </SectionLink>
 
                             { /* The two controls the bar gives up below `md`. Rows rather than
                                  the bar's icon buttons: there is width for a word here, and a

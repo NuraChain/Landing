@@ -1,0 +1,70 @@
+import { useNavigate, useRoute, type Child } from 'azerothjs';
+
+import { scrollToSection } from '../../lib/smooth-scroll';
+
+/**
+ * A link to one of the landing page's sections, from anywhere on the site.
+ *
+ * The sections are anchors in ONE document, so what the link has to do depends on which
+ * document the reader is currently in - and the header and the footer, the two things
+ * rendered OUTSIDE `<Routes>`, are exactly the two that outlive the landing page and have
+ * to ask. Both cases are one `<a>` with a real url in its `href`, so the served markup is
+ * crawlable and a middle-click still opens a tab; only the click handler differs.
+ *
+ * AT HOME the href is a bare `#chain`, which is the form `lib/smooth-scroll.ts` delegates
+ * on (`a[href^="#"]`): Lenis glides to the target and lands it clear of the sticky header.
+ * This component must NOT preventDefault there, or the glide never runs. A rooted
+ * `/#chain` at home would be worse still - a cross-document navigation for a few hundred
+ * pixels of scrolling, reloading the page it is already showing.
+ *
+ * ANYWHERE ELSE the href is `/#chain` and the click is handed to the router, and this is
+ * the half that was wrong. A plain `<a href="/#chain">` is not something the router
+ * intercepts, so every section link in the header and the footer tore the whole document
+ * down and built it again - a fresh request, a fresh bundle parse, a re-hydration - to
+ * reach a heading on another page. Measured from /blog, `window` was a new object on the
+ * other side of the click.
+ *
+ * `scroll: false` on that navigation, and `scrollToSection` after it: the router's own hash
+ * scroll runs the instant the new page's nodes attach, which on the landing page is long
+ * before it has its height, so it lands short and stays there. The helper waits for the
+ * document to settle and then glides, the same way and by the same offset as a click at home.
+ *
+ * Modified clicks are left alone in both cases: a new tab is the browser's to open.
+ */
+export default component SectionLink(props:
+{
+    /** The id of the section to land on - `chain`, `wallet`, `top`. */
+    id: string;
+    class?: string;
+    /** Closing the drawer, where a drawer holds the link. */
+    onClick?: () => void;
+    children?: Child;
+})
+{
+    const location = useRoute();
+    const { navigate } = useNavigate();
+
+    const atHome = (): boolean => location().pathname === '/';
+
+    const press = (event: MouseEvent): void =>
+    {
+        props.onClick?.();
+
+        if (atHome() || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+        {
+            return;
+        }
+
+        event.preventDefault();
+        navigate(`/#${ props.id }`, { scroll: false });
+        scrollToSection(props.id);
+    };
+
+    <a
+        href={ () => (atHome() ? `#${ props.id }` : `/#${ props.id }`) }
+        class={ () => props.class ?? '' }
+        onClick={ press }
+    >
+        { props.children }
+    </a>
+}
