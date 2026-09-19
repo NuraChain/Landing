@@ -106,8 +106,8 @@ export default component AddChainButton(props: { size?: ButtonSize; variant?: Bu
             travelTo('chain');
         }
 
-        window.clearTimeout(timer);
-        timer = window.setTimeout(() => setStatus('idle'), 2600);
+        clearTimeout(timer);
+        timer = setTimeout(() => setStatus('idle'), 2600);
     };
 
     const run = async (rdns: string): Promise<void> =>
@@ -121,7 +121,7 @@ export default component AddChainButton(props: { size?: ButtonSize; variant?: Bu
         report(await addChain(rdns));
     };
 
-    cleanup { window.clearTimeout(timer); }
+    cleanup { clearTimeout(timer); }
 
     {/* `contents` so the wrapper adds no box of its own: this button sits in a flex row
         at both call sites, and the picker beside it is portaled out of the tree anyway. */}

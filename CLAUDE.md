@@ -14,7 +14,7 @@ disagrees with the code, the code is the source of truth — fix the note.
 
 | Piece | What it is |
 | --- | --- |
-| Framework | **AzerothJS 2.0.0-beta.2** — not React, Vue or Svelte |
+| Framework | **AzerothJS 2.1.0** — not React, Vue or Svelte |
 | Components | `.azeroth` files, compiler syntax, no JSX and no hooks |
 | Reactivity | `state` / `derived` / `effect` / `cleanup` blocks; `createSignal` / `createStore` from `azerothjs` |
 | Motion | **anime.js v4**, but only through `src/lib/motion.ts` — the one authority that gates on `prefers-reduced-motion` and IntersectionObserver absence, so no section ever writes that guard itself |
@@ -108,6 +108,13 @@ manager. Do not add one to solve a problem the existing pieces already solve.
 - **Component props are compiled to getters; DOM attributes are not.** Pass a plain
   expression to a component (`label={ t().blog.all }`) and a thunk to an element
   (`class={ () => ... }`). A thunk passed as a component prop arrives as a function.
+- **A component-level `cleanup { ... }` RUNS ON THE SERVER**, when the string render disposes
+  the component's own scope (every compiled component owns one since 2.1.0). A cleanup inside
+  an `effect` never does - effects are inert in string mode - but a bare one at the body level
+  must not touch `window` or `document`. `add-chain-button` and `copy-field` clear a timer in
+  one, and `window.clearTimeout` was a 500 on every blog request; the bare `setTimeout` /
+  `clearTimeout` globals exist on both sides. `tests/ssr.spec.ts` renders every server route
+  in a node environment so this is red in the suite, not in production.
 - **`value` on a `<select>` whose options come from a `<For>` does not stick** — the options
   do not exist at the moment it is applied, and the control renders blank. Put `selected` on
   the option instead. Inline options are fine, which is what makes this easy to miss.
@@ -465,11 +472,12 @@ Measure before changing; an optimisation with no before/after number is a guess.
   already showing.
 - The server caches nothing the browser needs to re-cache. Repeated node reads are memoised
   server-side; do not add a second layer in the browser without a measurement.
-- Vite hashes asset filenames, so `/assets` is served `immutable` for a year from `app.ts` -
-  registered BEFORE `mountPages`, whose `/*path` fallback would otherwise match first and
-  apply the kit's revalidate-always default. Everything at the root (`index.html`, the
-  favicons, `robots.txt`) keeps that default: those names are stable across deploys, so
-  pinning them would strand a returning reader on the previous build.
+- Vite hashes asset filenames, so `/assets` is served `immutable` for a year - by the kit
+  itself since 2.1.0, which registers that mount ahead of its `/*path` fallback. Registering
+  the pattern again in `app.ts` is a `Route conflict` at boot, which is why the app no longer
+  does. Everything at the root (`index.html`, the favicons, `robots.txt`) keeps the
+  revalidate-always default: those names are stable across deploys, so pinning them would
+  strand a returning reader on the previous build.
 - Fonts are self-hosted with per-script `unicode-range` subsets, so a Latin
   visitor never downloads the Arabic file.
 - Images carry intrinsic `width`/`height` so they cannot shift layout.

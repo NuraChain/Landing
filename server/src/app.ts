@@ -201,6 +201,17 @@ export type Api = ReturnType<typeof createApi>;
  */
 export const DEFAULT_SITE_URL = 'https://nurachain.net';
 
+/** `Omit` over a union keeps only the keys every arm shares; this keeps each arm whole. */
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
+
+/**
+ * The client this process serves pages for: the built directory in production, or the shell
+ * html as TEXT where nothing is built (the kit's dev session, a spec). Exactly one of the two,
+ * which is what `KitOptions` itself demands - a plain `Omit` over that union would collapse it
+ * into a shape that satisfies neither arm.
+ */
+export type PagesOptions = DistributiveOmit<KitOptions, 'manifest'>;
+
 export interface AppOptions extends ApiDeps
 {
     dev: boolean;
@@ -225,7 +236,7 @@ export interface AppOptions extends ApiDeps
      * `manifest` is not among the options a caller supplies: it is projected from the api this
      * function just registered, so the embedded copy and the served one cannot disagree.
      */
-    pages?: Omit<KitOptions, 'manifest'>;
+    pages?: PagesOptions;
 }
 
 export function buildApp(options: AppOptions): App
@@ -264,7 +275,7 @@ export function buildApp(options: AppOptions): App
     /*
      * The whitepaper downloads, under the same prefix as the page that describes them.
      *
-     * Registered ahead of `mountPages` like `/assets` and `/sitemap.xml`: the kit claims
+     * Registered ahead of `mountPages` like `/sitemap.xml`: the kit claims
      * `/whitepaper` by name and everything else through `/*path`, and this pattern is more
      * specific than the fallback without colliding with the page. The default cache policy -
      * revalidate every time - is the right one here, because a regenerated PDF keeps its name.
@@ -275,29 +286,11 @@ export function buildApp(options: AppOptions): App
     }
 
     // Mounted LAST so nothing can shadow /api: the kit's asset fallback matches everything.
+    // The kit also serves `/assets` itself, `public, max-age=31536000, immutable` - vite's
+    // content-hashed names earn it - so nothing here registers that pattern: a second
+    // registration of one pattern is a `Route conflict` at boot.
     if (options.pages !== undefined)
     {
-        /*
-         * Vite writes CONTENT-HASHED names into /assets, so the bytes behind one of those urls
-         * can never change - a new build is a new name. The kit serves them on its default
-         * `max-age=0, must-revalidate` all the same, which asks the browser to check every
-         * script, stylesheet and font again on every single page view.
-         *
-         * Two costs, and the second is the one that bit: a round trip per asset per visit, and
-         * a request per asset for the rate limiter to count. Pinning them for a year takes a
-         * returning reader's page view from a dozen metered requests to zero.
-         *
-         * Registered BEFORE mountPages for the same reason /sitemap.xml is - the kit's /*path
-         * fallback matches everything, and the first match wins.
-         *
-         * Only /assets is pinned. index.html, the favicons and robots.txt live at the root
-         * under names that stay the same across deploys, so they must keep revalidating or a
-         * deploy would never reach anybody holding a cached copy.
-         */
-        app.get('/assets/*path', staticFiles(join(options.pages.clientDir, 'assets'), {
-            cacheControl: 'public, max-age=31536000, immutable'
-        }));
-
         /*
          * The landing pages, served with a head of their own.
          *
@@ -307,7 +300,7 @@ export function buildApp(options: AppOptions): App
          * and one description, with no canonical, no Open Graph and no structured data.
          *
          * These two paths are TAKEN OUT of the table handed to `mountPages` rather than
-         * registered ahead of it. `/sitemap.xml` and `/assets` can sit in front of the kit
+         * registered ahead of it. `/sitemap.xml` and the PDFs can sit in front of the kit
          * because the kit never claims those exact patterns - it claims `/*path`, and a more
          * specific route wins. `/` and `/about` it claims by name, and this router answers a
          * duplicate pattern with `Route conflict` at startup rather than by preferring one.
@@ -320,20 +313,23 @@ export function buildApp(options: AppOptions): App
          * network section is dragged onto a server, which is the trade routes.ts weighed and
          * declined.
          */
-        const clientDir = options.pages.clientDir;
+        const { clientDir = '', shell } = options.pages;
         const manifest = manifestOf(api);
 
         /*
          * The shell, read once and kept. Same order the kit looks in - a built client may ship
          * `shell.html` beside `index.html` - and the manifest script is spliced in exactly as
-         * `mountPages` would, so hydration on these two paths still costs no round trip.
+         * `mountPages` would, so hydration on these two paths still costs no round trip. A
+         * mount handed the shell as text (no built client) serves that text.
          */
         let shellCache: Promise<string> | null = null;
 
         const landingShell = (): Promise<string> =>
         {
-            shellCache ??= readFile(join(clientDir, 'shell.html'), 'utf8')
-                .catch(() => readFile(join(clientDir, 'index.html'), 'utf8'))
+            shellCache ??= (shell === undefined
+                ? readFile(join(clientDir, 'shell.html'), 'utf8')
+                    .catch(() => readFile(join(clientDir, 'index.html'), 'utf8'))
+                : Promise.resolve(shell))
                 .then((page) => page.replace('</head>', () => `${ manifestScript(manifest) }</head>`));
 
             return shellCache;
@@ -382,9 +378,11 @@ function withMeta(renderer: PageRenderer | undefined, content: SiteContent, site
         return undefined;
     }
 
-    return async (url, shell) =>
+    // The third argument is the render's own context - the request, its abort signal, the
+    // negotiated language, the handoff stamps - and it has to reach the renderer whole.
+    return async (url, shell, options) =>
     {
-        const result = await renderer(url, shell);
+        const result = await renderer(url, shell, options);
 
         // The union may grow - a streaming arm is planned - so this switches on the one arm it
         // can rewrite rather than assuming anything about the others.

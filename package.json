@@ -37,6 +37,6 @@
         "service:uninstall": "bash scripts/service-uninstall.sh"
     },
     "devDependencies": {
-        "@azerothjs/cli": "2.0.0-beta.2"
+        "@azerothjs/cli": "2.1.0"
     }
 }

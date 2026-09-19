@@ -42,8 +42,8 @@ export default component CopyField(props:
             await navigator.clipboard.writeText(props.value);
 
             copied = true;
-            window.clearTimeout(timer);
-            timer = window.setTimeout(() => { copied = false; }, 1600);
+            clearTimeout(timer);
+            timer = setTimeout(() => { copied = false; }, 1600);
         }
         catch
         {
@@ -61,7 +61,7 @@ export default component CopyField(props:
         }
     };
 
-    cleanup { window.clearTimeout(timer); }
+    cleanup { clearTimeout(timer); }
 
     <div class="flex min-w-0 flex-1 items-center gap-2">
         { /* The value is pinned LTR even in Persian, where bidi would otherwise reorder a
