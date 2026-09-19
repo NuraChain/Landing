@@ -2,7 +2,9 @@ import { For } from 'azerothjs';
 
 import { Code2, Terminal, Zap } from 'lucide';
 
-import { DOWNLOADS, RELEASES_URL, ROADMAP } from '../lib/content/site';
+import { DOWNLOADS, NETWORK_NAME, RELEASES_URL, ROADMAP, SITE_URL } from '../lib/content/site';
+import { HOME_DESCRIPTION, HOME_TITLE } from '../lib/content/page-copy';
+import { organization, pageHead } from '../lib/head';
 import { onReady, reveal, revealItems } from '../lib/motion';
 
 import DownloadTile from '../components/chain/download-tile.component.azeroth';
@@ -23,6 +25,33 @@ import TokenomicsSection from '../sections/tokenomics.section.azeroth';
 export default component Home()
 {
     const { t } = useLocale();
+
+    /*
+     * The site's own front door, and the one head that has to agree with `index.html`.
+     *
+     * The shell states the same title and description for every path a page does not own, and
+     * for a reader with no JavaScript before this declaration is applied - so the two are the
+     * same strings on purpose. `WebSite` and `Organization` are what a search engine reads to
+     * name the site and its publisher; there is deliberately no `SearchAction`, because there
+     * is no search box here and describing one is a promise a crawler acts on.
+     */
+    pageHead({
+        title: () => HOME_TITLE,
+        description: () => HOME_DESCRIPTION,
+        path: '/',
+        type: 'website',
+        jsonLd: () => [
+            {
+                '@context': 'https://schema.org',
+                '@type': 'WebSite',
+                name: NETWORK_NAME,
+                description: HOME_DESCRIPTION,
+                url: `${ SITE_URL }/`,
+                publisher: organization()
+            },
+            { '@context': 'https://schema.org', ...organization() }
+        ]
+    });
 
     // The wallet section rises once, when it first scrolls into view. reveal() holds the
     // reduced-motion and no-IntersectionObserver fallbacks; without JS nothing is hidden.

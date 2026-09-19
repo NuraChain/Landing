@@ -184,7 +184,10 @@ describe('the head a crawler reads', () =>
         {
             const { html } = await visit(path);
 
-            expect([...html.matchAll(/<title>/gu)], path).toHaveLength(1);
+            // `<title`, never `<title>`: the kit stamps the shell's own title text onto the
+            // tag (`data-azeroth-title-base`) so the client can restore it when the page is
+            // left, so the served tag carries an attribute.
+            expect([...html.matchAll(/<title[\s>]/gu)], path).toHaveLength(1);
             expect([...html.matchAll(/name="description"/gu)], path).toHaveLength(1);
             // Two robots directives resolve to the MOST RESTRICTIVE, so a duplicate is how a
             // page ends up silently de-indexed by /about's noindex.
@@ -199,7 +202,7 @@ describe('the head a crawler reads', () =>
         const home = await visit('/');
         const about = await visit('/about');
 
-        const titleOf = (html: string): string | undefined => /<title>([^<]*)<\/title>/u.exec(html)?.[1];
+        const titleOf = (html: string): string | undefined => /<title[^>]*>([^<]*)<\/title>/u.exec(html)?.[1];
 
         expect(titleOf(home.html)).toBeTruthy();
         expect(titleOf(home.html)).not.toBe(titleOf(about.html));
@@ -227,7 +230,9 @@ describe('the head a crawler reads', () =>
     {
         const { html } = await visit('/blog/hello');
 
-        expect(html).toContain('<title>Hello there — Nura Chain</title>');
-        expect(html).toContain('<link rel="canonical" href="https://nurachain.net/blog/hello"/>');
+        expect(/<title[^>]*>([^<]*)<\/title>/u.exec(html)?.[1]).toBe('Hello there — Nura Chain');
+        // Matched on the attributes, not on a literal tag: every element the head runtime
+        // writes carries a `data-azeroth-head` marker so the client can adopt and remove it.
+        expect(/<link[^>]*rel="canonical"[^>]*href="([^"]*)"/u.exec(html)?.[1]).toBe('https://nurachain.net/blog/hello');
     });
 });

@@ -1,6 +1,9 @@
 import { Link, useQuery, type NavigateTarget } from 'azerothjs';
 
 import { blogQuery } from '../lib/blog-query';
+import { BLOG_DESCRIPTION, BLOG_TITLE } from '../lib/content/page-copy';
+import { SITE_URL } from '../lib/content/site';
+import { breadcrumbs, organization, pageHead } from '../lib/head';
 import type { BlogIndex } from '../lib/loaders';
 import { useLocalizedLoader } from '../lib/localized-loader';
 import { directionOf, useLocale } from '../stores/locale';
@@ -43,6 +46,34 @@ export default component Blog()
     const query = useQuery();
 
     const index = useLocalizedLoader<BlogIndex>();
+
+    /*
+     * One canonical for every filter and page.
+     *
+     * `?tag=` and `?page=` narrow a LIST; they do not make a different document, and pointing
+     * each variant at itself would put a dozen near-identical pages in the index competing
+     * with each other. The pager's own links stay crawlable, which is how page two is reached.
+     */
+    pageHead({
+        title: () => BLOG_TITLE,
+        description: () => BLOG_DESCRIPTION,
+        path: '/blog',
+        type: 'website',
+        jsonLd: () => [
+            {
+                '@context': 'https://schema.org',
+                '@type': 'Blog',
+                name: BLOG_TITLE,
+                description: BLOG_DESCRIPTION,
+                url: `${ SITE_URL }/blog`,
+                publisher: organization()
+            },
+            breadcrumbs([
+                { name: 'Home', url: `${ SITE_URL }/` },
+                { name: 'Blog', url: `${ SITE_URL }/blog` }
+            ])
+        ]
+    });
 
     derived posts = index.data()?.rows ?? null;
     derived tags = index.data()?.tags ?? [];

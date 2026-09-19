@@ -43,7 +43,9 @@ components/       reusable UI  (Button, Card, Banner, CopyField, SectionHeading,
 sections/         page sections (network, tokenomics, chain, explorer, social)
 pages/            route components (home, about, blog, post)
 stores/           locale and theme, each a createStore singleton
-lib/              content/site.ts (every fact the site states), network.ts, wallet.ts,
+lib/              content/site.ts (every fact the site states), content/page-copy.ts,
+                  head.ts (each page's <head>), loaders.ts + blog-query.ts + reader-locale.ts
+                  + localized-loader.ts (the route data layer), network.ts, wallet.ts,
                   nura-link.ts, markdown.ts, overlay.ts, section-href.ts, i18n/
 api.ts            the typed client - the ONLY file that crosses into server/, and with types only
 routes.ts         the one route table, read by the client router, the SSR entry and the kit
@@ -60,7 +62,7 @@ deploy-env.ts  two lines `npm start` imports first: NODE_ENV defaults to product
 blog/content.ts the blog, read off disk at boot - loadArticles + an in-memory index
 blog/present.ts the fallback policy - which translation a given reader is served
 market/price.ts the ONE outbound call this half makes - see below
-seo/           pages.ts (the head), article.ts (the body), sitemap.ts, meta.ts
+seo/           article.ts (the whitepaper PDF's body), sitemap.ts, meta.ts (attr, directionOf)
 main.ts        config, connections, the listening process
 ```
 
@@ -168,25 +170,34 @@ is the whole policy: the reader's language, else the post's default, else anythi
   `innerHTML`. Headings level against the document's own shallowest heading, so `#`/`##` and
   `##`/`###` both come out h2/h3 rather than skipping a level under the page's h1.
 
-**Rendering, and the SEO that depends on it.** `/blog` and `/blog/:slug` are
-`render: 'server'`; the landing pages stay `'client'`.
+**Rendering, and the SEO that depends on it.** Every route is `render: 'server'` - the two
+landing pages included.
 
-A post route serves the REAL ARTICLE, not a loading skeleton. The page fetches inside an
-`effect`, which never runs on a server, so what used to be indexed was a correct `<title>`
-over an empty body. `seo/pages.ts` writes the head - title, description, canonical, OG,
-Twitter, JSON-LD - and `seo/article.ts` renders the markdown into the same document.
+A post route serves the REAL ARTICLE, not a loading skeleton, and it gets there through the
+framework rather than around it:
 
-- `seo/article.ts` is a SECOND reading of the markdown subset `lib/markdown.ts` parses, and
-  that duplication is deliberate. It is safe for one reason: `main.azeroth` mounts with
-  `render()`, not `hydrate()`, and `render()` EMPTIES its container first. Server markup is
-  deleted the moment the bundle boots, so nothing hydrates against it and it cannot mismatch.
-  It has to say the same words, not carry the same classes.
-- The head and the body resolve through the SAME call - `postFor` - so a page cannot describe
-  one article and print another.
-- Served in the post's own `defaultLocale`: the renderer gets a url and a shell and no request
-  headers, so there is no reader to resolve against. One address per post, no hreflang. Ten
-  indexable addresses would want the locale in the path; see the comment in `routes.ts`.
-- A slug that resolves to nothing is a real 404, never a soft one.
+- **The data comes from the route's `loader`** (`lib/loaders.ts`, wired in `routes.ts`). It
+  runs before the render and reaches this app's own api IN PROCESS - no socket, the visitor's
+  identity carried - so the document leaves with the article in it. The result rides the
+  loader handoff, `bootClient` in `main.azeroth` HYDRATES it, and the browser makes no request
+  to draw what it was already sent. Pages used to fetch inside an `effect`, which never runs on
+  a server; that is why the body was empty and why the server patched it back in afterwards.
+- **The head comes from the page**, through `pageHead` in `lib/head.ts` over the framework's
+  `useHead`. One helper, five callers. The kit replaces the shell's `title`, `description` and
+  `robots` BY KEY, so a document still carries exactly one of each, and the client updates the
+  head in place on a navigation - which the old server-side splice could not do at all, so a
+  reader's tab kept the title of whichever page they landed on first.
+- **The head and the body resolve through the same loader**, so a page cannot describe one
+  article and print another.
+- Served in the READER's language, negotiated per request; the article itself is whichever
+  translation the fallback policy picked, and carries its own `lang`/`dir`. One address per
+  post, no hreflang - ten indexable addresses would want the locale in the path; see the
+  comment in `routes.ts`.
+- A slug that resolves to nothing throws `notFound()` from the loader, which the kit answers as
+  a real 404 - never a soft one, and decided by the same lookup that fetches the post.
+- `seo/article.ts` still exists and is NOT part of this path: it renders the markdown for
+  `npm run whitepaper:pdf` alone. The served page uses the same `Markdown` component the
+  browser does, on both sides.
 
 ## The whitepaper
 
@@ -201,7 +212,8 @@ fall back differently. `GET /api/whitepaper?locale=` serves it; the page renders
 same `Markdown` component a post uses and shares its `TranslationNotice`.
 
 **The PDFs are derived and committed.** `npm run whitepaper:pdf` renders every `<locale>.md`
-through `seo/article.ts` - the renderer a crawler is served - and prints it with Playwright's
+through `seo/article.ts` - which exists for this and nothing else now; the served page renders
+its body through the same `Markdown` component the browser uses - and prints it with Playwright's
 Chromium into `content/whitepaper/pdf/`, beside a `manifest.json` recording the sha256 of the
 markdown each file came from. Chromium is what gets Persian and Arabic shaped, Han and Devanagari
 set in a real face, and page breaks that keep a heading with its text; it is a dev dependency and
@@ -223,14 +235,30 @@ section.
 ## The head, and the social card
 
 `index.html` carries the head every path starts from - title, description, `robots`, the
-favicons, the apple-touch-icon and the manifest. `seo/pages.ts` REPLACES the first three for
-the five paths it owns, and `injectMeta` strips each of them from the shell before splicing
-its own in.
+favicons, the apple-touch-icon and the manifest. **Each PAGE then declares its own**, through
+`pageHead` in `src/lib/head.ts` - one helper over the framework's `useHead`, called by all
+five routes. The kit serializes that into the served document and REPLACES the shell's
+title, description and robots by key, so a document carries exactly one of each without
+anybody stripping anything; on the client the same declaration is applied to the live head and
+rolled back when the page is left, which is what makes the title follow a navigation.
+
+The server writes no head at all any more. It used to rewrite the finished document by string
+surgery from a table of paths it kept in its own half, which worked for a crawler and did
+nothing for a reader clicking between pages.
 
 - **The `robots` line is stated, not omitted, and there must be exactly one per document.**
   Conflicting directives resolve to the MOST RESTRICTIVE, so a shell saying `index, follow`
   beside `/about`'s `noindex` de-indexes whatever it lands on, and the served markup looks
-  right either way. Adding a directive means adding a strip in `injectMeta`.
+  right either way. `pageHead` always emits one, and the kit replaces the shell's by key -
+  `tests/ssr.spec.ts` counts them per page.
+- **A head value is a GETTER, and it must always answer something real.** A title getter that
+  returns `''` is still a declaration and writes an empty `<title>`; only `undefined` falls
+  back to the shell's. So a page whose document is still loading titles itself with its
+  not-found or section string, never a bare suffix.
+- **Match served markup on attributes, never on a literal tag.** Everything the head runtime
+  writes carries `data-azeroth-head`, and the title carries `data-azeroth-title-base` holding
+  the shell's original text for the client's restore. A check written as `<title>` finds
+  nothing on a real page and reports a missing head that is perfectly present.
 - **The manifest is `public/manifest.json`, not `.webmanifest`.** `staticFiles` maps
   extensions to Content-Types from a fixed table that has no entry for `.webmanifest`, so that
   name serves `application/octet-stream` and every browser drops the manifest without a word.
@@ -239,7 +267,8 @@ its own in.
   `npm run og:image` renders it through the same Playwright Chromium, from the site's own
   string table, `lib/content/site.ts` constants and dark-theme tokens. 1200x630, because every
   card layout in use lays out at ~1.91:1 and crops or letterboxes anything else. Change the
-  size in `scripts/og-image.ts` and `SOCIAL_IMAGE` in `seo/pages.ts` together.
+  size in `scripts/og-image.ts` and `SOCIAL_IMAGE` in `src/lib/head.ts` together;
+  `tests/page-head.spec.ts` pins the pair and `tests/head.spec.ts` reads the file's pixels.
 
 ## Design system
 
@@ -329,8 +358,9 @@ layout work.
 - **A reader's language and a DOCUMENT's language are different questions.** A post written in
   Persian shown to an English reader is an English page containing a Persian article: the
   article carries its own `lang`/`dir` where it is rendered (see `post.page.azeroth`), and
-  nothing rewrites the document from it. `server/src/seo/pages.ts` used to, and that is why it
-  no longer touches `<html>`.
+  nothing rewrites the document from it. The head says the same thing twice over: `og:locale`
+  names the language the words are IN, which `pageHead` takes from the document rather than
+  from the reader, while `<html lang>` stays the reader's.
 - **Logical utilities only**: `ms-`/`me-`, `ps-`/`pe-`, `start-`/`end-`,
   `text-start`/`text-end`, `border-s`/`border-e`. A physical `ml-`, `pr-`,
   `left-`, `text-right` is a defect unless commented as deliberately physical.
@@ -468,12 +498,19 @@ npm test               # both halves
 npm run test:shuffle   # both halves, shuffled - the isolation gate
 npm run test:server    # the api and the store alone
 npm run coverage       # the browser half, thresholds enforced in vite.config.ts
-npm run test:unit          # wallet, stores, site constants, i18n, network
-npm run test:integration   # sections, header, add-chain, app shell
+npm run test:unit          # wallet, stores, site constants, the head's parts, i18n, network
+npm run test:integration   # sections, header, add-chain, app shell, server rendering
 npm run test:fuzz          # seeded property runs over the parsers
 npm run test:security      # link safety, upstream failures, chain params
-npm run test:i18n          # string tables, direction, pre-paint script
+npm run test:i18n          # string tables, direction, pre-paint script (theme)
 ```
+
+**`tests/ssr.spec.ts` is the one spec that runs the SERVER**, in a node environment, over the
+real `buildApp` and the real renderer with the shell handed in as text. It is where the page
+contract lives: the article in the served document, the reader's negotiated language on it, a
+real 404 for a slug nobody published, and exactly one title, description and robots directive
+per page. Nothing else can see any of that - every other spec runs under happy-dom against
+components, where `window` exists and there is no status line.
 
 Use the framework that is here. Do not add a second test runner. Every spec stubs `fetch`,
 and the server suite builds its blog from posts declared inline with a stubbed chain gateway —

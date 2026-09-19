@@ -1,14 +1,13 @@
 import { App, HttpError, NotFoundError, json, pipeline, rateLimit, requestId, securityHeaders, text, type ErrorObserver, type RequestObserver, type WebHandler } from '@azerothjs/http';
 import { staticFiles } from '@azerothjs/http/node';
 import { feature, manifestOf, register } from '@azerothjs/http/api';
-import { mountPages, type KitOptions, type PageRenderer } from '@azerothjs/kit';
+import { mountPages, type KitOptions } from '@azerothjs/kit';
 import { array } from '@azerothjs/schema';
 import type { LocaleConfig } from 'azerothjs';
 
 import { pageCount, toCards, toDetail } from './blog/present.ts';
 import type { SiteContent } from './content.ts';
 import { createPriceGateway, type PriceGateway } from './market/price.ts';
-import { injectMeta, metaFor } from './seo/pages.ts';
 import { buildSitemap } from './seo/sitemap.ts';
 import {
     nuraPrice,
@@ -309,8 +308,6 @@ export function buildApp(options: AppOptions): App
 
     registerApi(app, api, options, options);
 
-    const siteUrl = (options.siteUrl ?? DEFAULT_SITE_URL).replace(/\/+$/, '');
-
     // Mounted LAST so nothing can shadow /api: the kit's asset fallback matches everything.
     // The kit also serves `/assets` itself, `public, max-age=31536000, immutable` - vite's
     // content-hashed names earn it - so nothing here registers that pattern: a second
@@ -329,74 +326,12 @@ export function buildApp(options: AppOptions): App
          */
         mountPages(app, {
             ...options.pages,
-            renderer: withMeta(options.pages.renderer, options, siteUrl),
             manifest: manifestOf(api),
             locales: LOCALES
         });
     }
 
     return app;
-}
-
-/**
- * Wraps the page renderer so a server-rendered blog page carries its own head.
- *
- * The kit splices markup into the shell and leaves `<head>` alone, which would give all ten
- * posts index.html's single title and description - the two fields a search result is built
- * from. `PageRenderer` hands back the finished document as a string, so the head can be
- * rewritten here without the kit growing an API for it and without a route moving.
- *
- * Everything that is not one of the two blog routes falls through untouched: `metaFor` answers
- * null and the original result is returned as-is. A page whose head this module does not
- * understand keeps the one it already had.
- */
-function withMeta(renderer: PageRenderer | undefined, content: SiteContent, siteUrl: string): PageRenderer | undefined
-{
-    if (renderer === undefined)
-    {
-        return undefined;
-    }
-
-    // The third argument is the render's own context - the request, its abort signal, the
-    // negotiated language, the handoff stamps - and it has to reach the renderer whole.
-    return async (url, shell, options) =>
-    {
-        const result = await renderer(url, shell, options);
-
-        // The union may grow - a streaming arm is planned - so this switches on the one arm it
-        // can rewrite rather than assuming anything about the others.
-        if (result.kind !== 'html')
-        {
-            return result;
-        }
-
-        const deps = { store: content.store, whitepaper: content.whitepaper, siteUrl };
-        const meta = metaFor(url, deps);
-
-        if (meta === null)
-        {
-            /*
-             * Nothing to say about this address, so the shell's own head stands.
-             *
-             * The soft-404 patch that used to live here is gone: a post address that resolves
-             * to nothing is a `notFound()` thrown by the route's LOADER, which the kit answers
-             * as a real 404 - decided by the same lookup that fetches the article, rather than
-             * by this wrapper inspecting the url a second time and reaching its own verdict.
-             */
-            return result;
-        }
-
-        /*
-         * The head only. The BODY is the page's own.
-         *
-         * This used to render the article into the document as well, because the page fetched
-         * inside an `effect` - which never runs on a server - so a crawler was served a correct
-         * `<title>` over a loading skeleton. Each page declares a route LOADER now, so the text
-         * is fetched before the render and the page's own `Markdown` component puts it in the
-         * document, on both sides, from one implementation.
-         */
-        return { ...result, html: injectMeta(result.html, meta) };
-    };
 }
 
 /**

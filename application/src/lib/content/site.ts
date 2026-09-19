@@ -93,6 +93,21 @@ export const RPC_URL = 'https://rpc.nurachain.net';
 export const EXPLORER_URL = 'https://explorer.nurachain.net';
 
 /**
+ * The origin the site names itself by, with no trailing slash.
+ *
+ * Every absolute url a page states about itself is built from it: the canonical link, the
+ * Open Graph url, the social card and the JSON-LD. It has to be ABSOLUTE because those are
+ * read off-site - by a crawler, by a link preview in a chat client - where a relative path
+ * resolves against nothing.
+ *
+ * The server states the same origin as `DEFAULT_SITE_URL` (it builds the sitemap, which this
+ * half never sees) and `tests/page-head.spec.ts` pins the two equal. A deployment served from
+ * another host sets `SITE_URL` in the server's environment; this constant is the default both
+ * halves agree on.
+ */
+export const SITE_URL = 'https://nurachain.net';
+
+/**
  * Absolute, because a wallet draws this in its own network list with no page to resolve a
  * relative path against. It is the same `/icon.png` the header, the footer and the favicon
  * already use, so the mark beside the network is the one the reader saw on the site.

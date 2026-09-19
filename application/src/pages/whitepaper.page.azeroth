@@ -1,6 +1,8 @@
 import { Download } from 'lucide';
 
 import type { WhitepaperDetail } from '../api';
+import { NETWORK_NAME, SITE_URL } from '../lib/content/site';
+import { breadcrumbs, organization, pageHead } from '../lib/head';
 import { useLocalizedLoader } from '../lib/localized-loader';
 import { directionOf, useLocale } from '../stores/locale';
 
@@ -39,6 +41,62 @@ export default component Whitepaper()
 
     /** The name the file lands under in a downloads folder: the last segment of its path. */
     const fileName = (path: string): string => path.slice(path.lastIndexOf('/') + 1);
+
+    /*
+     * The head, from the same resolution the body renders - see the post page.
+     *
+     * `TechArticle` rather than `BlogPosting`, and it carries a `version`: this is the page a
+     * reader is most likely to CITE, and a cited document says which revision it is. The PDF
+     * is declared as an `encoding` of the same work rather than as a separate page, so a
+     * crawler that indexes PDFs knows which page the file belongs to.
+     */
+    pageHead({
+        title: () => `${ paper?.title ?? t().nav.whitepaper } — ${ NETWORK_NAME }`,
+        description: () => paper?.summary ?? t().whitepaper.downloadHint,
+        path: '/whitepaper',
+        type: 'article',
+        locale: () => paper?.locale ?? locale(),
+        alternates: () => paper?.available ?? [],
+        article: () => paper === null
+            ? null
+            : { publishedTime: paper.publishedAt, modifiedTime: paper.updatedAt, tags: ['whitepaper'] },
+        jsonLd: () =>
+        {
+            if (paper === null)
+            {
+                return [];
+            }
+
+            const canonical = `${ SITE_URL }/whitepaper`;
+
+            return [
+                {
+                    '@context': 'https://schema.org',
+                    '@type': 'TechArticle',
+                    headline: paper.title,
+                    description: paper.summary,
+                    inLanguage: paper.locale,
+                    availableLanguage: paper.available,
+                    version: paper.revision,
+                    datePublished: paper.publishedAt,
+                    dateModified: paper.updatedAt,
+                    url: canonical,
+                    mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+                    encoding: {
+                        '@type': 'MediaObject',
+                        encodingFormat: 'application/pdf',
+                        contentUrl: `${ SITE_URL }${ paper.pdf }`
+                    },
+                    author: organization(),
+                    publisher: organization()
+                },
+                breadcrumbs([
+                    { name: 'Home', url: `${ SITE_URL }/` },
+                    { name: paper.title, url: canonical }
+                ])
+            ];
+        }
+    });
 
     { /* One measure with the rest of the site - see the note on the blog index. The PROSE is
          narrowed again further down: 4xl is the page's edge, not a line length to read at. */ }
