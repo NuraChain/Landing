@@ -86,6 +86,27 @@ const freshLocale = async () => (await import('../src/stores/locale')).useLocale
 beforeEach(() =>
 {
     vi.resetModules();
+
+    /*
+     * The locale store reads the DOCUMENT now, and the document is shared by the whole file.
+     *
+     * `<html lang>` is what the server stamped and what the store reports, so a test that
+     * switches language leaves the next one reading its choice - the same trap the old
+     * localStorage-backed store set, one element over. The cookie goes too: it is where a
+     * choice is remembered, and a stale one would outlive the test that made it.
+     */
+    document.documentElement.lang = 'en';
+    document.documentElement.removeAttribute('dir');
+
+    for (const entry of document.cookie.split(';'))
+    {
+        const name = entry.split('=')[0]?.trim();
+
+        if (name !== undefined && name !== '')
+        {
+            document.cookie = `${ name }=; path=/; max-age=0`;
+        }
+    }
 });
 
 afterEach(() =>
@@ -259,115 +280,120 @@ describe('theme store: following the system', () =>
     });
 });
 
-describe('locale store: resolution at startup', () =>
+describe('locale store: what the document says', () =>
 {
-    const withLanguages = (languages: string[]): void =>
+    /*
+     * There is no detection left in this store, and that is the assertion.
+     *
+     * The SERVER decides the language - the reader's `locale` cookie, then `Accept-Language`
+     * in preference order, then English - and stamps it on `<html lang>` before the first
+     * byte leaves. The store reads that stamp, so a hydrating page cannot disagree with the
+     * markup it is adopting. The old `navigator.languages` walk lived here and in the
+     * pre-paint script, resolved a language a frame after paint, and was invisible to a
+     * crawler; those cases moved to the server, where `negotiateLocale` owns them.
+     */
+    it('reports the language the document was served in', async () =>
     {
-        vi.stubGlobal('navigator', { ...navigator, languages, clipboard: navigator.clipboard });
-    };
-
-    it('restores a previously chosen locale', async () =>
-    {
-        stubStorage().set('nura.locale', 'tr');
-        withLanguages(['en-US']);
+        document.documentElement.lang = 'tr';
 
         expect((await freshLocale()).locale()).toBe('tr');
     });
 
-    it('ignores a stored value that is not a supported locale', async () =>
+    it('falls back to English for a tag the string table does not hold', async () =>
     {
-        stubStorage().set('nura.locale', 'klingon');
-        withLanguages(['fr-FR']);
-
-        expect((await freshLocale()).locale()).toBe('fr');
-    });
-
-    // Walking the browser's order rather than ours is the whole point: a visitor who lists
-    // Persian first should get Persian, not whichever supported language we happen to
-    // declare first.
-    it('walks navigator.languages in the browser order, not ours', async () =>
-    {
-        stubStorage();
-        withLanguages(['fa-IR', 'en-US']);
-
-        expect((await freshLocale()).locale()).toBe('fa');
-    });
-
-    it('skips unsupported entries and takes the first supported one', async () =>
-    {
-        stubStorage();
-        withLanguages(['ja-JP', 'ko-KR', 'ru-RU', 'en-US']);
-
-        expect((await freshLocale()).locale()).toBe('ru');
-    });
-
-    it('matches on the primary subtag, so a region tag still resolves', async () =>
-    {
-        stubStorage();
-        withLanguages(['pt-BR']);
-
-        expect((await freshLocale()).locale()).toBe('pt');
-    });
-
-    it('matches case-insensitively', async () =>
-    {
-        stubStorage();
-        withLanguages(['ZH-Hans-CN']);
-
-        expect((await freshLocale()).locale()).toBe('zh');
-    });
-
-    it('falls back to English when nothing matches', async () =>
-    {
-        stubStorage();
-        withLanguages(['ja-JP', 'ko-KR']);
+        // The kit only ever stamps a supported tag, so this is the belt to that pair of
+        // braces - but indexing the table with an unknown key would be a blank page.
+        document.documentElement.lang = 'klingon';
 
         expect((await freshLocale()).locale()).toBe('en');
     });
 
-    it('falls back to English when the browser reports no languages at all', async () =>
+    it('never reads navigator.languages', async () =>
     {
-        stubStorage();
-        vi.stubGlobal('navigator', { ...navigator, languages: undefined, clipboard: navigator.clipboard });
-
-        expect((await freshLocale()).locale()).toBe('en');
-    });
-
-    it('still resolves a locale when storage reads throw', async () =>
-    {
-        stubStorage({ readThrows: true });
-        withLanguages(['es-ES']);
+        // The browser's guess is the SERVER's input now, through Accept-Language. A store
+        // that still consulted it would answer one language while the document declared
+        // another - which is the hydration mismatch this whole arrangement removes.
+        document.documentElement.lang = 'es';
+        vi.stubGlobal('navigator', { ...navigator, languages: ['fa-IR'], clipboard: navigator.clipboard });
 
         expect((await freshLocale()).locale()).toBe('es');
     });
 });
 
-describe('locale store: choosing', () =>
+describe('locale store: a choice made before the cookie existed', () =>
 {
-    it('persists the chosen locale', async () =>
+    it('replays a stored choice into the cookie once, then forgets the key', async () =>
+    {
+        // Readers who picked a language under the old store have it in localStorage, where no
+        // server can see it - so without this their next visit silently forgets what they
+        // chose. The key is removed either way, so the replay cannot fight a later choice.
+        const data = stubStorage();
+
+        data.set('nura.locale', 'hi');
+        document.documentElement.lang = 'en';
+
+        const { migrateLegacyChoice } = await import('../src/stores/locale');
+
+        migrateLegacyChoice();
+
+        expect(document.documentElement.lang).toBe('hi');
+        expect(document.cookie).toContain('locale=hi');
+        expect(data.get('nura.locale')).toBeUndefined();
+    });
+
+    it('ignores a stored value that is not a supported locale', async () =>
     {
         const data = stubStorage();
+
+        data.set('nura.locale', 'klingon');
+        document.documentElement.lang = 'en';
+
+        const { migrateLegacyChoice } = await import('../src/stores/locale');
+
+        migrateLegacyChoice();
+
+        expect(document.documentElement.lang).toBe('en');
+        expect(data.get('nura.locale')).toBeUndefined();
+    });
+
+    it('does nothing at all when there is nothing stored, and survives a blocked store', async () =>
+    {
+        stubStorage({ readThrows: true });
+        document.documentElement.lang = 'fr';
+
+        const { migrateLegacyChoice } = await import('../src/stores/locale');
+
+        expect(() => migrateLegacyChoice()).not.toThrow();
+        expect(document.documentElement.lang).toBe('fr');
+    });
+});
+
+describe('locale store: choosing', () =>
+{
+    it('remembers the choice where the SERVER can read it', async () =>
+    {
+        // A cookie, not localStorage, and that is the whole point of the move: the next
+        // request arrives already knowing the language, so its HTML is rendered in that
+        // language rather than corrected after it lands.
         const { choose } = await freshLocale();
 
         choose('hi');
 
-        expect(data.get('nura.locale')).toBe('hi');
+        expect(document.cookie).toContain('locale=hi');
+        expect(document.documentElement.lang).toBe('hi');
     });
 
-    it('still switches when the write throws', async () =>
+    it('refuses a tag that is not a language tag', async () =>
     {
-        stubStorage({ writeThrows: true });
+        // `setLocale` validates before it writes anything, because under a url prefix a tag
+        // becomes part of a url. Nothing is written and nothing is navigated.
+        const { choose } = await freshLocale();
 
-        const { locale, choose } = await freshLocale();
-
-        expect(() => choose('ar')).not.toThrow();
-        expect(locale()).toBe('ar');
+        expect(() => choose('/evil.example' as Locale)).toThrow();
     });
 
     it('reports direction and isRtl consistently for every locale', async () =>
     {
-        stubStorage();
-
         const { LOCALES } = await import('../src/stores/locale');
         const { choose, direction, isRtl } = await freshLocale();
 
@@ -380,8 +406,6 @@ describe('locale store: choosing', () =>
 
     it('swaps the whole string table, not just a few keys', async () =>
     {
-        stubStorage();
-
         const { choose, t } = await freshLocale();
 
         choose('en');
@@ -397,8 +421,6 @@ describe('locale store: choosing', () =>
 
     it('mirrors the locale onto the document element', async () =>
     {
-        stubStorage();
-
         const { choose } = await freshLocale();
 
         choose('ar');

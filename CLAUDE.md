@@ -316,10 +316,21 @@ page has one left edge as you scroll.
 Two RTL locales ship: `fa` and `ar`. Load the **`i18n-rtl-ltr`** skill before
 layout work.
 
-- **One authority for direction.** `src/stores/locale.ts` stamps `dir` and `lang`
-  on `<html>`, and the pre-paint script in `index.html` does the same before
-  first paint. Their three lists (locales, RTL set, themes) must stay in step —
-  `tests/prepaint.spec.ts` fails if they drift.
+- **One authority for direction, and it is the SERVER.** `mountPages` is given the ten
+  languages (`LOCALES` in `server/src/app.ts`, which is `POST_LOCALES`) and negotiates every
+  request - the reader's `locale` cookie, then `Accept-Language` in preference order, then
+  English - then stamps `lang` and `dir` on the `<html>` of the response. So the document
+  arrives correctly labelled and correctly mirrored with no script at all, which is what a
+  crawler and a reader with JavaScript off get. `src/stores/locale.ts` READS that stamp
+  (`useLocale` from `azerothjs`) and writes the cookie on a switch (`setLocale`); it detects
+  nothing and stamps nothing. The pre-paint script settles the THEME only, and
+  `tests/prepaint.spec.ts` asserts it never touches `lang` or `dir`. `tests/blog-locales.spec.ts`
+  still pins the application's `LOCALES` equal to the server's `POST_LOCALES`.
+- **A reader's language and a DOCUMENT's language are different questions.** A post written in
+  Persian shown to an English reader is an English page containing a Persian article: the
+  article carries its own `lang`/`dir` where it is rendered (see `post.page.azeroth`), and
+  nothing rewrites the document from it. `server/src/seo/pages.ts` used to, and that is why it
+  no longer touches `<html>`.
 - **Logical utilities only**: `ms-`/`me-`, `ps-`/`pe-`, `start-`/`end-`,
   `text-start`/`text-end`, `border-s`/`border-e`. A physical `ml-`, `pr-`,
   `left-`, `text-right` is a defect unless commented as deliberately physical.

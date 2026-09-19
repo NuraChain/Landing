@@ -19,7 +19,7 @@ import type { SiteContent } from '../content.ts';
 import type { PostDetail, WhitepaperDetail } from '../schemas.ts';
 import { toWhitepaper } from '../whitepaper/content.ts';
 
-import { directionOf, renderMeta, type PageMeta } from './meta.ts';
+import { renderMeta, type PageMeta } from './meta.ts';
 
 /**
  * The home page's copy, and it must stay in step with `index.html`.
@@ -444,7 +444,6 @@ const DESCRIPTION = /[ \t]*<meta\s+name="description"[^>]*>[ \t]*\r?\n?/i;
  * page whose served markup looks entirely correct.
  */
 const ROBOTS = /[ \t]*<meta\s+name="robots"[^>]*>[ \t]*\r?\n?/i;
-const HTML_OPEN = /<html\b[^>]*>/i;
 
 /**
  * Rewrites the shell's head with this page's.
@@ -456,22 +455,23 @@ const HTML_OPEN = /<html\b[^>]*>/i;
 export function injectMeta(html: string, meta: PageMeta): string
 {
     const head = renderMeta(meta);
-    const lang = meta.locale;
-    const dir = directionOf(lang);
 
+    /*
+     * `<html lang>` and `<html dir>` are NOT written here.
+     *
+     * The kit negotiates the reader's language per request - their cookie, then
+     * `Accept-Language` in preference order, then the site's default - and stamps both
+     * attributes on every response before this wrapper ever sees it. Writing them again would
+     * overwrite the reader's own language with the DOCUMENT's, which is a different question:
+     * a post written in Persian served to an English reader is an English page containing a
+     * Persian article, and the article carries its own `lang`/`dir` where it is rendered.
+     */
     return html
         // Dropped rather than left in place: two titles in one document is undefined behaviour
         // that every parser resolves differently, and the shell's is the generic one.
         .replace(TITLE, () => '')
         .replace(DESCRIPTION, () => '')
         .replace(ROBOTS, () => '')
-        /*
-         * The served document declares the post's own language. The pre-paint script in
-         * index.html overwrites both attributes from localStorage a moment later, so a visitor
-         * still gets their chosen language - but a crawler, which runs no script, reads the
-         * language the post was actually written in instead of a hard-coded `en`.
-         */
-        .replace(HTML_OPEN, () => `<html lang="${ lang }" dir="${ dir }">`)
         .replace('</head>', () => `    ${ head }\n    </head>`);
 }
 

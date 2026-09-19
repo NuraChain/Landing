@@ -145,18 +145,22 @@ const run = async () =>
                     deviceScaleFactor: 1
                 });
 
-                // Seeded before any script runs, so the page paints in the right locale on
-                // the FIRST frame - which is the whole point of the pre-paint script.
-                await context.addInitScript(([locale]) =>
+                // The language is a COOKIE now: the server negotiates it and stamps `lang`
+                // and `dir` on the response, so seeding it here is what makes the very first
+                // document arrive in this scenario's language rather than being corrected
+                // after hydration. `locale` is the name the kit reads by default.
+                await context.addCookies([{ name: 'locale', value: direction.locale, url: URL_UNDER_TEST }]);
+
+                // The theme is still the browser's to resolve, before first paint.
+                await context.addInitScript(() =>
                 {
                     try
                     {
-                        localStorage.setItem('nura.locale', locale);
                         localStorage.setItem('nura.theme', 'dark');
                     }
                     catch
                     { /* storage blocked; the page still resolves a default */ }
-                }, [direction.locale]);
+                });
 
                 const page = await context.newPage();
 

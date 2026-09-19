@@ -1,20 +1,20 @@
-// The inline script in index.html duplicates three lists that live in TypeScript modules,
-// and both copies have to agree.
+// The inline script in index.html duplicates ONE list that lives in a TypeScript module.
 //
 // This is the one duplication the codebase accepts on purpose: the script has to run before
-// first paint, so it cannot import anything, and both `src/stores/theme.ts` and
-// `src/stores/locale.ts` carry comments saying their lists "must stay in step" with it. The
-// failure mode is nasty and silent - add an eleventh language, forget the script, and that
-// language paints English LTR for a frame and then snaps to its real direction on hydration.
-// Nothing throws; it just looks broken on the slowest connections, which is where it is
-// least likely to be noticed.
+// first paint, so it cannot import anything, and `src/stores/theme.ts` carries a comment
+// saying its list "must stay in step" with it. The failure mode is silent - add a third theme,
+// forget the script, and that theme paints as dark for a frame and then snaps on hydration.
+//
+// The LANGUAGE used to be settled here too, and those tests are gone with the code they
+// covered. The server negotiates it per request and stamps `lang` and `dir` on the response,
+// so there is no second implementation left to drift from - which is why the one test below
+// asserts that this script does NOT touch either attribute. `tests/stores.spec.ts` covers the
+// store's side of it and `server/tests/app.spec.ts` covers the negotiation itself.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import vm from 'node:vm';
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import { directionOf, LOCALES, useLocale } from '../src/stores/locale';
 import { THEMES, THEME_KEY, useTheme } from '../src/stores/theme';
 
 // Resolved from the project root rather than from `import.meta.url`: under the happy-dom
@@ -33,51 +33,31 @@ const arrayLiteral = (name: string): string[] =>
 
 describe('pre-paint script', () =>
 {
-    it('lists exactly the locales the store supports, in the same order', () =>
-    {
-        expect(arrayLiteral('locales')).toEqual([...LOCALES]);
-    });
-
     it('lists exactly the themes the store supports', () =>
     {
         expect(arrayLiteral('themes')).toEqual([...THEMES]);
     });
 
-    // Derived by driving the store rather than by re-declaring the set here, so this asserts
-    // against real behaviour instead of against a second copy of the same list.
-    it('marks the same locales as RTL that the store treats as RTL', () =>
-    {
-        const { choose, isRtl } = useLocale();
-        const fromStore = LOCALES.filter((locale) =>
-        {
-            choose(locale);
-
-            return isRtl();
-        });
-
-        expect(arrayLiteral('rtl')).toEqual(fromStore);
-    });
-
-    it('reads the same storage keys the stores write', () =>
+    it('reads the same storage key the theme store writes', () =>
     {
         expect(HTML).toContain(`localStorage.getItem('${ THEME_KEY }')`);
-
-        // The locale key is private to the store, so it is discovered by watching a write
-        // rather than by importing it.
-        localStorage.clear();
-        useLocale().choose('fr');
-
-        const written = Object.keys(localStorage).find((key) => localStorage.getItem(key) === 'fr');
-
-        expect(written, 'choosing a locale should persist it under some key').toBeDefined();
-        expect(HTML).toContain(`localStorage.getItem('${ written! }')`);
     });
 
-    it('sets direction and language on the same element the store does', () =>
+    it('settles the theme, and leaves the language to the server', () =>
     {
-        expect(HTML).toMatch(/document\.documentElement\.lang\s*=/u);
-        expect(HTML).toMatch(/document\.documentElement\.dir\s*=/u);
         expect(HTML).toMatch(/document\.documentElement\.dataset\.theme\s*=/u);
+
+        /*
+         * The negative half, and it is the one worth pinning.
+         *
+         * The kit stamps `lang` and `dir` from the language it negotiated for this reader.
+         * A script overwriting them a moment later would put the document into a language
+         * the markup was not rendered in - a mirrored page full of English, or the reverse -
+         * and it would do it only in browsers, so nothing on the server could see it.
+         */
+        expect(HTML).not.toMatch(/document\.documentElement\.lang\s*=/u);
+        expect(HTML).not.toMatch(/document\.documentElement\.dir\s*=/u);
+        expect(HTML).not.toContain('navigator.languages');
     });
 
     it('ships the document defaulting to English LTR before the script runs', () =>
@@ -96,11 +76,12 @@ describe('pre-paint script', () =>
 });
 
 /**
- * The behaviour the script re-implements, checked against the store that owns it. If these
- * two ever disagree the page resolves one thing before paint and another after hydration -
- * which is the exact flash the arrangement exists to prevent.
+ * The theme the script resolves, and the store that owns it, must agree.
+ *
+ * If these two disagree the page resolves one thing before paint and another after
+ * hydration - which is the exact flash the arrangement exists to prevent.
  */
-describe('store and script agree on resolution', () =>
+describe('store and script agree on the theme', () =>
 {
     beforeEach(() =>
     {
@@ -110,26 +91,7 @@ describe('store and script agree on resolution', () =>
     afterEach(() =>
     {
         localStorage.clear();
-        useLocale().choose('en');
         useTheme().choose('dark');
-    });
-
-    it('resolves every supported locale to a direction, and only fa/ar to rtl', () =>
-    {
-        const { choose, direction } = useLocale();
-
-        for (const locale of LOCALES)
-        {
-            choose(locale);
-            expect(['ltr', 'rtl'], locale).toContain(direction());
-        }
-
-        choose('fa');
-        expect(direction()).toBe('rtl');
-        choose('ar');
-        expect(direction()).toBe('rtl');
-        choose('en');
-        expect(direction()).toBe('ltr');
     });
 
     it('applies the chosen theme to the same data attribute the script primes', () =>
@@ -141,96 +103,5 @@ describe('store and script agree on resolution', () =>
             choose(theme);
             expect(document.documentElement.dataset.theme).toBe(theme);
         }
-    });
-});
-
-/**
- * The script's own resolution, run for real.
- *
- * Everything above compares the script's three LISTS against the store's. That catches an
- * eleventh language added in one place and not the other, and nothing else - the walk that
- * turns `navigator.languages` into one of those entries is the half that decides what a
- * first-time visitor actually sees, and it was the half no spec executed.
- *
- * It runs in a `vm` rather than against this file's own document: the script assigns to
- * `documentElement` and reads `localStorage`, both of which the suite shares, and a spec
- * that resolves Persian should not leave the next one mirrored.
- */
-describe('pre-paint script: what a first-time visitor resolves to', () =>
-{
-    const SCRIPT = /<script>([\s\S]*?)<\/script>/u.exec(HTML)?.[1] ?? '';
-
-    /** Runs the pre-paint script against one stubbed browser and reports what it stamped. */
-    const paint = (languages: string[] | undefined, saved: string | null = null) =>
-    {
-        const root = { dataset: {} as Record<string, string>, lang: '', dir: '' };
-        const context = {
-            document: { documentElement: root },
-            navigator: { languages },
-            localStorage: { getItem: (key: string) => (key === 'nura.locale' ? saved : null) },
-            matchMedia: () => ({ matches: false })
-        };
-
-        vm.runInContext(SCRIPT, vm.createContext(context));
-
-        return { lang: root.lang, dir: root.dir };
-    };
-
-    it('extracted the script from index.html', () =>
-    {
-        expect(SCRIPT).toContain('navigator.languages');
-    });
-
-    // Derived from the store rather than re-listed here, so this stays honest on the day an
-    // eleventh language arrives: the script has to resolve every locale the store supports,
-    // and to the direction the store gives it.
-    it('resolves every supported locale, in the direction the store assigns it', () =>
-    {
-        for (const locale of LOCALES)
-        {
-            expect(paint([locale]), locale).toEqual({ lang: locale, dir: directionOf(locale) });
-        }
-    });
-
-    it('takes the visitor first choice, not ours', () =>
-    {
-        expect(paint(['fa-IR', 'en-US'])).toEqual({ lang: 'fa', dir: 'rtl' });
-    });
-
-    it('skips unsupported entries and takes the first supported one', () =>
-    {
-        expect(paint(['ja-JP', 'ko-KR', 'ru-RU', 'en-US'])).toEqual({ lang: 'ru', dir: 'ltr' });
-    });
-
-    it('matches on the primary subtag, so a region tag still resolves', () =>
-    {
-        expect(paint(['pt-BR'])).toEqual({ lang: 'pt', dir: 'ltr' });
-    });
-
-    it('matches case-insensitively', () =>
-    {
-        expect(paint(['ZH-Hans-CN'])).toEqual({ lang: 'zh', dir: 'ltr' });
-    });
-
-    it('falls back to English when nothing matches', () =>
-    {
-        expect(paint(['ja-JP', 'ko-KR'])).toEqual({ lang: 'en', dir: 'ltr' });
-    });
-
-    it('falls back to English when the browser reports no languages at all', () =>
-    {
-        expect(paint(undefined)).toEqual({ lang: 'en', dir: 'ltr' });
-    });
-
-    // A remembered choice outranks the browser, which is what makes the switcher stick -
-    // and the reason a visitor who once picked a language stops seeing detection at all.
-    it('prefers a remembered choice over the browser preference', () =>
-    {
-        expect(paint(['fr-FR'], 'tr')).toEqual({ lang: 'tr', dir: 'ltr' });
-    });
-
-    it('ignores a stored value that is not a supported locale', () =>
-    {
-        expect(paint(['fr-FR'], 'klingon')).toEqual({ lang: 'fr', dir: 'ltr' });
     });
 });

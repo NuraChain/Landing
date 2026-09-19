@@ -6,6 +6,7 @@ import { staticFiles } from '@azerothjs/http/node';
 import { feature, manifestOf, manifestScript, register } from '@azerothjs/http/api';
 import { mountPages, type KitOptions, type PageRenderer } from '@azerothjs/kit';
 import { array } from '@azerothjs/schema';
+import type { LocaleConfig } from 'azerothjs';
 
 import { pageCount, toCards, toDetail } from './blog/present.ts';
 import type { SiteContent } from './content.ts';
@@ -18,6 +19,7 @@ import {
     pageQuery,
     postDetail,
     postPage,
+    POST_LOCALES,
     readQuery,
     tagCount,
     whitepaperDetail
@@ -39,6 +41,18 @@ const DEFAULT_LIMIT = 10;
 
 /** The language a reader gets when they ask for none - the same default the site falls to. */
 const DEFAULT_LOCALE = 'en';
+
+/**
+ * The languages every page is negotiated over.
+ *
+ * `POST_LOCALES` rather than a second list: the blog already declares the ten the site speaks,
+ * and `tests/blog-locales.spec.ts` pins it equal to the application's own `LOCALES`. Given this,
+ * the kit decides each request's language - the `locale` cookie a reader's choice writes, then
+ * `Accept-Language` in preference order, then English - and stamps `<html lang>` and
+ * `<html dir>` on the response before a single byte of JavaScript runs. That is what a crawler
+ * reads and what lays a Persian page out right-to-left on its first paint.
+ */
+export const LOCALES: LocaleConfig = { supported: POST_LOCALES, default: DEFAULT_LOCALE };
 
 /**
  * Everything the api reads: the content, already off disk, and where the price comes from.
@@ -378,7 +392,8 @@ export function buildApp(options: AppOptions): App
             ...options.pages,
             routes: options.pages.routes.filter((route) => !LANDING_PATHS.includes(route.path)),
             renderer: withMeta(options.pages.renderer, options, siteUrl),
-            manifest
+            manifest,
+            locales: LOCALES
         });
     }
 

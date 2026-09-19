@@ -41,12 +41,21 @@
         <link rel="manifest" href="/manifest.json"/>
         <link rel="stylesheet" href="/src/styles.css"/>
 
-        <!-- Runs BEFORE first paint, which is the entire point: resolving the theme in the
-             app would paint the default first and repaint on hydration, and that flash is
-             the most visible bug a themed site can ship. The key and the attribute name
-             must match `THEME_KEY` and the effect in src/stores/theme.ts. Same reasoning
-             for `dir`: setting it after hydration reflows the whole page in Persian or
-             Arabic. Both lists must match `LOCALES` and `RTL` in src/stores/locale.ts. -->
+        <!-- The THEME, and only the theme.
+
+             It runs before first paint because resolving it in the app would paint the
+             default first and repaint on hydration, and that flash is the most visible bug a
+             themed site can ship. The key and the attribute name must match `THEME_KEY` and
+             the effect in src/stores/theme.ts; `tests/prepaint.spec.ts` fails if they drift.
+
+             The LANGUAGE is not settled here any more, and must not be. The server negotiates
+             it per request - the reader's `locale` cookie, then `Accept-Language` in
+             preference order, then English - and stamps `lang` and `dir` on the root element
+             of every response, so the document arrives correctly labelled and correctly
+             mirrored with no script at all. That is strictly better than this script could do: it
+             reaches a crawler and a reader with JavaScript off, and it cannot disagree with
+             what the page was rendered as. A theme is the one thing the server genuinely
+             cannot know, which is why this is all that is left. -->
         <script>
             (function ()
             {
@@ -59,31 +68,6 @@
                         : saved;
 
                     document.documentElement.dataset.theme = theme;
-
-                    var locales = ['en', 'fa', 'ar', 'es', 'pt', 'hi', 'zh', 'ru', 'fr', 'tr'];
-                    var rtl = ['fa', 'ar'];
-                    var locale = localStorage.getItem('nura.locale');
-
-                    if (locales.indexOf(locale) === -1)
-                    {
-                        locale = 'en';
-
-                        var tags = navigator.languages || [];
-
-                        for (var i = 0; i < tags.length; i++)
-                        {
-                            var primary = tags[i].toLowerCase().split('-')[0];
-
-                            if (locales.indexOf(primary) !== -1)
-                            {
-                                locale = primary;
-                                break;
-                            }
-                        }
-                    }
-
-                    document.documentElement.lang = locale;
-                    document.documentElement.dir = rtl.indexOf(locale) === -1 ? 'ltr' : 'rtl';
                 }
                 catch (error)
                 {

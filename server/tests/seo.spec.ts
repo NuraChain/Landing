@@ -249,8 +249,9 @@ describe('a post head', () =>
 
     it('is written in the post default language, not in English by default', () =>
     {
-        // The renderer gets no request headers, so there is no reader to resolve against. A post
-        // authored in Persian must not be described to a crawler in a language it does not hold.
+        // A post authored in Persian must not be DESCRIBED to a crawler in a language it does
+        // not hold: `og:locale` and the structured data name the language the article is
+        // actually written in, which is the post's own default.
         const store = storeWith(post({ slug: 'persian-first', defaultLocale: 'fa' }, [
             translation('fa', { title: 'نورا چین چیست', summary: 'خلاصه' })
         ]));
@@ -258,10 +259,29 @@ describe('a post head', () =>
         const meta = metaFor('/blog/persian-first', deps(store))!;
 
         expect(meta.locale).toBe('fa');
+        expect(injectMeta(SHELL, meta)).toContain('<meta property="og:locale" content="fa_IR"/>');
+    });
 
-        const html = injectMeta(SHELL, meta);
+    it('leaves the document\'s own language alone', () =>
+    {
+        /*
+         * `<html lang>` belongs to the READER, and the kit writes it.
+         *
+         * The two questions look alike and are not: the document's language is whichever one
+         * this visitor negotiated, while the post's is whichever one it was written in. A
+         * Persian article shown to an English reader is an English page containing a Persian
+         * article - the article carries its own `lang` and `dir` where it is rendered, and
+         * stamping the whole document from it would mirror the header, the footer and the
+         * reader's own interface around one paragraph.
+         */
+        const store = storeWith(post({ slug: 'persian-first', defaultLocale: 'fa' }, [
+            translation('fa', { title: 'نورا چین چیست' })
+        ]));
 
-        expect(html).toContain('<html lang="fa" dir="rtl">');
+        const html = injectMeta(SHELL, metaFor('/blog/persian-first', deps(store))!);
+
+        expect(html).toContain('<html lang="en">');
+        expect(html).not.toContain('dir="rtl"');
     });
 
     it('names every other language the same url can be read in', () =>
@@ -329,7 +349,9 @@ describe('the whitepaper head', () =>
 
         const html = injectMeta(SHELL, meta);
 
-        expect(html).toContain('<html lang="fa" dir="rtl">');
+        // The DOCUMENT's language is the reader's and the kit stamps it; what the head states
+        // is the language the text was written in, and the others it can be read in.
+        expect(html).toContain('<meta property="og:locale" content="fa_IR"/>');
         expect(html).toContain('<meta property="og:locale:alternate" content="en_US"/>');
     });
 

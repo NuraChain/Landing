@@ -9,7 +9,7 @@ import { SSR_SOURCE_ENTRY } from '@azerothjs/kit/dev/entry';
 import { createLogger, teeSink, terminalSink } from '@azerothjs/logger';
 import { fileSink } from '@azerothjs/logger/node';
 
-import { buildApp, createApi, createHandler, registerApi, DEFAULT_SITE_URL } from './app.ts';
+import { buildApp, createApi, createHandler, registerApi, DEFAULT_SITE_URL, LOCALES } from './app.ts';
 import { BlogContent, loadArticles } from './blog/content.ts';
 import { loadWhitepaper, PDF_DIR, pdfStatus } from './whitepaper/content.ts';
 
@@ -132,7 +132,7 @@ const kitDev = isProduction ? undefined : await import('@azerothjs/kit/dev');
 const session = await kitDev?.devPages({
     root: fileURLToPath(new URL('../../application/', import.meta.url)),
     entry: SSR_SOURCE_ENTRY,
-    pages: { manifest: manifestOf(api), onError: pageError },
+    pages: { manifest: manifestOf(api), onError: pageError, locales: LOCALES },
     routes: (target) => registerApi(target, api, content, { siteUrl: config.siteUrl, pdfDir: PDF_DIR }),
     app: { dev: true, observe, onError },
     // The single-instance check resolves `azerothjs` from THIS module rather than from the kit,
