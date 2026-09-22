@@ -13,6 +13,7 @@ import { article as connectToNuraChainRpc } from './connect-to-nura-chain-rpc/ar
 import { article as createAnErc20TokenOnNuraChain } from './create-an-erc-20-token-on-nura-chain/article.ts';
 import { article as crossChainIntentsErc7683 } from './cross-chain-intents-erc-7683/article.ts';
 import { article as deployASmartContractOnNuraChain } from './deploy-a-smart-contract-on-nura-chain/article.ts';
+import { article as eip7702SmartAccounts } from './eip-7702-smart-accounts/article.ts';
 import { article as geniusActStablecoinRules } from './genius-act-stablecoin-rules/article.ts';
 import { article as howToUseNuraChainExplorer } from './how-to-use-nura-chain-explorer/article.ts';
 import { article as nuraChainEvmCompatibility } from './nura-chain-evm-compatibility/article.ts';
@@ -49,5 +50,6 @@ export const ARTICLES: readonly Article[] = [
     whyAuditedContractsGetDrained,
     tokenizedTreasuriesRwa2026,
     aiAgentsOnchainPaymentsX402,
-    geniusActStablecoinRules
+    geniusActStablecoinRules,
+    eip7702SmartAccounts
 ];
