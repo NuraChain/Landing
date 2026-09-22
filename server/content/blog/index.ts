@@ -7,6 +7,7 @@
  * batch and shares its dates; the topical articles below each carry a date of their own.
  */
 import { article as addNuraChainToYourWallet } from './add-nura-chain-to-your-wallet/article.ts';
+import { article as aiAgentsOnchainPaymentsX402 } from './ai-agents-onchain-payments-x402/article.ts';
 import { article as buildADappOnNuraChain } from './build-a-dapp-on-nura-chain/article.ts';
 import { article as connectToNuraChainRpc } from './connect-to-nura-chain-rpc/article.ts';
 import { article as createAnErc20TokenOnNuraChain } from './create-an-erc-20-token-on-nura-chain/article.ts';
@@ -45,5 +46,6 @@ export const ARTICLES: readonly Article[] = [
     whySoManyEvmChains,
     crossChainIntentsErc7683,
     whyAuditedContractsGetDrained,
-    tokenizedTreasuriesRwa2026
+    tokenizedTreasuriesRwa2026,
+    aiAgentsOnchainPaymentsX402
 ];
