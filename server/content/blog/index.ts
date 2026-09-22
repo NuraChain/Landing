@@ -16,6 +16,7 @@ import { article as howToUseNuraChainExplorer } from './how-to-use-nura-chain-ex
 import { article as nuraChainEvmCompatibility } from './nura-chain-evm-compatibility/article.ts';
 import { article as nuraCoinTokenomics } from './nura-coin-tokenomics/article.ts';
 import { article as tokenUnlocksAndSupplySchedules } from './token-unlocks-and-supply-schedules/article.ts';
+import { article as tokenizedTreasuriesRwa2026 } from './tokenized-treasuries-rwa-2026/article.ts';
 import { article as whatGasActuallyCostsIn2026 } from './what-gas-actually-costs-in-2026/article.ts';
 import { article as whatIsNuraChain } from './what-is-nura-chain/article.ts';
 import { article as whyAuditedContractsGetDrained } from './why-audited-contracts-get-drained/article.ts';
@@ -43,5 +44,6 @@ export const ARTICLES: readonly Article[] = [
     whatGasActuallyCostsIn2026,
     whySoManyEvmChains,
     crossChainIntentsErc7683,
-    whyAuditedContractsGetDrained
+    whyAuditedContractsGetDrained,
+    tokenizedTreasuriesRwa2026
 ];
