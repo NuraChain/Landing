@@ -12,7 +12,7 @@
  */
 export const PROVISIONAL = true;
 
-export type PlatformId = 'ios' | 'android' | 'apk' | 'windows' | 'macos' | 'linux';
+export type PlatformId = 'ios' | 'android' | 'apk' | 'windows' | 'macos' | 'linux' | 'chrome';
 
 export interface Download
 {
@@ -42,6 +42,11 @@ export const RELEASES_URL = 'https://github.com/NuraChain/Wallet/releases';
  * .rpm, .AppImage, the split APKs - lives behind the releases link rather than in a matrix
  * nobody reads.
  *
+ * Chrome is the one row that does not come from GitHub: the extension is distributed by the
+ * Web Store and updates itself there. The url carries the listing's SLUG as well as its id -
+ * the bare `/detail/<id>` form answers 301 to exactly this address, so linking it would cost
+ * every visitor a redirect for nothing.
+ *
  * TODO(real-data): iOS and macOS have no published build yet.
  */
 const LATEST = `${ RELEASES_URL }/latest/download`;
@@ -58,6 +63,12 @@ export const DOWNLOADS: readonly Download[] =
     { id: 'windows', label: 'Windows', url: `${ LATEST }/Nura-Wallet-Windows-x64-setup.exe`, note: '.exe · x64' },
     { id: 'macos', label: 'macOS', url: null, note: 'Apple silicon' },
     { id: 'linux', label: 'Linux', url: `${ LATEST }/Nura-Wallet-Linux-amd64.deb`, note: '.deb · x64' },
+    {
+        id: 'chrome',
+        label: 'Chrome',
+        url: 'https://chromewebstore.google.com/detail/nura-wallet/bpcanahgbjafkgflkfbjejipmigakopg',
+        note: 'Chrome Web Store'
+    },
     {
         id: 'apk',
         label: 'Android APK',

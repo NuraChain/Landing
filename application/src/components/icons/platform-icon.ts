@@ -1,4 +1,4 @@
-import { siAndroid, siApple, siLinux } from 'simple-icons';
+import { siAndroid, siApple, siGooglechrome, siLinux } from 'simple-icons';
 import type { SimpleIcon } from 'simple-icons';
 
 import { svgMark } from './icon';
@@ -19,6 +19,9 @@ import type { PlatformId } from '../../lib/content/site';
  * iOS and macOS deliberately share the Apple mark, as do the two Android rows. Each pair is
  * one brand, so giving either row an invented alternative would be the inaccurate choice;
  * the labels beside them are what tell them apart.
+ *
+ * Chrome is the browser mark (`siGooglechrome`), not the Web Store's: the row is about where
+ * the extension RUNS, and the store is what its note says.
  */
 const WINDOWS_PATH = 'M0 3.449 9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699'
     + 'M10.949 12.6H24V24l-12.9-1.801';
@@ -30,7 +33,8 @@ const MARK: Record<PlatformId, SimpleIcon | string> =
     apk: siAndroid,
     windows: WINDOWS_PATH,
     macos: siApple,
-    linux: siLinux
+    linux: siLinux,
+    chrome: siGooglechrome
 };
 
 /**

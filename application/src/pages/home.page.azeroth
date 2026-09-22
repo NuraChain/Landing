@@ -88,10 +88,10 @@ export default component Home()
                          user-agent sniff guessed into a big accent button with the other five
                          demoted to tiles below - which made Windows look like the supported
                          platform and the rest like afterthoughts, and put the wrong one on top
-                         whenever the guess missed. A uniform grid states what is true: six
-                         targets, three of them shipping. */ }
+                         whenever the guess missed. A uniform grid states what is true: seven
+                         targets, five of them shipping. */ }
                     { /* A `<ul>`, and each row an `<li>` around the tile. Two reasons, and the
-                         second is the compiler's: it IS a list of six platforms, which is what
+                         second is the compiler's: it IS a list of seven platforms, which is what
                          tells a screen reader how many there are before it reads the first; and
                          a `<For>` row must be exactly one host element, which `DownloadTile` is
                          not - it resolves to an `<a>` or a `<div>` depending on whether that

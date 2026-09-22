@@ -287,7 +287,8 @@ describe('outbound links', () =>
     {
         for (const entry of DOWNLOADS.filter((download) => download.url !== null))
         {
-            expect(entry.url, entry.id).toMatch(/^https:\/\/(github\.com|play\.google\.com)\//u);
+            expect(entry.url, entry.id)
+                .toMatch(/^https:\/\/(github\.com|play\.google\.com|chromewebstore\.google\.com)\//u);
         }
     });
 });
