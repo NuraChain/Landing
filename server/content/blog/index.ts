@@ -19,6 +19,7 @@ import { article as whatGasActuallyCostsIn2026 } from './what-gas-actually-costs
 import { article as whatIsNuraChain } from './what-is-nura-chain/article.ts';
 
 import { article as whyBuildOnAnEvmCompatibleChain } from './why-build-on-an-evm-compatible-chain/article.ts';
+import { article as whySoManyEvmChains } from './why-so-many-evm-chains/article.ts';
 
 import type { Article } from './types.ts';
 
@@ -37,5 +38,6 @@ export const ARTICLES: readonly Article[] = [
     // Topical, newest last. Each carries its own publishedAt, so this block's order
     // only matters to a reader of this file.
     tokenUnlocksAndSupplySchedules,
-    whatGasActuallyCostsIn2026
+    whatGasActuallyCostsIn2026,
+    whySoManyEvmChains
 ];
