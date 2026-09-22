@@ -15,7 +15,7 @@ import { POST_LOCALES, type PostLocale, type PostStatus } from '../schemas.ts';
  * Deleting it removed the dashboard, the session table, the admin key and the one piece of
  * mutable state the deployment had to back up. A post is now a commit.
  *
- * Everything is read ONCE, at construction. Ten articles in ten languages is about half a
+ * Everything is read ONCE, at construction. Twenty articles in ten languages is about a
  * megabyte of markdown; holding it costs less than the statement cache the store kept, and it
  * means no request touches the filesystem. The consequence is the honest one: editing an
  * article on a running server changes nothing until the process restarts. That is the same
@@ -160,8 +160,9 @@ export class BlogContent
          * Newest first, and ties broken by the order `index.ts` lists them in - REVERSED, so
          * that within one publication date the article written last reads as the newest. The
          * store got this from `id DESC` over rows the seed script inserted in that same order;
-         * with three timestamps across ten articles the tiebreak decides most of the page, so
-         * it is spelled out rather than left to sort stability.
+         * the evergreen cluster still shares three timestamps across ten articles, so the
+         * tiebreak decides half the index and is spelled out rather than left to sort
+         * stability.
          */
         this.#posts = [...loaded]
             .map((entry, index) => ({ entry, index }))

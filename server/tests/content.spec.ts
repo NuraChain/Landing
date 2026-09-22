@@ -1,7 +1,7 @@
 // The blog, read from disk, and the markup a crawler is served.
 //
 // This is the ONE spec that touches the filesystem, and deliberately: `loadArticles` reading
-// the repository's own cluster is the assertion that the ten articles this site publishes are
+// the repository's own cluster is the assertion that every article this site publishes is
 // complete and loadable. Everything else here builds its blog inline.
 import { describe, it, expect } from 'vitest';
 
@@ -81,8 +81,8 @@ describe('the index', () =>
 
     it('breaks a date tie by declaration order, newest last-written first', () =>
     {
-        // Ten articles share three timestamps in the real cluster, so the tiebreak decides most
-        // of the page. Reversed index order: the one written last reads as the newest.
+        // The evergreen cluster shares three timestamps across ten articles, so the tiebreak
+        // decides half the index. Reversed index order: the one written last reads as newest.
         const same = '2026-05-05T00:00:00.000Z';
         const store = new BlogContent([
             post({ slug: 'written-first', publishedAt: same }),

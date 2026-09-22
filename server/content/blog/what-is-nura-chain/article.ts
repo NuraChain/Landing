@@ -4,9 +4,9 @@ import type { Article } from '../types.ts';
  * The cluster's hub page.
  *
  * Primary keyword: "Nura Chain". Informational intent - somebody who has heard the name and
- * wants to know what it is. It links OUT to every other article in the cluster and is linked
- * back to from most of them, which is what makes it the page an engine treats as the topic's
- * centre rather than one of eleven siblings.
+ * wants to know what it is. It links OUT to every other article in the evergreen cluster and
+ * is linked back to from most of them - and from the topical articles too - which is what
+ * makes it the page an engine treats as the topic's centre rather than one sibling of many.
  */
 export const article: Article = {
     slug: 'what-is-nura-chain',
