@@ -10,6 +10,7 @@ import { article as addNuraChainToYourWallet } from './add-nura-chain-to-your-wa
 import { article as buildADappOnNuraChain } from './build-a-dapp-on-nura-chain/article.ts';
 import { article as connectToNuraChainRpc } from './connect-to-nura-chain-rpc/article.ts';
 import { article as createAnErc20TokenOnNuraChain } from './create-an-erc-20-token-on-nura-chain/article.ts';
+import { article as crossChainIntentsErc7683 } from './cross-chain-intents-erc-7683/article.ts';
 import { article as deployASmartContractOnNuraChain } from './deploy-a-smart-contract-on-nura-chain/article.ts';
 import { article as howToUseNuraChainExplorer } from './how-to-use-nura-chain-explorer/article.ts';
 import { article as nuraChainEvmCompatibility } from './nura-chain-evm-compatibility/article.ts';
@@ -39,5 +40,6 @@ export const ARTICLES: readonly Article[] = [
     // only matters to a reader of this file.
     tokenUnlocksAndSupplySchedules,
     whatGasActuallyCostsIn2026,
-    whySoManyEvmChains
+    whySoManyEvmChains,
+    crossChainIntentsErc7683
 ];
