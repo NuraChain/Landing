@@ -15,6 +15,7 @@ import { article as howToUseNuraChainExplorer } from './how-to-use-nura-chain-ex
 import { article as nuraChainEvmCompatibility } from './nura-chain-evm-compatibility/article.ts';
 import { article as nuraCoinTokenomics } from './nura-coin-tokenomics/article.ts';
 import { article as tokenUnlocksAndSupplySchedules } from './token-unlocks-and-supply-schedules/article.ts';
+import { article as whatGasActuallyCostsIn2026 } from './what-gas-actually-costs-in-2026/article.ts';
 import { article as whatIsNuraChain } from './what-is-nura-chain/article.ts';
 
 import { article as whyBuildOnAnEvmCompatibleChain } from './why-build-on-an-evm-compatible-chain/article.ts';
@@ -35,5 +36,6 @@ export const ARTICLES: readonly Article[] = [
 
     // Topical, newest last. Each carries its own publishedAt, so this block's order
     // only matters to a reader of this file.
-    tokenUnlocksAndSupplySchedules
+    tokenUnlocksAndSupplySchedules,
+    whatGasActuallyCostsIn2026
 ];
