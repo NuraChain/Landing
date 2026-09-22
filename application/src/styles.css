@@ -179,11 +179,50 @@
            `auto` through the global rule at the bottom of this file). This is the no-JS
            fallback for the same glide the click delegation provides with Lenis. */
         scroll-behavior: smooth;
+
+        /* No chaining past the document, in either axis.
+
+           Without it a phone rubber-bands the whole page on an over-scroll and, on Android
+           Chrome, a downward drag at the top fires pull-to-refresh - so a reader flicking back
+           up the page reloads it and loses their place. `contain` keeps the gesture inside the
+           document; it does NOT disable ordinary scrolling. */
+        overscroll-behavior: contain;
     }
 
     body
     {
         font-family: var(--font-sans);
+
+        /* The notch, and the home indicator.
+
+           `viewport-fit=cover` in index.html lets the page paint edge to edge, which is what
+           an app looks like - and it means the top and bottom strips can sit under hardware.
+           The insets are applied HERE, once, so no section has to know the shape of a phone;
+           the sticky header and the fixed toast rail add their own below, because they are
+           positioned out of this flow and inherit none of it. `env()` is 0 everywhere else,
+           so this costs a desktop browser nothing. */
+        padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+    }
+
+    /* Taps should feel like presses, not like selecting a document.
+
+       Three defaults give a mobile web page away, and all three are on CONTROLS rather than
+       on text: the grey flash a tap paints over any tappable element, the 300ms the browser
+       waits to see whether a second tap means "zoom", and a long-press selecting a button's
+       label. Text itself is left entirely alone - a reader must still be able to select and
+       copy an address, a chain id or a paragraph. */
+    button,
+    [role='button'],
+    summary,
+    header a,
+    nav a,
+    footer a,
+    label
+    {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        -webkit-user-select: none;
+        user-select: none;
     }
 
     /* Persian and Arabic need a face that actually has the glyphs, and a line-height with
@@ -429,6 +468,46 @@
 [dir='rtl'] .drawer
 {
     --drawer-from: -100%;
+}
+
+/* The two overlays that leave the document flow, kept clear of the hardware.
+
+   `body` carries the side insets for everything in flow, but a FIXED element is positioned
+   against the viewport and inherits none of that - so a full-height drawer runs under the
+   notch and the home indicator, and the toast rail sits beneath the indicator on every
+   modern iPhone. Each keeps the spacing it already had and grows only where a device
+   actually intrudes, which is why every value is a `max()` against the original.
+
+   DELIBERATELY PHYSICAL, against the logical-properties rule elsewhere in this file: a notch
+   is a fact about the hardware, not about the reading direction, and `env(safe-area-inset-
+   left)` names the left of the SCREEN in Persian exactly as it does in English. Mapping it
+   onto `padding-inline` would put the inset on the wrong edge for right-to-left readers. */
+.drawer
+{
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+.toast-rail
+{
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+/* The theme toggle renders BOTH glyphs and CSS shows the one that applies.
+
+   Choosing the glyph in the component would put a different element in the document on each
+   side of hydration - the server renders the default theme's, a light-theme reader's browser
+   builds the other - and that mismatch throws the whole server render away. `data-theme` is
+   on the root before the first paint (the pre-paint script in index.html), so the right glyph
+   is the only one ever painted. */
+[data-theme='dark'] .theme-glyph-light,
+[data-theme='light'] .theme-glyph-dark
+{
+    display: none;
 }
 
 /* Touch targets, enforced globally for the same reason as reduced-motion below: a section

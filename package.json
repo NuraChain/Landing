@@ -1,7 +1,7 @@
 {
     "name": "NuraLanding",
     "private": true,
-    "version": "1.7.2",
+    "version": "1.8.0",
     "type": "module",
     "engines": {
         "node": ">=22"
@@ -10,6 +10,9 @@
         "application",
         "server"
     ],
+    "azeroth": {
+        "dev": "server"
+    },
     "scripts": {
         "dev": "azeroth dev",
         "check": "azeroth check",
@@ -26,6 +29,7 @@
         "test:server": "npm test --workspace server",
         "coverage": "npm run coverage --workspace application",
         "qa:visual": "node scripts/visual-qa.mjs",
+        "qa:browser": "node scripts/browser-qa.mjs",
         "whitepaper:pdf": "node scripts/whitepaper-pdf.ts",
         "og:image": "node scripts/og-image.ts",
         "service:install": "bash scripts/service-install.sh",
@@ -37,6 +41,7 @@
         "service:uninstall": "bash scripts/service-uninstall.sh"
     },
     "devDependencies": {
-        "@azerothjs/cli": "2.0.0-beta.2"
+        "@azerothjs/cli": "2.1.0",
+        "@vitest/coverage-v8": "^5.0.0"
     }
 }

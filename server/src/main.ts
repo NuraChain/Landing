@@ -1,12 +1,15 @@
-import { pathToFileURL } from 'node:url';
+import { existsSync } from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { logRequests, loadConfig, flag, num, oneOf, str } from '@azerothjs/http';
+import { logRequests, loadConfig, flag, num, oneOf, str, type ErrorObserver } from '@azerothjs/http';
+import { manifestOf } from '@azerothjs/http/api';
 import { serve, handleShutdownSignals } from '@azerothjs/http/node';
-import type { PageRenderer, PageRoute } from '@azerothjs/kit';
+import type { KitErrorObserver, PageRenderer, PageRoute } from '@azerothjs/kit';
+import { SSR_SOURCE_ENTRY } from '@azerothjs/kit/dev/entry';
 import { createLogger, teeSink, terminalSink } from '@azerothjs/logger';
 import { fileSink } from '@azerothjs/logger/node';
 
-import { buildApp, createHandler, DEFAULT_SITE_URL } from './app.ts';
+import { buildApp, createApi, createHandler, registerApi, DEFAULT_SITE_URL, LOCALES } from './app.ts';
 import { BlogContent, loadArticles } from './blog/content.ts';
 import { loadWhitepaper, PDF_DIR, pdfStatus } from './whitepaper/content.ts';
 
@@ -45,8 +48,18 @@ const log = createLogger({
     fields: { service: 'nura-landing-server' }
 });
 
-// Dev: vite serves the client and proxies /api here. Production: this server serves the whole
-// site from one origin, and the self-contained SSR bundle carries the routes and the renderer.
+// Production mode with nothing built is the one way the import below dies as a bare missing
+// module; say what it means while there is still a logger to say it with.
+if (isProduction && !existsSync(config.ssrEntry))
+{
+    log.error('no SSR bundle on disk - run `npm run build` first, or start the dev session with `npm run dev`', {
+        ssrEntry: config.ssrEntry,
+        env: config.env
+    });
+}
+
+// Production: the self-contained SSR bundle carries the routes and the renderer. Dev builds
+// nothing - the kit's session below loads the same two exports from source, through vite.
 const ssr = isProduction
     ? await import(pathToFileURL(config.ssrEntry).href) as { routes: PageRoute[]; renderPage: PageRenderer }
     : undefined;
@@ -75,23 +88,70 @@ if (pdfs.missing.length > 0)
     throw new Error(`Whitepaper PDF missing for: ${ pdfs.missing.join(', ') } - run npm run whitepaper:pdf.`);
 }
 
-const app = buildApp({
-    store,
-    whitepaper,
+const content = { store, whitepaper };
+const observe = logRequests(log);
+
+const onError: ErrorObserver = (error, mapped) =>
+{
+    if (mapped.status >= 500)
+    {
+        log.error('unhandled error', { status: mapped.status, error });
+    }
+};
+
+/*
+ * A page failure has nowhere else to go.
+ *
+ * A rejected loader renders the page at a real 500 rather than throwing, so the kernel's own
+ * error path never sees it - the kit reports it here instead, and its default is `console.error`,
+ * which the NDJSON log never receives. The same seam carries a failed ISR regeneration and a
+ * streamed boundary that rejected after the shell had flushed.
+ */
+const pageError: KitErrorObserver = (error, context) =>
+    log.error('page failed', { path: context.path, phase: context.phase, error });
+
+/*
+ * The ONE api this process holds.
+ *
+ * Built here rather than inside `buildApp` because both halves of the boot need the same
+ * instance: its price gateway carries the one-minute memo, and a second instance would be a
+ * second memo asking the swap on its own schedule.
+ */
+const api = createApi(content);
+
+/*
+ * Development runs the production page mount, fed by vite inside THIS process.
+ *
+ * One origin serves the pages, the api, the PDFs and the HMR socket, over the same route table
+ * and the same renderer a deploy uses - so guards as status, locale negotiation, real 404s and
+ * the manifest splice are all things that exist in dev now, rather than things you could only
+ * see after a build. The import is dynamic because vite is a devDependency a production image
+ * (`npm ci --omit=dev`) never installs.
+ */
+const kitDev = isProduction ? undefined : await import('@azerothjs/kit/dev');
+const session = await kitDev?.devPages({
+    root: fileURLToPath(new URL('../../application/', import.meta.url)),
+    entry: SSR_SOURCE_ENTRY,
+    pages: { manifest: manifestOf(api), onError: pageError, locales: LOCALES },
+    routes: (target) => registerApi(target, api, content, { siteUrl: config.siteUrl, pdfDir: PDF_DIR }),
+    app: { dev: true, observe, onError },
+    // The single-instance check resolves `azerothjs` from THIS module rather than from the kit,
+    // so a second copy under the server half is refused at startup instead of silently splitting
+    // the request scope.
+    serverAnchor: import.meta.url
+});
+
+const app = session?.app ?? buildApp({
+    ...content,
+    api,
     pdfDir: PDF_DIR,
     siteUrl: config.siteUrl,
     dev: !isProduction,
-    observe: logRequests(log),
-    onError: (error, mapped) =>
-    {
-        if (mapped.status >= 500)
-        {
-            log.error('unhandled error', { status: mapped.status, error });
-        }
-    },
+    observe,
+    onError,
     pages: ssr === undefined
         ? undefined
-        : { routes: ssr.routes, clientDir: config.clientDir, renderer: ssr.renderPage }
+        : { routes: ssr.routes, clientDir: config.clientDir, renderer: ssr.renderPage, onError: pageError }
 });
 
 /*
@@ -108,8 +168,22 @@ const app = buildApp({
  */
 const handler = createHandler(app, { trustProxy: config.trustProxy });
 
-const served = await serve(handler, { port: config.port });
-handleShutdownSignals(served);
+const served = await serve(handler, {
+    port: config.port,
+    // Vite's own middleware, ahead of the kernel: it sees only its own urls and the files under
+    // the application root. Undefined in production, where there is no session.
+    before: session?.before,
+    // Dev binds IPv4 loopback, because `localhost` resolves to ::1 first on some platforms and
+    // a page that cannot reach its own origin is the confusing failure. HOST=0.0.0.0 opens it to
+    // another device. Production keeps the adapter's own bind.
+    hostname: isProduction ? undefined : (process.env.HOST ?? '127.0.0.1')
+});
+
+// The HMR socket rides THIS server: vite was given a relay it never listens on, so the page
+// dials its own origin and a tab survives the process restarting under `node --watch`.
+session?.attach(served.server);
+
+handleShutdownSignals(served, { beforeExit: () => session?.close() });
 
 /*
  * The devtools bridge exposes live server state, so it attaches only under a LITERAL

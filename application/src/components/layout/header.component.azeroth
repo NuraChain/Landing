@@ -1,16 +1,15 @@
-import { For, Link, Show } from 'azerothjs';
+import { For, Link, Show, type Child } from 'azerothjs';
 
 import { Blocks, Check, CircleDollarSign, FileText, Languages, Menu, Moon, Newspaper, Search, Sun, Users, Wallet, X } from 'lucide';
 
 import { LOCALES, nativeName, useLocale } from '../../stores/locale';
 import { captureOverlay } from '../../lib/overlay';
-import { useSectionHref } from '../../lib/section-href';
 import { withThemeTransition } from '../../lib/theme-transition';
 
 import IconButton from '../ui/icon-button.component.azeroth';
+import SectionLink from '../ui/section-link.component.azeroth';
 import Tooltip from '../ui/tooltip.component.azeroth';
 import { useTheme } from '../../stores/theme';
-import type { Theme } from '../../stores/theme';
 
 import { flagSrc, preloadFlags } from '../icons/flag-icon';
 import { icon } from '../icons/icon';
@@ -21,7 +20,24 @@ type SectionId = 'wallet' | 'tokenomics' | 'chain' | 'explorer' | 'social';
 // fails to assign and collapses the row parameter to `unknown`.
 const SECTIONS: SectionId[] = ['wallet', 'tokenomics', 'chain', 'explorer', 'social'];
 
-const GLYPH: Record<Theme, typeof Moon> = { dark: Moon, light: Sun };
+/**
+ * Both theme glyphs, always rendered; CSS shows the one that matches.
+ *
+ * Picking the glyph from `theme()` at render time would put a different ELEMENT in the
+ * document on each side of hydration: the server renders the store's default (Moon, one
+ * path) and a light-theme reader's browser builds Sun (nine children), which is a structural
+ * mismatch - the whole server render is discarded and the page is rebuilt client-side, for
+ * every reader who prefers light.
+ *
+ * So the markup is theme-independent and `styles.css` hides the inactive one off
+ * `[data-theme]`, which the pre-paint script sets before the first paint. The label beside it
+ * is an attribute binding, which is re-applied reactively and needs none of this.
+ */
+const themeGlyphs = (size: string): Child[] =>
+[
+    icon(Moon, `theme-glyph-dark ${ size }`),
+    icon(Sun, `theme-glyph-light ${ size }`)
+];
 
 /**
  * One glyph per drawer row. Drawn from the vocabulary the sections themselves already use -
@@ -104,14 +120,18 @@ export default component Header()
         }
     }
 
-    // The drawer and its scrim are `md:hidden`, so from 48rem up they stop being painted -
+    // The drawer and its scrim are `lg:hidden`, so from 64rem up they stop being painted -
     // but `menuOpen` stayed true, and with it the scroll lock and the focus trap. Rotating a
-    // phone to landscape crosses 48rem: the overlay vanished, the page underneath stayed
+    // tablet to landscape crosses 64rem: the overlay vanished, the page underneath stayed
     // frozen, and there was nothing on screen to say why and no Escape key to reach for. The
-    // width here MUST match the `md:` variants below - Tailwind's `md` is 48rem.
+    // width here MUST match the `lg:` variants below - Tailwind's `lg` is 64rem.
+    //
+    // It is `lg` rather than `md` because the full nav MEASURES 861px: shown at 48rem it
+    // pushed the header 93px past a tablet-portrait viewport and the whole page scrolled
+    // sideways. Tablet portrait keeps the drawer, which is what an iPad does natively anyway.
     effect
     {
-        const wide = matchMedia('(min-width: 48rem)');
+        const wide = matchMedia('(min-width: 64rem)');
         const sync = (): void =>
         {
             if (wide.matches)
@@ -125,8 +145,6 @@ export default component Header()
 
         cleanup { wide.removeEventListener('change', sync); }
     }
-
-    const sectionHref = useSectionHref();
 
     const label = (id: SectionId): string => t().nav[id];
 
@@ -162,22 +180,28 @@ export default component Header()
             class={ () => 'mx-auto flex h-16 max-w-6xl items-center gap-3 rounded-2xl border px-5 transition-colors duration-300 '
                 + (scrolled ? 'border-line bg-bg/85 backdrop-blur-lg' : 'border-line/60 bg-surface/60 backdrop-blur-md') }
         >
-            <a href={ () => sectionHref('top') } class="me-auto flex items-center gap-2 text-base font-semibold tracking-tight text-ink">
+            <SectionLink id="top" class="me-auto flex items-center gap-2 text-base font-semibold tracking-tight text-ink">
                 { /* Decorative: `alt=""` on purpose, because the brand name sits right
                      beside it inside the same link. A real alt here would make a screen
                      reader announce the name twice. */ }
                 <img src="/icon.png" alt="" width="28" height="28" class="size-7 rounded-lg" />
                 { t().brand }
-            </a>
+            </SectionLink>
 
-            <nav class="hidden items-center gap-1 md:flex" aria-label={ t().nav.wallet }>
+            <nav class="hidden items-center gap-1 lg:flex" aria-label={ t().nav.wallet }>
+                { /* The row wrapper is the reconciler's requirement, not a layout choice: a
+                     <For> row must be exactly ONE host element, and a component's root is a
+                     fragment as far as the compiler can see. The <div> is the flex item the
+                     <a> used to be, and the link fills it. */ }
                 <For each={ SECTIONS } key={ (id) => id } let={ id }>
-                    <a
-                        href={ () => sectionHref(id) }
-                        class="rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-elevated hover:text-ink"
-                    >
-                        { label(id) }
-                    </a>
+                    <div>
+                        <SectionLink
+                            id={ id }
+                            class="block rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-elevated hover:text-ink"
+                        >
+                            { label(id) }
+                        </SectionLink>
+                    </div>
                 </For>
 
                 { /* The one nav entry that is a ROUTE rather than an anchor, so it is a <Link>.
@@ -223,7 +247,7 @@ export default component Header()
             <Tooltip
                 label={ `${ t().theme.label }: ${ t().theme[theme()] }` }
                 describe={ false }
-                class="hidden md:inline-flex"
+                class="hidden lg:inline-flex"
             >
                 { /* `theme-trigger` locates the reveal circle's origin - the theme spreads
                      from THIS button. The swap itself goes through withThemeTransition so
@@ -233,11 +257,11 @@ export default component Header()
                     class="theme-trigger"
                     onClick={ () => withThemeTransition(() => cycle()) }
                 >
-                    { () => icon(GLYPH[theme()], 'size-[18px]') }
+                    { themeGlyphs('size-[18px]') }
                 </IconButton>
             </Tooltip>
 
-            <Tooltip label={ t().nav.language } describe={ false } class="hidden md:inline-flex">
+            <Tooltip label={ t().nav.language } describe={ false } class="hidden lg:inline-flex">
                 <IconButton
                     label={ t().nav.language }
                     haspopup="dialog"
@@ -249,17 +273,17 @@ export default component Header()
                 </IconButton>
             </Tooltip>
 
-            <a
-                href={ () => sectionHref('wallet') }
+            <SectionLink
+                id="wallet"
                 class="hidden h-9 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-hover sm:flex"
             >
                 { t().nav.download }
-            </a>
+            </SectionLink>
 
             <IconButton
                 label={ menuOpen ? t().nav.closeMenu : t().nav.openMenu }
                 expanded={ menuOpen }
-                class="md:hidden"
+                class="lg:hidden"
                 onClick={ () => menuOpen = !menuOpen }
             >
                 { () => icon(menuOpen ? X : Menu, 'size-5') }
@@ -272,7 +296,7 @@ export default component Header()
                      the panel as siblings throws at append time - the same one-element rule
                      a `<For>` row and a route component follow. The wrapper is unstyled and
                      both children are `fixed`, so it intercepts nothing. */ }
-                <div class="md:hidden">
+                <div class="lg:hidden">
                 { /* Scrim first so the panel stacks above it. Tapping it closes, which is
                      the gesture people try before hunting for an X. */ }
                     <div
@@ -284,7 +308,7 @@ export default component Header()
                      and from the LEFT in Persian. A drawer pinned to `right` would come from
                      the wrong side of an RTL page and read as a mistake. */ }
                     <nav
-                        class="drawer fixed inset-y-0 end-0 z-[61] flex w-[min(19rem,85vw)] flex-col gap-1 border-s border-line bg-surface p-4 shadow-2xl overflow-y-auto overscroll-contain motion-safe:animate-[drawer_220ms_ease-out] md:hidden"
+                        class="drawer fixed inset-y-0 end-0 z-[61] flex w-[min(19rem,85vw)] flex-col gap-1 border-s border-line bg-surface p-4 shadow-2xl overflow-y-auto overscroll-contain motion-safe:animate-[drawer_220ms_ease-out] lg:hidden"
                         style="padding-top: max(1rem, env(safe-area-inset-top)); padding-bottom: max(1rem, env(safe-area-inset-bottom));"
                         aria-label={ t().nav.wallet }
                     >
@@ -306,15 +330,20 @@ export default component Header()
                              The group drops the nav's `gap-1` on purpose: a gap would leave
                              each rule floating in the space instead of dividing two rows. */ }
                         <div class="flex flex-col divide-y divide-line">
+                            { /* Wrapped for the same reason as the bar's rows: one host
+                                 element per <For> row. `divide-y` draws between these
+                                 wrappers now, which is the same line in the same place. */ }
                             <For each={ SECTIONS } key={ (id) => id } let={ id }>
-                                <a
-                                    href={ () => sectionHref(id) }
-                                    class="flex items-center gap-3 rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink"
-                                    onClick={ () => jump() }
-                                >
-                                    { icon(SECTION_GLYPH[id], 'size-[18px] shrink-0') }
-                                    <span>{ label(id) }</span>
-                                </a>
+                                <div>
+                                    <SectionLink
+                                        id={ id }
+                                        class="flex items-center gap-3 rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink"
+                                        onClick={ () => jump() }
+                                    >
+                                        { icon(SECTION_GLYPH[id], 'size-[18px] shrink-0') }
+                                        <span>{ label(id) }</span>
+                                    </SectionLink>
+                                </div>
                             </For>
 
                             <Link
@@ -346,13 +375,13 @@ export default component Header()
                              content outgrows the panel, where a distributed `justify-` would
                              still be trying to spread space that is no longer there. */ }
                         <div class="mt-auto flex flex-col gap-1 pt-6">
-                            <a
-                                href={ () => sectionHref('wallet') }
+                            <SectionLink
+                                id="wallet"
                                 class="flex h-12 items-center justify-center rounded-xl bg-accent font-semibold text-accent-ink"
                                 onClick={ () => jump() }
                             >
                                 { t().nav.download }
-                            </a>
+                            </SectionLink>
 
                             { /* The two controls the bar gives up below `md`. Rows rather than
                                  the bar's icon buttons: there is width for a word here, and a
@@ -365,7 +394,7 @@ export default component Header()
                                     class="theme-trigger flex items-center gap-3 rounded-xl px-4 py-3 text-base text-muted transition-colors hover:bg-elevated hover:text-ink"
                                     onClick={ () => withThemeTransition(() => cycle()) }
                                 >
-                                    { () => icon(GLYPH[theme()], 'size-[18px] shrink-0') }
+                                    { themeGlyphs('size-[18px] shrink-0') }
                                     <span class="flex-1 text-start">{ t().theme.label }</span>
                                     <span class="text-sm text-faint">{ () => t().theme[theme()] }</span>
                                 </button>

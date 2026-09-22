@@ -6,19 +6,35 @@
 // direction actually flipping, and the axe rule set. Screenshots are the evidence you read
 // AFTER something fails, not the check itself.
 //
-//   npm run qa:visual                      # against http://localhost:4000
-//   npm run qa:visual -- --url http://...  # against anything else
+//   npm run qa:visual                          # Chromium, against http://127.0.0.1:3000
+//   npm run qa:visual -- --url http://...      # against anything else
+//   npm run qa:visual -- --browser all         # Chromium AND Firefox
 //
-// Requires the dev server (or a preview build) to already be serving.
+// Requires `npm run dev` (one process, one origin) or a production `npm start` to already
+// be serving.
 import { mkdir, writeFile } from 'node:fs/promises';
-import { chromium } from 'playwright';
+import { launchBrowser } from './browsers.mjs';
 import AxeBuilder from '@axe-core/playwright';
 
-/** The three sizes the site is designed against; the mobile one is an iPhone 14/15 class. */
+/**
+ * The sizes the site is checked at, smallest first - because the design is mobile-first and
+ * so is the evidence for it.
+ *
+ * `small` is the floor that actually exists: 320px is an iPhone SE and the narrowest viewport
+ * any current phone reports, and it is where a layout that merely "works on mobile" at 390
+ * tends to break. `wide` is the other end, where a centred `max-w-4xl` page has to stop
+ * growing rather than strand its text in the middle of a television.
+ *
+ * Between them: a current phone, the tablet portrait width where the header swaps its drawer
+ * for the full nav (`md`, 768), and the two desktop sizes the design was drawn at.
+ */
 const VIEWPORTS = [
-    { name: 'desktop', width: 1440, height: 900 },
+    { name: 'small', width: 320, height: 568 },
+    { name: 'mobile', width: 390, height: 844 },
+    { name: 'tabletp', width: 768, height: 1024 },
     { name: 'tablet', width: 1024, height: 768 },
-    { name: 'mobile', width: 390, height: 844 }
+    { name: 'desktop', width: 1440, height: 900 },
+    { name: 'wide', width: 1920, height: 1080 }
 ];
 
 /** One Latin locale and one Arabic-script locale - the two directions the site ships. */
@@ -34,7 +50,7 @@ const arg = (flag, fallback) =>
     return index === -1 ? fallback : process.argv[index + 1];
 };
 
-const URL_UNDER_TEST = arg('--url', 'http://localhost:4000/');
+const URL_UNDER_TEST = arg('--url', 'http://127.0.0.1:3000/');
 const OUT_DIR = arg('--out', 'artifacts/visual-qa');
 
 /**
@@ -125,12 +141,33 @@ const layoutProblems = async (page) => page.evaluate(() =>
     };
 });
 
-const run = async () =>
-{
-    await mkdir(OUT_DIR, { recursive: true });
+/**
+ * Which engines this run drives.
+ *
+ * Chromium alone by default, so the everyday invocation stays quick; `--browser all` adds
+ * Firefox, which is where a layout written against one engine's defaults tends to break.
+ */
+const ENGINES = ['chromium', 'firefox'];
+const WANTED = arg('--browser', 'chromium');
 
-    const browser = await chromium.launch();
-    const summary = [];
+/** Every scenario, in one engine. Findings and the summary rows are shared across engines. */
+const runEngine = async (engine, summary) =>
+{
+    let browser;
+
+    try
+    {
+        const launched = await launchBrowser(engine);
+
+        browser = launched.browser;
+        console.log(`> ${ engine }: ${ launched.using }`);
+    }
+    catch (error)
+    {
+        record('FAIL', engine, `could not launch: ${ error.message }`);
+
+        return;
+    }
 
     try
     {
@@ -138,24 +175,28 @@ const run = async () =>
         {
             for (const viewport of VIEWPORTS)
             {
-                const scenario = `${ direction.dir }-${ viewport.name }`;
+                const scenario = `${ engine }-${ direction.dir }-${ viewport.name }`;
                 const context = await browser.newContext({
                     viewport: { width: viewport.width, height: viewport.height },
                     deviceScaleFactor: 1
                 });
 
-                // Seeded before any script runs, so the page paints in the right locale on
-                // the FIRST frame - which is the whole point of the pre-paint script.
-                await context.addInitScript(([locale]) =>
+                // The language is a COOKIE now: the server negotiates it and stamps `lang`
+                // and `dir` on the response, so seeding it here is what makes the very first
+                // document arrive in this scenario's language rather than being corrected
+                // after hydration. `locale` is the name the kit reads by default.
+                await context.addCookies([{ name: 'locale', value: direction.locale, url: URL_UNDER_TEST }]);
+
+                // The theme is still the browser's to resolve, before first paint.
+                await context.addInitScript(() =>
                 {
                     try
                     {
-                        localStorage.setItem('nura.locale', locale);
                         localStorage.setItem('nura.theme', 'dark');
                     }
                     catch
                     { /* storage blocked; the page still resolves a default */ }
-                }, [direction.locale]);
+                });
 
                 const page = await context.newPage();
 
@@ -205,23 +246,78 @@ const run = async () =>
                  */
                 try
                 {
-                    const height = await page.evaluate(() => document.body.scrollHeight);
-                    const step = Math.round((viewport.height ?? 900) * 0.8);
-
-                    for (let y = 0; y < height; y += step)
+                    /*
+                     * Travel to the bottom and back, waiting for the page to ARRIVE.
+                     *
+                     * The walk used to step down in fixed 120ms hops, which works on a page
+                     * that scrolls instantly and does not here: Lenis smooths every scroll, so
+                     * each hop was still gliding when the next one was issued and the page
+                     * ended up somewhere short of where the walk believed it was. The sections
+                     * past that point were never intersected, never revealed, and came out of
+                     * the capture as a thousand pixels of background.
+                     *
+                     * So: ask for the bottom, then poll until the position stops changing.
+                     * One continuous trip reveals everything on the way, which is what a
+                     * reader's own scroll does.
+                     */
+                    const settle = async (to) =>
                     {
-                        await page.evaluate((to) => { window.scrollTo(0, to); }, y);
-                        await page.waitForTimeout(120);
-                    }
+                        await page.evaluate((target) =>
+                        {
+                            window.scrollTo({ top: target, behavior: 'auto' });
+                        }, to);
 
-                    await page.evaluate(() => { window.scrollTo(0, 0); });
+                        let last = -1;
+
+                        for (let tick = 0; tick < 40; tick++)
+                        {
+                            await page.waitForTimeout(150);
+
+                            const now = await page.evaluate(() => Math.round(window.scrollY));
+
+                            if (now === last)
+                            {
+                                return;
+                            }
+
+                            last = now;
+                        }
+                    };
+
+                    await settle(await page.evaluate(() => document.body.scrollHeight));
+                    await settle(0);
                     await page.waitForTimeout(400);
                 }
                 catch
                 {
-                    // One short call per step rather than one long one, so a reload mid-walk
-                    // costs a step instead of the whole run. Measure what is on screen.
+                    // A reload mid-walk costs the walk, not the run. Measure what is on screen.
                 }
+
+                /*
+                 * Let the REVEALS settle, the way the hero's entrance is waited for above.
+                 *
+                 * Each section rises once when it is first scrolled past, on a spring stagger
+                 * that outlasts the 120ms the walk spends per step - so the last sections were
+                 * still mid-fade when axe ran, and an element caught at opacity 0.4 has a
+                 * blended colour. That is the same false `color-contrast` failure the hero
+                 * produced before it learned to announce itself, one level down: it appeared
+                 * only at the narrowest viewport, where the page is tallest and the walk takes
+                 * the most steps.
+                 *
+                 * Waiting on the animations THEMSELVES rather than on a timeout, with the
+                 * ticker excluded - it loops forever by design and would hold this open until
+                 * the timeout on every scenario.
+                 */
+                await page.evaluate(() => Promise.all(
+                    document.getAnimations()
+                        .filter((animation) =>
+                        {
+                            const timing = animation.effect?.getComputedTiming();
+
+                            return timing !== undefined && timing.iterations !== Infinity;
+                        })
+                        .map((animation) => animation.finished.catch(() => undefined))))
+                    .catch(() => { /* No animation API, or one was cancelled; measure what is on screen. */ });
 
                 const layout = await layoutProblems(page);
 
@@ -251,7 +347,18 @@ const run = async () =>
 
                 const file = `${ OUT_DIR }/${ scenario }.png`;
 
-                await page.screenshot({ path: file, fullPage: true });
+                /*
+                 * `animations: 'disabled'` finishes every finite animation and freezes the
+                 * infinite ones at their first frame, for the duration of the capture.
+                 *
+                 * A `fullPage` shot does not scroll - it stitches while resizing the viewport
+                 * internally - and that resize re-runs the IntersectionObserver the sections
+                 * reveal on. Measured at tablet portrait: a page whose sections are all at
+                 * opacity 1 for a reader came out as a hero, a footer and a thousand pixels of
+                 * black between them, because the stitch caught them mid-reveal. The notes say
+                 * to look at the screenshots; this is what makes them worth looking at.
+                 */
+                await page.screenshot({ path: file, fullPage: true, animations: 'disabled' });
 
                 summary.push({
                     scenario,
@@ -271,6 +378,18 @@ const run = async () =>
     finally
     {
         await browser.close();
+    }
+};
+
+const run = async () =>
+{
+    await mkdir(OUT_DIR, { recursive: true });
+
+    const summary = [];
+
+    for (const engine of (WANTED === 'all' ? ENGINES : [WANTED]))
+    {
+        await runEngine(engine, summary);
     }
 
     console.table(summary);

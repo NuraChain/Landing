@@ -6,13 +6,11 @@
 import { describe, it, expect } from 'vitest';
 
 import { BlogContent, loadArticles } from '../src/blog/content.ts';
+import { toDetail } from '../src/blog/present.ts';
 import { articleMarkup, injectArticle, renderArticle, safeHref } from '../src/seo/article.ts';
-import { postFor } from '../src/seo/pages.ts';
 import { POST_LOCALES } from '../src/schemas.ts';
 import { loadWhitepaper, PDF_DIR, pdfFileFor, pdfStatus, toWhitepaper } from '../src/whitepaper/content.ts';
-import { harness, post, translation, whitepaper } from './support/fixtures.ts';
-
-const SITE = 'https://nurachain.net';
+import { harness, post, translation } from './support/fixtures.ts';
 
 describe('the repository cluster', () =>
 {
@@ -170,7 +168,7 @@ describe('the crawlable article', () =>
             translation('fa', { title: 'عنوان', body: 'متن' })
         ])]);
 
-        const markup = articleMarkup(postFor('/blog/persian', { store, whitepaper: whitepaper(), siteUrl: SITE })!);
+        const markup = articleMarkup(toDetail(store.bySlug('persian')!, 'fa')!);
 
         expect(markup).toContain('lang="fa"');
         expect(markup).toContain('dir="rtl"');
@@ -185,21 +183,20 @@ describe('the crawlable article', () =>
             translation('en', { title: 'A real title', body: '## A heading\n\nSome real prose.' })
         ])]);
 
-        const markup = articleMarkup(postFor('/blog/real', { store, whitepaper: whitepaper(), siteUrl: SITE })!);
+        const markup = articleMarkup(toDetail(store.bySlug('real')!, 'en')!);
 
         expect(markup).toContain('<h1>A real title</h1>');
         expect(markup).toContain('<h2>A heading</h2>');
         expect(markup).toContain('Some real prose.');
     });
 
-    it('answers null for anything that is not one post', () =>
+    it('answers nothing for a slug the blog does not hold', () =>
     {
+        // Which url is a post is the ROUTER's question now - this one is only about a slug
+        // that resolves to no document, which is what the route's loader turns into a 404.
         const store = new BlogContent([post()]);
 
-        for (const url of ['/', '/about', '/blog', '/blog?page=2', '/blog/never-written'])
-        {
-            expect(postFor(url, { store, whitepaper: whitepaper(), siteUrl: SITE }), url).toBeNull();
-        }
+        expect(store.bySlug('never-written')).toBeNull();
     });
 
     it('goes in ahead of the frame the kit rendered, without disturbing it', () =>

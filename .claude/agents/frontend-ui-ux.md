@@ -87,8 +87,8 @@ This site ships ten languages, two of them RTL (`fa`, `ar`). Load the
 Never report a UI change as done from source alone.
 
 ```bash
-npm run dev                              # note the port it prints; it is not always 4000
-npm run qa:visual -- --url http://localhost:<port>/
+npm run dev                              # one process, one origin: http://127.0.0.1:3000
+npm run qa:visual -- --url http://127.0.0.1:3000/
 ```
 
 That runs 1440x900, 1024x768 and 390x844 in **both** LTR and RTL, asserts the

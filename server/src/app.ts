@@ -1,44 +1,43 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
-
-import { App, HttpError, NotFoundError, html, json, pipeline, rateLimit, requestId, securityHeaders, text, type ErrorObserver, type RequestObserver, type WebHandler } from '@azerothjs/http';
+import { App, HttpError, NotFoundError, json, pipeline, rateLimit, requestId, securityHeaders, text, type ErrorObserver, type RequestObserver, type WebHandler } from '@azerothjs/http';
 import { staticFiles } from '@azerothjs/http/node';
-import { feature, manifestOf, manifestScript, register } from '@azerothjs/http/api';
-import { mountPages, type KitOptions, type PageRenderer } from '@azerothjs/kit';
+import { feature, manifestOf, register } from '@azerothjs/http/api';
+import { mountPages, type KitOptions } from '@azerothjs/kit';
 import { array } from '@azerothjs/schema';
+import type { LocaleConfig } from 'azerothjs';
 
 import { pageCount, toCards, toDetail } from './blog/present.ts';
 import type { SiteContent } from './content.ts';
 import { createPriceGateway, type PriceGateway } from './market/price.ts';
-import { articleMarkup, injectArticle } from './seo/article.ts';
-import { injectMeta, isMissingPost, metaFor, postFor, whitepaperFor } from './seo/pages.ts';
 import { buildSitemap } from './seo/sitemap.ts';
 import {
     nuraPrice,
     pageQuery,
     postDetail,
     postPage,
+    POST_LOCALES,
     readQuery,
     tagCount,
     whitepaperDetail
 } from './schemas.ts';
 import { PDF_ROUTE, toWhitepaper } from './whitepaper/content.ts';
 
-/**
- * The pages this process serves the shell for itself, head included.
- *
- * They are `render: 'client'` in `routes.ts` and stay that way - the browser still renders
- * their bodies. This list is only about which half of the process writes their `<head>`, and
- * it must match the `'client'` rows in that table: a path here that the table does not carry
- * would serve a page the client router cannot route.
- */
-const LANDING_PATHS: readonly string[] = ['/', '/about'];
-
 /** How many posts a blog index page holds when the caller does not say. */
 const DEFAULT_LIMIT = 10;
 
 /** The language a reader gets when they ask for none - the same default the site falls to. */
 const DEFAULT_LOCALE = 'en';
+
+/**
+ * The languages every page is negotiated over.
+ *
+ * `POST_LOCALES` rather than a second list: the blog already declares the ten the site speaks,
+ * and `tests/blog-locales.spec.ts` pins it equal to the application's own `LOCALES`. Given this,
+ * the kit decides each request's language - the `locale` cookie a reader's choice writes, then
+ * `Accept-Language` in preference order, then English - and stamps `<html lang>` and
+ * `<html dir>` on the response before a single byte of JavaScript runs. That is what a crawler
+ * reads and what lays a Persian page out right-to-left on its first paint.
+ */
+export const LOCALES: LocaleConfig = { supported: POST_LOCALES, default: DEFAULT_LOCALE };
 
 /**
  * Everything the api reads: the content, already off disk, and where the price comes from.
@@ -201,12 +200,19 @@ export type Api = ReturnType<typeof createApi>;
  */
 export const DEFAULT_SITE_URL = 'https://nurachain.net';
 
-export interface AppOptions extends ApiDeps
-{
-    dev: boolean;
-    observe?: RequestObserver;
-    onError?: ErrorObserver;
+/** `Omit` over a union keeps only the keys every arm shares; this keeps each arm whole. */
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
+/**
+ * The client this process serves pages for: the built directory in production, or the shell
+ * html as TEXT where nothing is built (the kit's dev session, a spec). Exactly one of the two,
+ * which is what `KitOptions` itself demands - a plain `Omit` over that union would collapse it
+ * into a shape that satisfies neither arm.
+ */
+export type PagesOptions = DistributiveOmit<KitOptions, 'manifest'>;
+
+export interface RegisterOptions
+{
     /** Canonical origin, no trailing slash. Defaults to {@link DEFAULT_SITE_URL}. */
     siteUrl?: string;
 
@@ -218,27 +224,24 @@ export interface AppOptions extends ApiDeps
      * `PDF_DIR` after checking every language's file is actually there.
      */
     pdfDir?: string;
-
-    /**
-     * The built client + SSR renderer (production); omit in dev - vite serves the client.
-     *
-     * `manifest` is not among the options a caller supplies: it is projected from the api this
-     * function just registered, so the embedded copy and the served one cannot disagree.
-     */
-    pages?: Omit<KitOptions, 'manifest'>;
 }
 
-export function buildApp(options: AppOptions): App
+/**
+ * Every route that is NOT a page: the api and its manifest, the sitemap, the PDFs.
+ *
+ * The kit's dev session registers this on the App it serves and `buildApp` on the production
+ * one, so the two cannot drift - a route added here exists in both. Everything here sits ahead
+ * of any page mount for the reason `mountPages` documents: its `/*path` fallback matches every
+ * path, and the first match wins.
+ */
+export function registerApi(app: App, api: Api, content: SiteContent, options: RegisterOptions = {}): void
 {
-    const app = new App({ dev: options.dev, observe: options.observe, onError: options.onError });
-    const api = createApi(options);
-
     app.get('/api/healthz', () => json({ ok: true, at: new Date().toISOString() }));
 
     register(app, api);
 
-    // The typed client's runtime half. Production also embeds it into each served page, so
-    // hydration costs no round trip; this endpoint is what a plain vite dev page falls back to.
+    // The typed client's runtime half. A served page embeds it too, so hydration costs no round
+    // trip; this endpoint is what a page without the splice falls back to.
     app.get('/api/_manifest', () => json(manifestOf(api)));
 
     const siteUrl = (options.siteUrl ?? DEFAULT_SITE_URL).replace(/\/+$/, '');
@@ -246,14 +249,12 @@ export function buildApp(options: AppOptions): App
     /*
      * Generated per request rather than written to a file at build.
      *
-     * Posts are published from the dashboard at runtime, so a sitemap baked at build time is
-     * stale the moment anybody writes anything - and stale in the silent direction, where the
-     * new post is simply never crawled. This reads the store, so publishing IS listing.
-     *
-     * Registered before `mountPages` for the same reason `/api` is: the kit's asset fallback
-     * matches every path, and a static `sitemap.xml` in public/ would otherwise win.
+     * The store is read once at boot, so a sitemap built from it lists exactly what this process
+     * serves - where a `sitemap.xml` committed under public/ would go stale in the silent
+     * direction, the first time a post landed without it. Reading the store means publishing IS
+     * listing.
      */
-    app.get('/sitemap.xml', () => text(buildSitemap(options, siteUrl), {
+    app.get('/sitemap.xml', () => text(buildSitemap(content, siteUrl), {
         headers: {
             'content-type': 'application/xml; charset=utf-8',
             // Crawlers re-read this often; an hour keeps it fresh without regenerating per hit.
@@ -264,171 +265,73 @@ export function buildApp(options: AppOptions): App
     /*
      * The whitepaper downloads, under the same prefix as the page that describes them.
      *
-     * Registered ahead of `mountPages` like `/assets` and `/sitemap.xml`: the kit claims
-     * `/whitepaper` by name and everything else through `/*path`, and this pattern is more
-     * specific than the fallback without colliding with the page. The default cache policy -
-     * revalidate every time - is the right one here, because a regenerated PDF keeps its name.
+     * The kit claims `/whitepaper` by name and everything else through `/*path`, and this
+     * pattern is more specific than the fallback without colliding with the page. The default
+     * cache policy - revalidate every time - is the right one here, because a regenerated PDF
+     * keeps its name.
      */
     if (options.pdfDir !== undefined)
     {
         app.get(`${ PDF_ROUTE }/*path`, staticFiles(options.pdfDir));
     }
+}
+
+export interface AppOptions extends ApiDeps, RegisterOptions
+{
+    dev: boolean;
+    observe?: RequestObserver;
+    onError?: ErrorObserver;
+
+    /**
+     * A prebuilt api, when the caller already holds one.
+     *
+     * `main.ts` builds the ONE api whose price memo serves the process and hands it here in
+     * production and to the kit's dev session in development. The suite leaves it out and this
+     * function builds its own over the content it was given.
+     */
+    api?: Api;
+
+    /**
+     * The built client + SSR renderer (production); omit in dev - the kit's dev session mounts
+     * the pages on an App of its own, over the same route table and renderer.
+     *
+     * `manifest` is not among the options a caller supplies: it is projected from the api this
+     * function just registered, so the embedded copy and the served one cannot disagree.
+     */
+    pages?: PagesOptions;
+}
+
+export function buildApp(options: AppOptions): App
+{
+    const app = new App({ dev: options.dev, observe: options.observe, onError: options.onError });
+    const api = options.api ?? createApi(options);
+
+    registerApi(app, api, options, options);
 
     // Mounted LAST so nothing can shadow /api: the kit's asset fallback matches everything.
+    // The kit also serves `/assets` itself, `public, max-age=31536000, immutable` - vite's
+    // content-hashed names earn it - so nothing here registers that pattern: a second
+    // registration of one pattern is a `Route conflict` at boot.
     if (options.pages !== undefined)
     {
         /*
-         * Vite writes CONTENT-HASHED names into /assets, so the bytes behind one of those urls
-         * can never change - a new build is a new name. The kit serves them on its default
-         * `max-age=0, must-revalidate` all the same, which asks the browser to check every
-         * script, stylesheet and font again on every single page view.
+         * Every page goes through the kit now, `/` and `/about` included.
          *
-         * Two costs, and the second is the one that bit: a round trip per asset per visit, and
-         * a request per asset for the rate limiter to count. Pinning them for a year takes a
-         * returning reader's page view from a dozen metered requests to zero.
-         *
-         * Registered BEFORE mountPages for the same reason /sitemap.xml is - the kit's /*path
-         * fallback matches everything, and the first match wins.
-         *
-         * Only /assets is pinned. index.html, the favicons and robots.txt live at the root
-         * under names that stay the same across deploys, so they must keep revalidating or a
-         * deploy would never reach anybody holding a cached copy.
+         * Those two used to be pulled OUT of this table and answered by a handler of their own,
+         * because they were `render: 'client'` and the kit hands a client route the shell
+         * verbatim - so they shared index.html's single title and had no head worth reading.
+         * They are `render: 'server'` in `routes.ts` today, which means the kit renders them,
+         * `withMeta` below writes their head like any other page, and the special case is gone
+         * along with the shell cache it needed.
          */
-        app.get('/assets/*path', staticFiles(join(options.pages.clientDir, 'assets'), {
-            cacheControl: 'public, max-age=31536000, immutable'
-        }));
-
-        /*
-         * The landing pages, served with a head of their own.
-         *
-         * `/` and `/about` are `render: 'client'`, and the kit calls a renderer only for a
-         * `'server'` route - so `mountPages` hands them the shell verbatim and `withMeta` below
-         * never sees them. That left the site's two most important addresses sharing one title
-         * and one description, with no canonical, no Open Graph and no structured data.
-         *
-         * These two paths are TAKEN OUT of the table handed to `mountPages` rather than
-         * registered ahead of it. `/sitemap.xml` and `/assets` can sit in front of the kit
-         * because the kit never claims those exact patterns - it claims `/*path`, and a more
-         * specific route wins. `/` and `/about` it claims by name, and this router answers a
-         * duplicate pattern with `Route conflict` at startup rather than by preferring one.
-         * Removing them is also the more honest description of what happens: for a `'client'`
-         * route the kit only serves the shell, which is precisely what the handler below does,
-         * with the head filled in.
-         *
-         * This changes the HEAD only. The body is still the shell, so the browser renders these
-         * two pages exactly as it did - none of the client-only work in the stores or the
-         * network section is dragged onto a server, which is the trade routes.ts weighed and
-         * declined.
-         */
-        const clientDir = options.pages.clientDir;
-        const manifest = manifestOf(api);
-
-        /*
-         * The shell, read once and kept. Same order the kit looks in - a built client may ship
-         * `shell.html` beside `index.html` - and the manifest script is spliced in exactly as
-         * `mountPages` would, so hydration on these two paths still costs no round trip.
-         */
-        let shellCache: Promise<string> | null = null;
-
-        const landingShell = (): Promise<string> =>
-        {
-            shellCache ??= readFile(join(clientDir, 'shell.html'), 'utf8')
-                .catch(() => readFile(join(clientDir, 'index.html'), 'utf8'))
-                .then((page) => page.replace('</head>', () => `${ manifestScript(manifest) }</head>`));
-
-            return shellCache;
-        };
-
-        for (const path of LANDING_PATHS)
-        {
-            app.get(path, async () =>
-            {
-                const shell = await landingShell();
-                const meta = metaFor(path, { ...options, siteUrl });
-
-                // Null would mean this module has nothing to say about the path, which cannot
-                // happen for these two - but the shell is the right answer if it ever does.
-                return html(meta === null ? shell : injectMeta(shell, meta));
-            });
-        }
-
         mountPages(app, {
             ...options.pages,
-            routes: options.pages.routes.filter((route) => !LANDING_PATHS.includes(route.path)),
-            renderer: withMeta(options.pages.renderer, options, siteUrl),
-            manifest
+            manifest: manifestOf(api),
+            locales: LOCALES
         });
     }
 
     return app;
-}
-
-/**
- * Wraps the page renderer so a server-rendered blog page carries its own head.
- *
- * The kit splices markup into the shell and leaves `<head>` alone, which would give all ten
- * posts index.html's single title and description - the two fields a search result is built
- * from. `PageRenderer` hands back the finished document as a string, so the head can be
- * rewritten here without the kit growing an API for it and without a route moving.
- *
- * Everything that is not one of the two blog routes falls through untouched: `metaFor` answers
- * null and the original result is returned as-is. A page whose head this module does not
- * understand keeps the one it already had.
- */
-function withMeta(renderer: PageRenderer | undefined, content: SiteContent, siteUrl: string): PageRenderer | undefined
-{
-    if (renderer === undefined)
-    {
-        return undefined;
-    }
-
-    return async (url, shell) =>
-    {
-        const result = await renderer(url, shell);
-
-        // The union may grow - a streaming arm is planned - so this switches on the one arm it
-        // can rewrite rather than assuming anything about the others.
-        if (result.kind !== 'html')
-        {
-            return result;
-        }
-
-        const deps = { store: content.store, whitepaper: content.whitepaper, siteUrl };
-        const meta = metaFor(url, deps);
-
-        if (meta === null)
-        {
-            /*
-             * A post address that resolves to nothing is served as a real 404.
-             *
-             * The app renders its own not-found state either way, so the page a visitor sees is
-             * unchanged - what changes is the status line above it. It used to be 200, which is
-             * a soft 404: a crawler is told "this is a page" and indexes the generic shell
-             * title, so every mistyped or retired post url becomes a duplicate of the home page
-             * in the index. The status is the only thing that distinguishes them.
-             */
-            return isMissingPost(url, deps) ? { ...result, status: 404 } : result;
-        }
-
-        /*
-         * The head, then the BODY.
-         *
-         * A post route renders its text into the document here rather than leaving the frame's
-         * loading skeleton for a crawler to index. The page fetches inside an `effect`, which
-         * never runs on a server, so before this the indexed article was a correct `<title>`
-         * over an empty page - the head described something the body did not contain.
-         *
-         * A post or the whitepaper: each resolver answers null for every other address, and
-         * the blog index has nothing to server-render that the frame does not already carry.
-         */
-        const html = injectMeta(result.html, meta);
-        const detail = postFor(url, deps) ?? whitepaperFor(url, deps);
-
-        return {
-            ...result,
-            html: detail === null ? html : injectArticle(html, articleMarkup(detail))
-        };
-    };
 }
 
 /**

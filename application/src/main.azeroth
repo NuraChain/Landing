@@ -1,11 +1,29 @@
-import { render } from 'azerothjs';
+import { bootClient } from '@azerothjs/kit/client';
 
 import { initSmoothScroll } from './lib/smooth-scroll';
+import { migrateLegacyChoice } from './stores/locale';
 
 import App from './App.azeroth';
 
-render(() => App(), document.getElementById('root')!);
+/*
+ * Adopt what the server sent, rather than throwing it away and building it again.
+ *
+ * `bootClient` hydrates when the root already holds markup - which it does for every page now,
+ * since all five render on the server - and renders into an empty shell otherwise. It reads
+ * the loader handoff the document carries, so the browser draws the article the server already
+ * fetched and makes no request to redraw it.
+ *
+ * This used to be a bare `render()`, which EMPTIES its container first: the server's markup was
+ * deleted the moment the bundle booted, so it only ever existed for crawlers and the page was
+ * built twice for everyone else.
+ */
+bootClient(App);
 
 // Once per page load, not per component: wheel smoothing and the hash-link glide are
 // document-level concerns. Guarded internally (reduced motion, no ResizeObserver).
 initSmoothScroll();
+
+// AFTER the app is up, never during: a reader who chose a language before the server could
+// see that choice has it in localStorage, and this replays it into the cookie once. Switching
+// mid-mount would fight the language the server already rendered.
+migrateLegacyChoice();

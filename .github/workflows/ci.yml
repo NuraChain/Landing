@@ -109,14 +109,23 @@ jobs:
         run: npm run build
 
       # A smoke check on the artefacts themselves: the client bundle must exist, the SSR
-      # bundle the server imports by name must exist beside it, and the pre-paint script
-      # that settles `dir`/`lang`/theme before first paint must survive into the built HTML.
+      # bundle the server imports by name must exist beside it, and the built shell must
+      # carry what only the shell can carry.
+      #
+      # The THEME is settled before first paint by the inline script, because no server can
+      # know it. The LANGUAGE is not, and the negative is asserted here as well as in
+      # tests/prepaint.spec.ts: the kit negotiates it per request and stamps `lang`/`dir` on
+      # the response, so a script writing either one would overwrite the reader's own
+      # language with whatever the browser guessed - visible only in a browser, and only
+      # after hydration.
       - name: Smoke-check the bundles
         run: |
           test -f application/dist/index.html || { echo "application/dist/index.html missing"; exit 1; }
           test -f application/dist-server/entry.server.js || { echo "SSR bundle missing - the server imports it by path"; exit 1; }
-          grep -q "documentElement.dir" application/dist/index.html || { echo "pre-paint direction script missing from build"; exit 1; }
           grep -q "documentElement.dataset.theme" application/dist/index.html || { echo "pre-paint theme script missing from build"; exit 1; }
+          grep -q "viewport-fit=cover" application/dist/index.html || { echo "viewport-fit missing - the safe-area insets in styles.css have nothing to inset against"; exit 1; }
+          ! grep -q "documentElement.dir" application/dist/index.html || { echo "the shell writes dir - the server stamps it per request, and a script would overwrite the negotiated language"; exit 1; }
+          ! grep -q "navigator.languages" application/dist/index.html || { echo "the shell detects a language - negotiation belongs to the server"; exit 1; }
           echo "client ok: $(du -sh application/dist | cut -f1), ssr ok: $(du -sh application/dist-server | cut -f1)"
 
       - name: Upload bundle

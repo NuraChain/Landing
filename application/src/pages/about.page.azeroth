@@ -11,8 +11,32 @@
 // Pinning the section is correct while the content is English; translate it and
 // this attribute comes off, which is why the identifiers below carry their own
 // `<bdi>` rather than leaning on it.
+import { ABOUT_DESCRIPTION, ABOUT_TITLE } from '../lib/content/page-copy';
+import { pageHead } from '../lib/head';
+
 export default component About()
 {
+    /*
+     * NOINDEX, and it comes off the moment this page says something about Nura Chain.
+     *
+     * The route still renders the AzerothJS starter template. Indexed under this brand that is
+     * worse than having no about page at all: it competes with the home page for the site's
+     * name and tells whoever lands on it that nobody finished the site. `follow` rather than
+     * `nofollow`, because the header and footer links on it are real pages and there is no
+     * reason to strand a crawler that arrives here.
+     *
+     * No JSON-LD for the same reason: structured data is a claim about content, and there is
+     * none here worth claiming yet.
+     */
+    pageHead({
+        title: () => ABOUT_TITLE,
+        description: () => ABOUT_DESCRIPTION,
+        path: '/about',
+        type: 'website',
+        robots: 'noindex, follow',
+        jsonLd: () => []
+    });
+
     <section dir="ltr" class="mx-auto max-w-3xl px-5 py-16">
         <h1 class="mb-3 font-mono text-[clamp(1.6rem,5vw,2.1rem)] font-semibold tracking-tight">About</h1>
         <p class="mb-8 leading-relaxed text-faint">

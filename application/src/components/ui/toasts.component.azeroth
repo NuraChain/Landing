@@ -33,9 +33,13 @@ export default component Toasts()
     { /* `inset-x-0` is already symmetric, so the stack sits centred in both directions with no
          second rule. `pointer-events-none` on the strip and `auto` on each card keeps the
          empty space click-through - otherwise an invisible full-width box would swallow taps
-         meant for the page underneath it. */ }
+         meant for the page underneath it.
+
+         `toast-rail` adds the safe-area insets in styles.css: this is FIXED to the viewport,
+         so it inherits none of the padding `body` carries, and on a phone with a home
+         indicator the cards would otherwise sit under it. */ }
     <div
-        class="pointer-events-none fixed inset-x-0 bottom-4 z-[70] flex flex-col items-center gap-2 px-4"
+        class="toast-rail pointer-events-none fixed inset-x-0 bottom-4 z-[70] flex flex-col items-center gap-2 px-4"
         role="status"
         aria-live="polite"
     >

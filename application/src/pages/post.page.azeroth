@@ -1,6 +1,9 @@
-import { Link, useParams } from 'azerothjs';
+import { Link, useDateFormat, useParams } from 'azerothjs';
 
-import { client, type PostDetail } from '../api';
+import type { PostDetail } from '../api';
+import { NETWORK_NAME, SITE_URL } from '../lib/content/site';
+import { breadcrumbs, excerpt, organization, pageHead } from '../lib/head';
+import { useLocalizedLoader } from '../lib/localized-loader';
 import { directionOf, useLocale } from '../stores/locale';
 
 import Markdown from '../components/content/markdown.component.azeroth';
@@ -14,54 +17,115 @@ import Skeleton from '../components/ui/skeleton.component.azeroth';
  * The language a reader gets is the SERVER's decision - their own if the post has it, the post's
  * default if not, anything it holds otherwise. This page's job is to render that and to be
  * honest about which of the three happened.
+ *
+ * The article arrives with the DOCUMENT. `routes.ts` declares the loader, so the text is
+ * fetched before the render on a direct load - a crawler and a reader with no JavaScript get
+ * the whole post rather than a skeleton - and it rides the handoff into the browser, which
+ * draws it without asking again. `useLocalizedLoader` re-asks on a language switch, which is
+ * the one input a loader cannot key on.
  */
 export default component Post()
 {
-    const params = useParams();
     const { t, locale } = useLocale();
+    const params = useParams();
 
-    state post = null as PostDetail | null;
-    state missing = false;
+    const article = useLocalizedLoader<PostDetail>();
 
-    const day = (iso: string | null): string =>
-        iso === null ? '' : new Intl.DateTimeFormat(locale(), { dateStyle: 'long' }).format(new Date(iso));
+    derived post = article.data() ?? null;
+    // A loader that failed OR declared the slug missing: either way there is nothing to read,
+    // and the empty state below says so. A real fault is already a 500 on the server and is
+    // reported there; this page's job is not to tell the two apart for the reader.
+    derived missing = article.error() !== null;
 
-    // Keyed on the slug AND the language: switching language re-asks, because which translation
-    // this post resolves to is decided server-side and cannot be recomputed in the browser.
-    effect
+    const date = useDateFormat();
+    const day = (iso: string | null): string => (iso === null ? '' : date(iso, { dateStyle: 'long' }));
+
+    /*
+     * The head, from the same resolution the body renders.
+     *
+     * One loader answers both, so a page cannot describe one article and print another - the
+     * failure the server's old two-pass head made possible, where the title was resolved by a
+     * url lookup and the body by a different one.
+     *
+     * Every getter answers something REAL while the post is loading or missing. A title getter
+     * that returns `''` is still a declaration and writes an empty `<title>`; a bare
+     * " — Nura Chain" is worse than the not-found string, which is what a 404 should say
+     * anyway. The structured data is omitted entirely until there is an article to describe,
+     * because a `BlogPosting` with no headline is a claim about nothing.
+     */
+    const heading = (): string => post?.title ?? t().blog.notFound;
+    const summary = (): string =>
     {
-        let live = true;
-        const slug = params().slug ?? '';
-        const wanted = locale();
-
-        if (slug === '')
+        if (post === null)
         {
-            return;
+            return t().blog.notFoundHint;
         }
 
-        client.blog.one({ params: { slug }, query: { locale: wanted } })
-            .then((found) =>
-            {
-                if (live)
-                {
-                    post = found;
-                    missing = false;
-                }
-            })
-            .catch(() =>
-            {
-                if (live)
-                {
-                    missing = true;
-                    post = null;
-                }
-            });
+        return post.summary.trim() === '' ? excerpt(post.body) : post.summary;
+    };
 
-        cleanup
+    pageHead({
+        title: () => `${ heading() } — ${ NETWORK_NAME }`,
+        description: summary,
+        // The slug as the READER asked for it: a canonical has to name this page, and while
+        // the post is loading there is no resolved slug to name instead.
+        path: `/blog/${ params().slug ?? '' }`,
+        type: 'article',
+        // The language the post was WRITTEN in, which is not always the reader's.
+        locale: () => post?.locale ?? locale(),
+        alternates: () => post?.available ?? [],
+        article: () => post === null
+            ? null
+            : { publishedTime: post.publishedAt, modifiedTime: post.updatedAt, tags: post.tags },
+        /*
+         * The post's own cover when it has one, the site card when it does not - never
+         * nothing. A post with no cover used to fall to the small `summary` card, so an
+         * article shared into Slack or X rendered as a line of grey text beside a blank
+         * square while the home page beside it rendered a picture. The schema stores a path
+         * under this app's own public/, never a remote url, so the absolute one is built here
+         * rather than trusted from the row.
+         */
+        image: () => (post === null || post.coverImage === null
+            ? null
+            : { url: `${ SITE_URL }${ post.coverImage }`, alt: post.title }),
+        jsonLd: () =>
         {
-            live = false;
+            if (post === null)
+            {
+                return [];
+            }
+
+            const canonical = `${ SITE_URL }/blog/${ post.slug }`;
+
+            return [
+                {
+                    '@context': 'https://schema.org',
+                    '@type': 'BlogPosting',
+                    headline: post.title,
+                    description: summary(),
+                    inLanguage: post.locale,
+                    // Every language this same url can be read in: true, because the switcher
+                    // is client-side and the address does not change.
+                    availableLanguage: post.available,
+                    datePublished: post.publishedAt ?? undefined,
+                    dateModified: post.updatedAt,
+                    keywords: post.tags.join(', '),
+                    url: canonical,
+                    mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+                    ...(post.coverImage === null ? {} : { image: [`${ SITE_URL }${ post.coverImage }`] }),
+                    // No author system exists, and inventing a byline would be a fabricated
+                    // credential in a field search engines read as one.
+                    author: organization(),
+                    publisher: organization()
+                },
+                breadcrumbs([
+                    { name: 'Home', url: `${ SITE_URL }/` },
+                    { name: 'Blog', url: `${ SITE_URL }/blog` },
+                    { name: post.title, url: canonical }
+                ])
+            ];
         }
-    }
+    });
 
     { /* One measure with the rest of the site - see the note on the index. The PROSE is
          narrowed again further down: 4xl is the page's edge, not a line length to read at. */ }
@@ -73,7 +137,11 @@ export default component Post()
 
         { /* A title, a meta line and a few paragraphs - the shape of the article that is
              loading, so the page does not jump when it lands. */ }
-        <Show when={ post === null && !missing }>
+        { /* `loading()` is "nothing to show yet", which is not the same as "fetching": a
+             language switch refetches with the old article still on screen, and flashing a
+             skeleton over text the reader is in the middle of would be a worse answer than
+             letting the words change under them a moment later. */ }
+        <Show when={ article.loading() }>
             <div class="flex flex-col gap-4" aria-hidden="true">
                 <Skeleton class="h-10 w-3/4" />
                 <Skeleton class="h-4 w-1/3" />

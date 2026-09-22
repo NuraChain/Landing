@@ -33,10 +33,20 @@ export type {
 export type { NuraPrice as NuraPriceWire } from '../../server/src/schemas.ts';
 
 /**
- * SSR loads with an EMPTY manifest and that is deliberate: pages fetch inside `effect`, which
- * runs only in the browser, so no call is ever made server-side. An unreachable manifest degrades
- * to `{}` rather than throwing, so a failed boot request costs one page its data instead of
- * taking the whole module graph down and painting nothing.
+ * SSR loads with an EMPTY manifest and that is deliberate, though no longer for the reason it
+ * once was: loaders DO run on the server now. The server's manifest simply does not come from
+ * here - `attachApiBridge` hangs one on the request, carrying the registration's own, and a
+ * loader's call dispatches in process through that. This module-level value is the browser's.
+ *
+ * In the browser the kit embeds the manifest in the document and `readManifest()` is a
+ * synchronous read of it. The fetch is the fallback for a page that carries none - a plain
+ * vite page, a prerendered file - and an unreachable one degrades to `{}` rather than
+ * throwing, so a failed boot request costs one page its data instead of taking the whole
+ * module graph down and painting nothing.
+ *
+ * That fallback is also why `tests/setup.ts` installs a refusing `fetch`: with no embedded
+ * manifest a spec would resolve `/api/_manifest` against the happy-dom origin, which is the
+ * dev server's port.
  */
 const manifest: Manifest = typeof document === 'undefined'
     ? {}

@@ -15,20 +15,11 @@ export default defineConfig({
         external: ['azerothjs']
     },
 
-    server: {
-        port: 5001,
-
-        // The whole dev wiring to the server half. In production the server serves the built
-        // client itself, from one origin, so neither of these exists there.
-        proxy: {
-            '/api': 'http://localhost:5000',
-            '/_image': 'http://localhost:5000',
-            // The whitepaper PDFs are content, served by the server half from
-            // server/content/whitepaper/pdf. A regex rather than the `/whitepaper` prefix,
-            // because the bare path is the PAGE and vite has to keep serving that itself.
-            '^/whitepaper/.+\\.pdf$': 'http://localhost:5000'
-        }
-    },
+    // Nothing declares a dev server here, and nothing may: `azeroth dev` runs vite INSIDE the
+    // server process through @azerothjs/kit, which owns the port and the HMR socket and refuses
+    // a `server.proxy` at startup. One origin serves the pages, the api, the PDFs and HMR.
+    // Plugins, `ssr`, `resolve`, `css` and the rest of this file are read by that session as
+    // they are.
 
     test: {
         environment: 'happy-dom',

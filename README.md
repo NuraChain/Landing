@@ -26,15 +26,21 @@ that file, so a field is defined in exactly one place.
 
 ```bash
 npm install
-npm run dev        # both halves, with hot reload
+npm run dev        # one process, one origin: http://127.0.0.1:3000
 ```
+
+Development runs the same page mount a deploy runs: the server half serves the pages, the API
+and the whitepaper PDFs, with Vite living inside that process and HMR riding its socket. There
+is no second port to keep in sync.
 
 | Script | What it does |
 | --- | --- |
-| `npm run dev` | dev servers for both halves |
+| `npm run dev` | the whole site on one origin, with hot reload |
 | `npm run check` | typecheck and lint, both workspaces, in one pass |
 | `npm run build` | client bundle, SSR bundle |
 | `npm start` | run the built site (honours `PORT`) |
+| `npm run qa:visual` | layout, direction and axe, across 3 viewports and both directions |
+| `npm run qa:browser` | the served head, negotiation, hydration and 404s, in Chromium and Firefox |
 
 ## The blog
 

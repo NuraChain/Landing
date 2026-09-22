@@ -7,6 +7,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-09-19
+
+### Changed
+
+- **AzerothJS to 2.1.0**, every pin in lockstep - the compiled-output contract is v4 and
+  needs one version on both sides. TypeScript settles at `^6.0.3`, which is the range the
+  compiler's peer declares and the version the install had resolved all along.
+- **Development runs the production page mount.** `azeroth dev` starts the server half alone
+  and the kit runs vite inside it, so one origin serves the pages, the api, the PDFs and the
+  HMR socket over the same route table a deploy uses. Guards as status, locale negotiation,
+  real 404s and the manifest splice are things you can see in dev now rather than after a
+  deploy. There is no second port and no proxy block.
+- **The reader's language is negotiated on the server.** The site shipped one
+  `<html lang="en">` for every visitor and corrected it after hydration from localStorage, so
+  a Persian reader got a left-to-right page labelled English on first paint - mislabelled for
+  a crawler, announced wrongly by a screen reader, and laid out backwards until a script
+  caught up. The kit now decides per request (the reader's cookie, then `Accept-Language` in
+  preference order, then English) and stamps `lang` and `dir` before the first byte. Every
+  negotiated answer carries `Vary: accept-language, cookie`.
+- **Pages get their data from route loaders and the browser hydrates the result.** A page used
+  to fetch inside an `effect`, which never runs on a server, so a server-rendered route served
+  a correct `<title>` over a loading skeleton and the server patched the article back in with
+  a second markdown parser. A loader now runs before the render and reaches this app's own api
+  in process; the result rides the handoff, and the browser draws it without asking again.
+- **Each page declares its own `<head>`.** The server used to rewrite the finished document by
+  string surgery, which reached a crawler and did nothing for a reader clicking between pages -
+  the title in a tab belonged to whichever page they landed on first. One helper over the
+  framework's `useHead` now serves all five routes, on both sides.
+- **Numbers and dates go through the framework's locale-bound formatters**, which follow the
+  locale signal and cache per (locale, options) rather than constructing an `Intl` formatter
+  on every call.
+- **The header's desktop layout starts at `lg`.** Its full nav measures 861px and was shown
+  from 48rem, so tablet portrait scrolled sideways by 93px. A tablet in portrait keeps the
+  drawer.
+
+### Added
+
+- **`npm run qa:browser`** - the behaviour contract in Chromium and Firefox: the document
+  served with JavaScript disabled, the negotiated language, hydration with no console error
+  and no refetch, real 404s, the head following a client-side navigation, and the language
+  switch writing its cookie. `qa:visual` gains `--browser all` and runs six viewports from
+  320 to 1920.
+- **A native touch layer.** The page paints into the notch (`viewport-fit=cover`) with the
+  safe-area insets applied to `body`, the drawer and the toast rail; controls lose the grey
+  tap flash, the double-tap zoom delay and long-press selection, and the document no longer
+  chains its overscroll into pull-to-refresh. Text stays selectable.
+- **A tooltip on the chain card's copy button**, the site's most repeated icon-only control.
+- **`tests/ssr.spec.ts`** drives the real server over the real renderer in a node environment
+  and pins the page contract; `tests/loaders.spec.ts` covers the route data layer's edges.
+
+### Fixed
+
+- **A component-level `cleanup` block runs on the server** in 2.1.0, when the string render
+  disposes the component's scope. Two components cleared a timer through `window` there, which
+  was a 500 on every server-rendered request.
+- **A soft 404 is a real one.** A slug nobody published throws `notFound()` from the loader,
+  decided by the same lookup that fetches the post.
+- The app registered `/assets` itself, which the kit now owns - a `Route conflict` at boot.
+- Two QA-harness defects that were hiding evidence: the page walk outran a smooth-scrolled
+  page, so every full-page screenshot was a hero, a footer and a thousand pixels of
+  background; and the accessibility audit ran before the reveals finished, which produced a
+  phantom contrast failure at the narrowest viewport.
+
+### Removed
+
+- `server/src/seo/pages.ts` and the renderer wrapper around it. `seo/article.ts` stays for
+  `npm run whitepaper:pdf` alone.
+- The locale half of the pre-paint script, and the `nura.locale` storage key it read. A choice
+  saved under it is replayed into the cookie once, after boot.
+
 ## [1.7.2] - 2026-09-10
 
 ### Added
