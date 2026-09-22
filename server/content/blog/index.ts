@@ -14,6 +14,7 @@ import { article as createAnErc20TokenOnNuraChain } from './create-an-erc-20-tok
 import { article as crossChainIntentsErc7683 } from './cross-chain-intents-erc-7683/article.ts';
 import { article as deployASmartContractOnNuraChain } from './deploy-a-smart-contract-on-nura-chain/article.ts';
 import { article as eip7702SmartAccounts } from './eip-7702-smart-accounts/article.ts';
+import { article as ethereumGlamsterdamUpgrade } from './ethereum-glamsterdam-upgrade/article.ts';
 import { article as geniusActStablecoinRules } from './genius-act-stablecoin-rules/article.ts';
 import { article as howToUseNuraChainExplorer } from './how-to-use-nura-chain-explorer/article.ts';
 import { article as nuraChainEvmCompatibility } from './nura-chain-evm-compatibility/article.ts';
@@ -51,5 +52,6 @@ export const ARTICLES: readonly Article[] = [
     tokenizedTreasuriesRwa2026,
     aiAgentsOnchainPaymentsX402,
     geniusActStablecoinRules,
-    eip7702SmartAccounts
+    eip7702SmartAccounts,
+    ethereumGlamsterdamUpgrade
 ];
