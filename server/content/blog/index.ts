@@ -17,6 +17,7 @@ import { article as eip7702SmartAccounts } from './eip-7702-smart-accounts/artic
 import { article as ethereumGlamsterdamUpgrade } from './ethereum-glamsterdam-upgrade/article.ts';
 import { article as geniusActStablecoinRules } from './genius-act-stablecoin-rules/article.ts';
 import { article as howToUseNuraChainExplorer } from './how-to-use-nura-chain-explorer/article.ts';
+import { article as liquidNetworkExploitExplained } from './liquid-network-exploit-explained/article.ts';
 import { article as nuraChainEvmCompatibility } from './nura-chain-evm-compatibility/article.ts';
 import { article as nuraCoinTokenomics } from './nura-coin-tokenomics/article.ts';
 import { article as southKoreaTokenizedSecurities2027 } from './south-korea-tokenized-securities-2027/article.ts';
@@ -60,5 +61,6 @@ export const ARTICLES: readonly Article[] = [
     // The news batch of early October 2026: each reports a dated event, and none is dated
     // earlier than the event it reports.
     southKoreaTokenizedSecurities2027,
-    tokenizedDepositsSwiftWeekendPayment
+    tokenizedDepositsSwiftWeekendPayment,
+    liquidNetworkExploitExplained
 ];
