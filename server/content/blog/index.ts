@@ -9,6 +9,7 @@
 import { article as addNuraChainToYourWallet } from './add-nura-chain-to-your-wallet/article.ts';
 import { article as aiAgentsOnchainPaymentsX402 } from './ai-agents-onchain-payments-x402/article.ts';
 import { article as buildADappOnNuraChain } from './build-a-dapp-on-nura-chain/article.ts';
+import { article as clarityActSenateVoteFails } from './clarity-act-senate-vote-fails/article.ts';
 import { article as connectToNuraChainRpc } from './connect-to-nura-chain-rpc/article.ts';
 import { article as createAnErc20TokenOnNuraChain } from './create-an-erc-20-token-on-nura-chain/article.ts';
 import { article as crossChainIntentsErc7683 } from './cross-chain-intents-erc-7683/article.ts';
@@ -64,5 +65,6 @@ export const ARTICLES: readonly Article[] = [
     southKoreaTokenizedSecurities2027,
     tokenizedDepositsSwiftWeekendPayment,
     liquidNetworkExploitExplained,
-    postQuantumBlockchain2029
+    postQuantumBlockchain2029,
+    clarityActSenateVoteFails
 ];
