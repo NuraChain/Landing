@@ -26,6 +26,7 @@ import { article as micaBankCryptoCustodyEurope } from './mica-bank-crypto-custo
 import { article as nuraChainEvmCompatibility } from './nura-chain-evm-compatibility/article.ts';
 import { article as nuraCoinTokenomics } from './nura-coin-tokenomics/article.ts';
 import { article as postQuantumBlockchain2029 } from './post-quantum-blockchain-2029/article.ts';
+import { article as predictionMarketsNewYorkLawsuit } from './prediction-markets-new-york-lawsuit/article.ts';
 import { article as solanaAlpenglowUpgrade } from './solana-alpenglow-upgrade/article.ts';
 import { article as southKoreaTokenizedSecurities2027 } from './south-korea-tokenized-securities-2027/article.ts';
 import { article as tokenUnlocksAndSupplySchedules } from './token-unlocks-and-supply-schedules/article.ts';
@@ -78,5 +79,6 @@ export const ARTICLES: readonly Article[] = [
     zkevmProofsEthereumEip8025,
     aiAgentPaymentsCardsAndX402,
     solanaAlpenglowUpgrade,
-    defiTvlQ32026
+    defiTvlQ32026,
+    predictionMarketsNewYorkLawsuit
 ];
