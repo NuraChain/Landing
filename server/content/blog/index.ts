@@ -9,6 +9,7 @@
 import { article as addNuraChainToYourWallet } from './add-nura-chain-to-your-wallet/article.ts';
 import { article as aiAgentPaymentsCardsAndX402 } from './ai-agent-payments-cards-and-x402/article.ts';
 import { article as aiAgentsOnchainPaymentsX402 } from './ai-agents-onchain-payments-x402/article.ts';
+import { article as bitcoinCovenantsOpCatCtv } from './bitcoin-covenants-op-cat-ctv/article.ts';
 import { article as bitcoinEtfInflowsQ32026 } from './bitcoin-etf-inflows-q3-2026/article.ts';
 import { article as bitgetHackNorthKorea } from './bitget-hack-north-korea/article.ts';
 import { article as buildADappOnNuraChain } from './build-a-dapp-on-nura-chain/article.ts';
@@ -86,5 +87,6 @@ export const ARTICLES: readonly Article[] = [
     predictionMarketsNewYorkLawsuit,
     geniusAct10BillionStablecoinRule,
     bitcoinEtfInflowsQ32026,
-    bitgetHackNorthKorea
+    bitgetHackNorthKorea,
+    bitcoinCovenantsOpCatCtv
 ];
