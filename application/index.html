@@ -22,10 +22,21 @@
         <meta name="robots" content="index, follow"/>
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7f9fb"/>
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#070b12"/>
+        <!-- One mark, one master. Every file below is derived from public/icon.png by
+             `npm run icons` and committed, and every one is a full opaque SQUARE: iOS, Android
+             and Windows each cut their own shape out of the icon, so a corner the file rounded
+             for itself shows up as a notch inside the platform's mask.
+
+             The .ico is for whatever asks for /favicon.ico without reading this markup, and
+             for a taskbar pin. 192 is the one Google Search reads - it wants a multiple of 48
+             and ignores the 16 and the 32. The maskable pair is in the manifest only: it is
+             the mark pulled into Android's safe zone, and it is wrong anywhere else. -->
+        <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48"/>
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/>
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"/>
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png"/>
         <link rel="icon" type="image/png" sizes="512x512" href="/icon.png"/>
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"/>
 
         <!-- The install and share identity: name, icons and colours for "Add to Home screen",
              the Android splash screen and the app switcher. JSON carries no comments, so the

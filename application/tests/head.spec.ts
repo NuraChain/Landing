@@ -27,8 +27,23 @@ interface Manifest
     display: string;
     background_color: string;
     theme_color: string;
-    icons: { src: string; sizes: string; type: string }[];
+    icons: { src: string; sizes: string; type: string; purpose?: string }[];
 }
+
+/** A PNG's width, height and colour type, read from its IHDR chunk. */
+const png = (path: string): { width: number; height: number; colorType: number } =>
+{
+    const bytes = readFileSync(resolve(ROOT, 'public', path.replace(/^\//u, '')));
+
+    return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20), colorType: bytes.readUInt8(25) };
+};
+
+/** Every `<link rel="...">` of one kind in the shell, as its href and its declared size. */
+const links = (rel: string): { href: string; sizes: string }[] =>
+    [...HTML.matchAll(new RegExp(`<link[^>]*rel="${ rel }"[^>]*>`, 'gu'))].map(([tag]) => ({
+        href: /href="([^"]*)"/u.exec(tag)?.[1] ?? '',
+        sizes: /sizes="([^"]*)"/u.exec(tag)?.[1] ?? ''
+    }));
 
 describe('the shell head', () =>
 {
@@ -115,6 +130,70 @@ describe('the web app manifest', () =>
         expect(dark).toBeTruthy();
         expect(manifest.background_color).toBe(dark);
         expect(manifest.theme_color).toBe(dark);
+    });
+});
+
+describe('the icon set', () =>
+{
+    const manifest = JSON.parse(readFileSync(resolve(ROOT, 'public', 'manifest.json'), 'utf8')) as Manifest;
+
+    /** Every PNG a platform is pointed at: the shell's links and the manifest's entries. */
+    const declared = [
+        ...links('icon').filter((link) => link.href.endsWith('.png')),
+        ...links('apple-touch-icon'),
+        ...manifest.icons.map((entry) => ({ href: entry.src, sizes: entry.sizes }))
+    ];
+
+    /*
+     * `npm run icons` derives every one of these from public/icon.png. The size a platform is
+     * TOLD is the size it lays out at before the file arrives, so a declared 192 over a 180
+     * file is a blurred icon nothing reports.
+     */
+    it('ships every file at the size it is declared at, and square', () =>
+    {
+        expect(declared.length).toBeGreaterThan(0);
+
+        for (const { href, sizes } of declared)
+        {
+            const { width, height } = png(href);
+
+            expect(`${ width }x${ height }`, href).toBe(sizes);
+            expect(width, href).toBe(height);
+        }
+    });
+
+    /*
+     * Colour type 2 is truecolour with NO alpha channel, so there is nowhere for a rounded
+     * corner to be. The hand-exported favicons and apple-touch-icon carried one: iOS, Android
+     * and Windows each mask the icon themselves, and a corner the file already rounded shows
+     * through as a notch inside that mask.
+     */
+    it('ships none of them with an alpha channel', () =>
+    {
+        for (const { href } of declared)
+        {
+            expect(png(href).colorType, href).toBe(2);
+        }
+    });
+
+    // Android guarantees only the middle of a maskable icon. Without one it letterboxes the
+    // `any` icon inside a white circle, which is the launcher's way of saying nobody drew one.
+    it('offers Android a maskable icon as well as a plain one', () =>
+    {
+        const purposes = manifest.icons.map((entry) => entry.purpose);
+
+        expect(purposes).toContain('any');
+        expect(purposes).toContain('maskable');
+    });
+
+    it('answers /favicon.ico for clients that never read the markup', () =>
+    {
+        const bytes = readFileSync(resolve(ROOT, 'public', 'favicon.ico'));
+
+        // The ICONDIR header: reserved 0, type 1 (an icon, not a cursor), then the image count.
+        expect(bytes.readUInt16LE(0)).toBe(0);
+        expect(bytes.readUInt16LE(2)).toBe(1);
+        expect(bytes.readUInt16LE(4)).toBeGreaterThanOrEqual(2);
     });
 });
 

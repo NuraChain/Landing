@@ -32,6 +32,7 @@
         "qa:browser": "node scripts/browser-qa.mjs",
         "whitepaper:pdf": "node scripts/whitepaper-pdf.ts",
         "og:image": "node scripts/og-image.ts",
+        "icons": "node scripts/icons.ts",
         "service:install": "bash scripts/service-install.sh",
         "service:start": "bash scripts/service-start.sh",
         "service:stop": "bash scripts/service-stop.sh",
