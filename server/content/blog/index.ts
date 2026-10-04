@@ -16,6 +16,7 @@ import { article as buildADappOnNuraChain } from './build-a-dapp-on-nura-chain/a
 import { article as circleArcMainnetStablecoinChain } from './circle-arc-mainnet-stablecoin-chain/article.ts';
 import { article as clarityActSenateVoteFails } from './clarity-act-senate-vote-fails/article.ts';
 import { article as connectToNuraChainRpc } from './connect-to-nura-chain-rpc/article.ts';
+import { article as coreLightningUpgradeWarning } from './core-lightning-upgrade-warning/article.ts';
 import { article as createAnErc20TokenOnNuraChain } from './create-an-erc-20-token-on-nura-chain/article.ts';
 import { article as crossChainIntentsErc7683 } from './cross-chain-intents-erc-7683/article.ts';
 import { article as defiTvlQ32026 } from './defi-tvl-q3-2026/article.ts';
@@ -88,5 +89,6 @@ export const ARTICLES: readonly Article[] = [
     geniusAct10BillionStablecoinRule,
     bitcoinEtfInflowsQ32026,
     bitgetHackNorthKorea,
-    bitcoinCovenantsOpCatCtv
+    bitcoinCovenantsOpCatCtv,
+    coreLightningUpgradeWarning
 ];
