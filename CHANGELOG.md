@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`/llms.txt`** - the site described for a language model: the whitepaper and every
+  published post, newest first, each with an absolute address, its English summary and its
+  date. Generated from the store on request, like the sitemap, so publishing is listing.
+  `robots.txt` now says in words that answer-engine crawlers are welcome.
+- **`npm run icons`** derives the whole icon set from one master, `public/icon.png`:
+  `favicon.ico` (16, 32 and 48), the PNG favicons, the apple-touch-icon, a 192px icon and a
+  maskable pair for Android, all wired into the shell head and the manifest.
+
+### Fixed
+
+- **Every icon is a full opaque square.** The hand-exported favicons and apple-touch-icon
+  carried a rounded corner in an alpha channel, which shows as a notch inside the mask iOS and
+  Android cut for themselves. `tests/head.spec.ts` now reads each file's header: the declared
+  size is the real size, and none has an alpha channel for a corner to hide in.
+
 ## [1.8.0] - 2026-09-19
 
 ### Changed
