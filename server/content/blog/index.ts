@@ -34,6 +34,7 @@ import { article as whyAuditedContractsGetDrained } from './why-audited-contract
 
 import { article as whyBuildOnAnEvmCompatibleChain } from './why-build-on-an-evm-compatible-chain/article.ts';
 import { article as whySoManyEvmChains } from './why-so-many-evm-chains/article.ts';
+import { article as zkevmProofsEthereumEip8025 } from './zkevm-proofs-ethereum-eip-8025/article.ts';
 
 import type { Article } from './types.ts';
 
@@ -70,5 +71,6 @@ export const ARTICLES: readonly Article[] = [
     postQuantumBlockchain2029,
     clarityActSenateVoteFails,
     circleArcMainnetStablecoinChain,
-    micaBankCryptoCustodyEurope
+    micaBankCryptoCustodyEurope,
+    zkevmProofsEthereumEip8025
 ];
