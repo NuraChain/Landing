@@ -20,6 +20,7 @@ import { article as howToUseNuraChainExplorer } from './how-to-use-nura-chain-ex
 import { article as liquidNetworkExploitExplained } from './liquid-network-exploit-explained/article.ts';
 import { article as nuraChainEvmCompatibility } from './nura-chain-evm-compatibility/article.ts';
 import { article as nuraCoinTokenomics } from './nura-coin-tokenomics/article.ts';
+import { article as postQuantumBlockchain2029 } from './post-quantum-blockchain-2029/article.ts';
 import { article as southKoreaTokenizedSecurities2027 } from './south-korea-tokenized-securities-2027/article.ts';
 import { article as tokenUnlocksAndSupplySchedules } from './token-unlocks-and-supply-schedules/article.ts';
 import { article as tokenizedDepositsSwiftWeekendPayment } from './tokenized-deposits-swift-weekend-payment/article.ts';
@@ -62,5 +63,6 @@ export const ARTICLES: readonly Article[] = [
     // earlier than the event it reports.
     southKoreaTokenizedSecurities2027,
     tokenizedDepositsSwiftWeekendPayment,
-    liquidNetworkExploitExplained
+    liquidNetworkExploitExplained,
+    postQuantumBlockchain2029
 ];
