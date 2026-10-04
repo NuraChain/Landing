@@ -15,8 +15,8 @@ import { POST_LOCALES, type PostLocale, type PostStatus } from '../schemas.ts';
  * Deleting it removed the dashboard, the session table, the admin key and the one piece of
  * mutable state the deployment had to back up. A post is now a commit.
  *
- * Everything is read ONCE, at construction. Twenty articles in ten languages is about a
- * megabyte of markdown; holding it costs less than the statement cache the store kept, and it
+ * Everything is read ONCE, at construction. Forty articles in ten languages is a little over
+ * two megabytes of markdown; holding it costs less than the statement cache the store kept, and it
  * means no request touches the filesystem. The consequence is the honest one: editing an
  * article on a running server changes nothing until the process restarts. That is the same
  * deal the rest of the site already makes - the bundle is built, not watched.
