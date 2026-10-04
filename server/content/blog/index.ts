@@ -7,6 +7,7 @@
  * batch and shares its dates; the topical articles below each carry a date of their own.
  */
 import { article as addNuraChainToYourWallet } from './add-nura-chain-to-your-wallet/article.ts';
+import { article as aiAgentPaymentsCardsAndX402 } from './ai-agent-payments-cards-and-x402/article.ts';
 import { article as aiAgentsOnchainPaymentsX402 } from './ai-agents-onchain-payments-x402/article.ts';
 import { article as buildADappOnNuraChain } from './build-a-dapp-on-nura-chain/article.ts';
 import { article as circleArcMainnetStablecoinChain } from './circle-arc-mainnet-stablecoin-chain/article.ts';
@@ -72,5 +73,6 @@ export const ARTICLES: readonly Article[] = [
     clarityActSenateVoteFails,
     circleArcMainnetStablecoinChain,
     micaBankCryptoCustodyEurope,
-    zkevmProofsEthereumEip8025
+    zkevmProofsEthereumEip8025,
+    aiAgentPaymentsCardsAndX402
 ];
