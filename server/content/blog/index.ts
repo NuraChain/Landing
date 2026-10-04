@@ -32,6 +32,7 @@ import { article as nuraChainEvmCompatibility } from './nura-chain-evm-compatibi
 import { article as nuraCoinTokenomics } from './nura-coin-tokenomics/article.ts';
 import { article as postQuantumBlockchain2029 } from './post-quantum-blockchain-2029/article.ts';
 import { article as predictionMarketsNewYorkLawsuit } from './prediction-markets-new-york-lawsuit/article.ts';
+import { article as secCryptoCustodyProposal } from './sec-crypto-custody-proposal/article.ts';
 import { article as solanaAlpenglowUpgrade } from './solana-alpenglow-upgrade/article.ts';
 import { article as southKoreaTokenizedSecurities2027 } from './south-korea-tokenized-securities-2027/article.ts';
 import { article as tokenUnlocksAndSupplySchedules } from './token-unlocks-and-supply-schedules/article.ts';
@@ -90,5 +91,6 @@ export const ARTICLES: readonly Article[] = [
     bitcoinEtfInflowsQ32026,
     bitgetHackNorthKorea,
     bitcoinCovenantsOpCatCtv,
-    coreLightningUpgradeWarning
+    coreLightningUpgradeWarning,
+    secCryptoCustodyProposal
 ];
