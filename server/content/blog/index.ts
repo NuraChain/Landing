@@ -21,6 +21,7 @@ import { article as nuraChainEvmCompatibility } from './nura-chain-evm-compatibi
 import { article as nuraCoinTokenomics } from './nura-coin-tokenomics/article.ts';
 import { article as southKoreaTokenizedSecurities2027 } from './south-korea-tokenized-securities-2027/article.ts';
 import { article as tokenUnlocksAndSupplySchedules } from './token-unlocks-and-supply-schedules/article.ts';
+import { article as tokenizedDepositsSwiftWeekendPayment } from './tokenized-deposits-swift-weekend-payment/article.ts';
 import { article as tokenizedTreasuriesRwa2026 } from './tokenized-treasuries-rwa-2026/article.ts';
 import { article as whatGasActuallyCostsIn2026 } from './what-gas-actually-costs-in-2026/article.ts';
 import { article as whatIsNuraChain } from './what-is-nura-chain/article.ts';
@@ -58,5 +59,6 @@ export const ARTICLES: readonly Article[] = [
 
     // The news batch of early October 2026: each reports a dated event, and none is dated
     // earlier than the event it reports.
-    southKoreaTokenizedSecurities2027
+    southKoreaTokenizedSecurities2027,
+    tokenizedDepositsSwiftWeekendPayment
 ];
