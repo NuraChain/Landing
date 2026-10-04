@@ -25,6 +25,7 @@ import { article as micaBankCryptoCustodyEurope } from './mica-bank-crypto-custo
 import { article as nuraChainEvmCompatibility } from './nura-chain-evm-compatibility/article.ts';
 import { article as nuraCoinTokenomics } from './nura-coin-tokenomics/article.ts';
 import { article as postQuantumBlockchain2029 } from './post-quantum-blockchain-2029/article.ts';
+import { article as solanaAlpenglowUpgrade } from './solana-alpenglow-upgrade/article.ts';
 import { article as southKoreaTokenizedSecurities2027 } from './south-korea-tokenized-securities-2027/article.ts';
 import { article as tokenUnlocksAndSupplySchedules } from './token-unlocks-and-supply-schedules/article.ts';
 import { article as tokenizedDepositsSwiftWeekendPayment } from './tokenized-deposits-swift-weekend-payment/article.ts';
@@ -74,5 +75,6 @@ export const ARTICLES: readonly Article[] = [
     circleArcMainnetStablecoinChain,
     micaBankCryptoCustodyEurope,
     zkevmProofsEthereumEip8025,
-    aiAgentPaymentsCardsAndX402
+    aiAgentPaymentsCardsAndX402,
+    solanaAlpenglowUpgrade
 ];
