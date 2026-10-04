@@ -19,6 +19,7 @@ import { article as geniusActStablecoinRules } from './genius-act-stablecoin-rul
 import { article as howToUseNuraChainExplorer } from './how-to-use-nura-chain-explorer/article.ts';
 import { article as nuraChainEvmCompatibility } from './nura-chain-evm-compatibility/article.ts';
 import { article as nuraCoinTokenomics } from './nura-coin-tokenomics/article.ts';
+import { article as southKoreaTokenizedSecurities2027 } from './south-korea-tokenized-securities-2027/article.ts';
 import { article as tokenUnlocksAndSupplySchedules } from './token-unlocks-and-supply-schedules/article.ts';
 import { article as tokenizedTreasuriesRwa2026 } from './tokenized-treasuries-rwa-2026/article.ts';
 import { article as whatGasActuallyCostsIn2026 } from './what-gas-actually-costs-in-2026/article.ts';
@@ -53,5 +54,9 @@ export const ARTICLES: readonly Article[] = [
     aiAgentsOnchainPaymentsX402,
     geniusActStablecoinRules,
     eip7702SmartAccounts,
-    ethereumGlamsterdamUpgrade
+    ethereumGlamsterdamUpgrade,
+
+    // The news batch of early October 2026: each reports a dated event, and none is dated
+    // earlier than the event it reports.
+    southKoreaTokenizedSecurities2027
 ];
