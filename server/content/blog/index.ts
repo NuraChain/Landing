@@ -20,6 +20,7 @@ import { article as ethereumGlamsterdamUpgrade } from './ethereum-glamsterdam-up
 import { article as geniusActStablecoinRules } from './genius-act-stablecoin-rules/article.ts';
 import { article as howToUseNuraChainExplorer } from './how-to-use-nura-chain-explorer/article.ts';
 import { article as liquidNetworkExploitExplained } from './liquid-network-exploit-explained/article.ts';
+import { article as micaBankCryptoCustodyEurope } from './mica-bank-crypto-custody-europe/article.ts';
 import { article as nuraChainEvmCompatibility } from './nura-chain-evm-compatibility/article.ts';
 import { article as nuraCoinTokenomics } from './nura-coin-tokenomics/article.ts';
 import { article as postQuantumBlockchain2029 } from './post-quantum-blockchain-2029/article.ts';
@@ -68,5 +69,6 @@ export const ARTICLES: readonly Article[] = [
     liquidNetworkExploitExplained,
     postQuantumBlockchain2029,
     clarityActSenateVoteFails,
-    circleArcMainnetStablecoinChain
+    circleArcMainnetStablecoinChain,
+    micaBankCryptoCustodyEurope
 ];
