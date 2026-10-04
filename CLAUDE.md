@@ -62,7 +62,8 @@ deploy-env.ts  two lines `npm start` imports first: NODE_ENV defaults to product
 blog/content.ts the blog, read off disk at boot - loadArticles + an in-memory index
 blog/present.ts the fallback policy - which translation a given reader is served
 market/price.ts the ONE outbound call this half makes - see below
-seo/           article.ts (the whitepaper PDF's body), sitemap.ts, meta.ts (attr, directionOf)
+seo/           article.ts (the whitepaper PDF's body), sitemap.ts, llms.ts (/llms.txt),
+               meta.ts (attr, directionOf)
 main.ts        config, connections, the listening process
 ```
 
@@ -102,7 +103,7 @@ than `/api`, so a cold page load spends a dozen of the budget on its own assets 
 drives `app.handle`, where these edges do not exist.
 
 **`registerApi` is the one list of routes that are not pages** - the api, its manifest, the
-sitemap, the PDFs. The dev session registers it on the App it serves and `buildApp` on the
+sitemap, `/llms.txt`, the PDFs. The dev session registers it on the App it serves and `buildApp` on the
 production one, so a route added to one exists in both; `tests/app.spec.ts` drives it on a bare
 App. Keep `rateLimit` in the exported pipeline and out of `app.use`: an in-process api call from
 a page loader enters at `app.handle`, where the limiter's default key has no peer to read and
@@ -155,6 +156,18 @@ has no file behind it, naming every missing path at once.
 
 Editing an article on a running server changes nothing until it restarts - the same deal the
 bundle already makes.
+
+**A topical article is dated, attributed and bounded.** The evergreen cluster describes this
+chain; the topical block in `index.ts` reports events elsewhere, and three rules keep it honest.
+Every figure carries who measured it and when ("on DefiLlama's figures, as of 26 September"),
+because trackers disagree and the number will have moved by the time it is read. `publishedAt`
+is never earlier than the event the article reports. And a Nura tie-in states only what
+`lib/content/site.ts` or an existing article already states - where none fits, the article
+links an evergreen post and says nothing about this chain, rather than implying it has the
+feature in the news. Each opens with the answer (who, what, when, one number), follows it with
+a `## Key facts` list and question-shaped headings, and ends on the primary source: that is
+what a search snippet and an answer engine lift, and `/llms.txt` (`seo/llms.ts`, generated
+from the store like the sitemap) hands the same articles to a model with a line each.
 
 **One post, many translations, with a fallback.** A post carries any subset of the ten
 languages plus a `defaultLocale`. A reader whose language is missing gets the fallback and is
@@ -263,6 +276,14 @@ nothing for a reader clicking between pages.
   extensions to Content-Types from a fixed table that has no entry for `.webmanifest`, so that
   name serves `application/octet-stream` and every browser drops the manifest without a word.
   Its colours are `--bg`, the same value the dark `theme-color` states.
+- **The icon set is derived and committed too, and every file in it is a full opaque square.**
+  `npm run icons` renders `favicon.ico`, the two PNG favicons, `apple-touch-icon.png`,
+  `icon-192.png` and the maskable pair from one master, `public/icon.png`. iOS, Android and
+  Windows each cut their own shape out of an icon, so a corner the file rounded for itself
+  shows up as a notch inside the platform's mask - the hand-exported set carried exactly that
+  in an alpha channel. `tests/head.spec.ts` reads each file's header: declared size equals real
+  size, and colour type 2, which has no alpha for a corner to hide in. The maskable pair is the
+  mark at 80% on its plate and belongs in the manifest only.
 - **`public/og-image.png` is derived and committed**, like the whitepaper PDFs.
   `npm run og:image` renders it through the same Playwright Chromium, from the site's own
   string table, `lib/content/site.ts` constants and dark-theme tokens. 1200x630, because every
