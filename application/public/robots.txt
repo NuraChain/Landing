@@ -2,6 +2,11 @@
 # used to keep crawlers away from is gone, and with it the only path on the site that was not
 # for readers. Posts are files in the repository now, so publishing is a commit and there is no
 # private surface left to hide.
+#
+# "Everything" includes the crawlers that feed answer engines - GPTBot, ClaudeBot, PerplexityBot,
+# Google-Extended and the rest. That is a decision, not an oversight: a reader who asks a model
+# about a chain should get the answer this site wrote, and /llms.txt lists the same articles
+# for them with one line of description each.
 User-agent: *
 
 Allow: /

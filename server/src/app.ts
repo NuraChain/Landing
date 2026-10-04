@@ -8,6 +8,7 @@ import type { LocaleConfig } from 'azerothjs';
 import { pageCount, toCards, toDetail } from './blog/present.ts';
 import type { SiteContent } from './content.ts';
 import { createPriceGateway, type PriceGateway } from './market/price.ts';
+import { buildLlmsTxt } from './seo/llms.ts';
 import { buildSitemap } from './seo/sitemap.ts';
 import {
     nuraPrice,
@@ -227,7 +228,7 @@ export interface RegisterOptions
 }
 
 /**
- * Every route that is NOT a page: the api and its manifest, the sitemap, the PDFs.
+ * Every route that is NOT a page: the api and its manifest, the sitemap, llms.txt, the PDFs.
  *
  * The kit's dev session registers this on the App it serves and `buildApp` on the production
  * one, so the two cannot drift - a route added here exists in both. Everything here sits ahead
@@ -258,6 +259,18 @@ export function registerApi(app: App, api: Api, content: SiteContent, options: R
         headers: {
             'content-type': 'application/xml; charset=utf-8',
             // Crawlers re-read this often; an hour keeps it fresh without regenerating per hit.
+            'cache-control': 'public, max-age=3600'
+        }
+    }));
+
+    /*
+     * The same list for a language model, one line of description per address - see
+     * seo/llms.ts. Generated from the store for the reason the sitemap is, and cached for the
+     * same hour.
+     */
+    app.get('/llms.txt', () => text(buildLlmsTxt(content, siteUrl), {
+        headers: {
+            'content-type': 'text/plain; charset=utf-8',
             'cache-control': 'public, max-age=3600'
         }
     }));
