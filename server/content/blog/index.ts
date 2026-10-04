@@ -15,6 +15,7 @@ import { article as clarityActSenateVoteFails } from './clarity-act-senate-vote-
 import { article as connectToNuraChainRpc } from './connect-to-nura-chain-rpc/article.ts';
 import { article as createAnErc20TokenOnNuraChain } from './create-an-erc-20-token-on-nura-chain/article.ts';
 import { article as crossChainIntentsErc7683 } from './cross-chain-intents-erc-7683/article.ts';
+import { article as defiTvlQ32026 } from './defi-tvl-q3-2026/article.ts';
 import { article as deployASmartContractOnNuraChain } from './deploy-a-smart-contract-on-nura-chain/article.ts';
 import { article as eip7702SmartAccounts } from './eip-7702-smart-accounts/article.ts';
 import { article as ethereumGlamsterdamUpgrade } from './ethereum-glamsterdam-upgrade/article.ts';
@@ -76,5 +77,6 @@ export const ARTICLES: readonly Article[] = [
     micaBankCryptoCustodyEurope,
     zkevmProofsEthereumEip8025,
     aiAgentPaymentsCardsAndX402,
-    solanaAlpenglowUpgrade
+    solanaAlpenglowUpgrade,
+    defiTvlQ32026
 ];
