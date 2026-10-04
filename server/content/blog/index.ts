@@ -12,6 +12,7 @@ import { article as aiAgentsOnchainPaymentsX402 } from './ai-agents-onchain-paym
 import { article as bitcoinCovenantsOpCatCtv } from './bitcoin-covenants-op-cat-ctv/article.ts';
 import { article as bitcoinEtfInflowsQ32026 } from './bitcoin-etf-inflows-q3-2026/article.ts';
 import { article as bitgetHackNorthKorea } from './bitget-hack-north-korea/article.ts';
+import { article as blastL2ShutdownWithdrawals } from './blast-l2-shutdown-withdrawals/article.ts';
 import { article as buildADappOnNuraChain } from './build-a-dapp-on-nura-chain/article.ts';
 import { article as circleArcMainnetStablecoinChain } from './circle-arc-mainnet-stablecoin-chain/article.ts';
 import { article as clarityActSenateVoteFails } from './clarity-act-senate-vote-fails/article.ts';
@@ -94,5 +95,6 @@ export const ARTICLES: readonly Article[] = [
     bitcoinCovenantsOpCatCtv,
     coreLightningUpgradeWarning,
     secCryptoCustodyProposal,
-    tokenizedStocksOnchainTrading
+    tokenizedStocksOnchainTrading,
+    blastL2ShutdownWithdrawals
 ];
