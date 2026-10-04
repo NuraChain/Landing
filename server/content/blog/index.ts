@@ -19,6 +19,7 @@ import { article as defiTvlQ32026 } from './defi-tvl-q3-2026/article.ts';
 import { article as deployASmartContractOnNuraChain } from './deploy-a-smart-contract-on-nura-chain/article.ts';
 import { article as eip7702SmartAccounts } from './eip-7702-smart-accounts/article.ts';
 import { article as ethereumGlamsterdamUpgrade } from './ethereum-glamsterdam-upgrade/article.ts';
+import { article as geniusAct10BillionStablecoinRule } from './genius-act-10-billion-stablecoin-rule/article.ts';
 import { article as geniusActStablecoinRules } from './genius-act-stablecoin-rules/article.ts';
 import { article as howToUseNuraChainExplorer } from './how-to-use-nura-chain-explorer/article.ts';
 import { article as liquidNetworkExploitExplained } from './liquid-network-exploit-explained/article.ts';
@@ -80,5 +81,6 @@ export const ARTICLES: readonly Article[] = [
     aiAgentPaymentsCardsAndX402,
     solanaAlpenglowUpgrade,
     defiTvlQ32026,
-    predictionMarketsNewYorkLawsuit
+    predictionMarketsNewYorkLawsuit,
+    geniusAct10BillionStablecoinRule
 ];
