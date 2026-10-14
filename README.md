@@ -59,8 +59,8 @@ user, with a health check on `/api/healthz`. Configuration is the environment, p
   `X-Forwarded-For` past the limiter.
 * `SITE_URL` - canonical tags, Open Graph urls and the sitemap are built from it.
 
-`--env-file server/.env` works too, but the example file sets `PORT=5000` and
-`TRUST_PROXY=true`, so publish that port (`-p 5000:5000`) and keep a proxy in front.
+`--env-file server/.env` works too, but the example file sets `TRUST_PROXY=true`, so keep a
+proxy in front, and publish whatever `PORT` it names.
 
 The NDJSON log is written to `/app/server/logs`. Keep it with a named volume,
 `-v nura-logs:/app/server/logs`; a bind-mounted host directory must be writable by uid 1000,
