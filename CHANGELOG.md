@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`server/.env.example` states `NODE_ENV=production`**, with a comment saying why the line
+  records the mode rather than switching it: every way the process starts declares NODE_ENV in
+  the environment first, and the file never overwrites a variable already set.
+
 ## [1.8.3] - 2026-10-14
 
 ### Added
