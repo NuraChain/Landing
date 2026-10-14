@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **A `Dockerfile`.** `docker build` builds both bundles in one stage and ships the server
+  half's production dependencies, the built output and the content in another, running the
+  same process `npm start` does as an unprivileged user, with a health check on
+  `/api/healthz`. Configuration is the environment, `TRUST_PROXY` and `SITE_URL` included.
+
 ## [1.8.2] - 2026-10-04
 
 ### Added
