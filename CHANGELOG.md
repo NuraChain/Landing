@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.4] - 2026-10-14
+
 ### Changed
 
 - **`server/.env.example` states `NODE_ENV=production`**, with a comment saying why the line
