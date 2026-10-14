@@ -1,0 +1,25 @@
+# The image installs its own dependencies. The host's node_modules carries native bindings for
+# the host's platform, and a Windows rolldown in a Linux build fails before vite starts.
+**/node_modules
+
+# Built inside the image, from source.
+application/dist
+application/dist-server
+.azeroth-types
+**/coverage
+
+# Local state and tooling, none of it part of the site.
+server/logs
+artifacts
+.git
+.github
+.claude
+.idea
+.playwright-mcp
+*.local
+
+# server/.env holds the devtools token, and main.ts loads whatever .env sits in its working
+# directory - a baked copy would be a secret in every layer and configuration nobody passed.
+**/.env
+**/.env.*
+!**/.env.example
