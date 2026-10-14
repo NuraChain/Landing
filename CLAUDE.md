@@ -17,6 +17,14 @@ SERVER half at the application's range, because that is the copy the session loa
 production image built with `npm ci --omit=dev` still carries none. `HOST=0.0.0.0` in
 `server/.env` opens dev to another device.
 
+**The `Dockerfile` keeps the repository's layout, and that is load-bearing.** Its runtime stage
+installs `npm ci --omit=dev --workspace server` - the server's five dependencies (3 MB), not
+the application's icon and font sets (60 MB), which the SSR bundle has already inlined - and
+the bundle's one external, `azerothjs`, resolves to the same hoisted `/app/node_modules` copy
+the server holds. Flatten the paths and that becomes two copies, or none. It runs as `node` from
+`/app/server`, because `CLIENT_DIR`, `SSR_ENTRY` and `--import ./src/deploy-env.ts` are all
+relative to it, and `server/logs` is the one directory that user owns.
+
 Everything below describes what is actually in this repository. If a rule here
 disagrees with the code, the code is the source of truth — fix the note.
 
