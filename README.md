@@ -42,6 +42,30 @@ is no second port to keep in sync.
 | `npm run qa:visual` | layout, direction and axe, across 3 viewports and both directions |
 | `npm run qa:browser` | the served head, negotiation, hydration and 404s, in Chromium and Firefox |
 
+## Docker
+
+```bash
+docker build -t nura-landing .
+docker run --rm -p 4200:4200 -e SITE_URL=https://nurachain.net nura-landing
+```
+
+The image builds both bundles and runs the same process `npm start` does, as an unprivileged
+user, with a health check on `/api/healthz`. Configuration is the environment, passed with
+`-e`: `PORT`, `SITE_URL`, `TRUST_PROXY`, `CLIENT_DIR` and `SSR_ENTRY` (`HOST` and
+`DEVTOOLS_TOKEN` are development-only). Two matter for a real deploy:
+
+* `TRUST_PROXY=true` whenever nginx, Caddy or a tunnel sits in front - otherwise every visitor
+  shares the proxy's rate-limit bucket. Leave it off when nothing does, or a client can spoof
+  `X-Forwarded-For` past the limiter.
+* `SITE_URL` - canonical tags, Open Graph urls and the sitemap are built from it.
+
+`--env-file server/.env` works too, but the example file sets `PORT=5000` and
+`TRUST_PROXY=true`, so publish that port (`-p 5000:5000`) and keep a proxy in front.
+
+The NDJSON log is written to `/app/server/logs`. Keep it with a named volume,
+`-v nura-logs:/app/server/logs`; a bind-mounted host directory must be writable by uid 1000,
+or the server cannot open its log at boot.
+
 ## The blog
 
 An article is a directory under `server/content/blog/<slug>/`: one `.md` per language plus
