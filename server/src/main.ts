@@ -42,9 +42,12 @@ const config = loadConfig({
 });
 const isProduction = config.env === 'production';
 
-// Readable lines on the terminal, NDJSON in server/logs/ - both, in every mode.
+// Readable lines on the terminal, NDJSON in server/logs/ - both, in every mode. Errors only:
+// the per-request lines, the boot line and the warnings stay quiet unless AZEROTH_LOG asks for
+// them (`AZEROTH_LOG=info`), which the logger reads ahead of this level.
 const log = createLogger({
     sink: teeSink(terminalSink(), fileSink(new URL('../logs/', import.meta.url))),
+    level: 'error',
     fields: { service: 'nura-landing-server' }
 });
 
