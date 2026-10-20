@@ -59,16 +59,15 @@ En esta revisión no indicamos un «suministro circulante». Esa cifra depende d
 
 ### 5.2 El reparto
 
-Los mil millones de monedas se dividen en seis partes. Para cada porción: la parte que le corresponde, el número de monedas y para qué sirve.
+Los mil millones de monedas se dividen en cinco partes. Para cada porción: la parte que le corresponde, el número de monedas y para qué sirve.
 
-- **Bloqueado, 40%, 400.000.000 NURA.** Apartado y bloqueado durante un año. Qué se hace con él después se decide al terminar ese año, y cualquier decisión sobre esta porción necesita la aprobación de al menos el 65% de la red en una votación.
-- **Liquidez, 25%, 250.000.000 NURA.** Se usa a lo largo de un año para mantener suficiente NURA disponible en los fondos de intercambio, de modo que comprar y vender funcione con fluidez y el precio no dé bandazos con cada operación.
-- **Comunidad, 10%, 100.000.000 NURA.** Se entrega a lo largo de un año a quienes ayudan a crecer a la red: siendo activos, participando, construyendo cosas o trayendo a otros. Cada asignación la revisa y aprueba el consejo de gestión.
+- **Liquidez, 50%, 500.000.000 NURA.** Se usa a lo largo de un año para mantener suficiente NURA disponible en los fondos de intercambio, de modo que comprar y vender funcione con fluidez y el precio no dé bandazos con cada operación.
+- **Comunidad, 20%, 200.000.000 NURA.** Se entrega a lo largo de un año a quienes ayudan a crecer a la red: siendo activos, participando, construyendo cosas o trayendo a otros. Cada asignación la revisa y aprueba el consejo de gestión.
 - **Venta pública, 10%, 100.000.000 NURA.** Se vende al público por 24.000 dólares en total, lo que sale a 0,00024 dólares por NURA. Ese es el precio de esa venta, no el precio de mercado, y no dice nada sobre lo que vale NURA un día cualquiera.
 - **Tesorería, 10%, 100.000.000 NURA.** El presupuesto propio del proyecto a lo largo de un año, para desarrollo, infraestructura, productos y alianzas, bajo la supervisión del consejo de gestión.
-- **Airdrop, 5%, 50.000.000 NURA.** Se regala a lo largo de un año a personas alcanzadas a través de canales y comunidades seleccionados. La lista final la confirma el consejo de gestión.
+- **Airdrop, 10%, 100.000.000 NURA.** Se regala a lo largo de un año a personas alcanzadas a través de canales y comunidades seleccionados. La lista final la confirma el consejo de gestión.
 
-Esas seis porciones suman el 100%.
+Esas cinco porciones suman el 100%.
 
 ### 5.3 Comprobar un saldo
 
@@ -76,11 +75,9 @@ Todos los saldos de Nura Chain son públicos. Abre Nura Explorer, pega cualquier
 
 ## 6. Quién decide qué
 
-En esta revisión hay dos reglas en vigor, y las dos tratan de las monedas de la sección 5, no de la red en sí.
+En esta revisión hay una regla en vigor, y trata de las monedas de la sección 5, no de la red en sí.
 
-El 40% bloqueado no se puede liberar, destinar a otro fin ni gastar sin una votación en la que lo apruebe al menos el 65% de la red. Esa es la única regla firme sobre la porción más grande del suministro.
-
-Las porciones de comunidad, tesorería y airdrop, una cuarta parte de todas las monedas entre las tres, se reparten bajo la revisión de un consejo de gestión, que da el visto bueno a cada distribución.
+Las porciones de comunidad, tesorería y airdrop, el 40% de todas las monedas entre las tres, se reparten bajo la revisión de un consejo de gestión, que da el visto bueno a cada distribución.
 
 No afirmamos nada más allá de eso. No hay un sistema de votación para los ajustes de la propia red, como cada cuánto se escriben los bloques o quién los escribe. Eso lo deciden las personas que gestionan la red, y este documento lo dice así en lugar de describir un sistema que no existe.
 

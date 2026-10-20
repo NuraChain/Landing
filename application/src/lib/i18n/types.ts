@@ -68,7 +68,6 @@ export interface Strings
          */
         allocations:
         {
-            locked: string;
             liquidity: string;
             community: string;
             publicSale: string;
@@ -88,7 +87,6 @@ export interface Strings
          */
         notes:
         {
-            locked: string;
             liquidity: string;
             community: string;
             publicSale: string;

@@ -59,16 +59,15 @@ Bu revizyonda bir "dolaşımdaki arz" rakamı vermiyoruz. O rakam, aşağıdaki 
 
 ### 5.2 Dağılım
 
-Bir milyar coin altıya bölünüyor. Her pay için: oranı, coin sayısı ve ne için olduğu.
+Bir milyar coin beşe bölünüyor. Her pay için: oranı, coin sayısı ve ne için olduğu.
 
-- **Kilitli, %40, 400.000.000 NURA.** Bir yıllığına ayrılıp kilitlendi. Sonrasında ne olacağı o yılın sonunda kararlaştırılacak ve bu payla ilgili herhangi bir kararın oylamada ağın en az %65'inin onayını alması gerekiyor.
-- **Likidite, %25, 250.000.000 NURA.** Bir yıl boyunca işlem havuzlarında yeterli NURA bulundurmak için kullanılıyor; böylece alım satım sorunsuz işler ve fiyat her işlemde sıçramaz.
-- **Topluluk, %10, 100.000.000 NURA.** Bir yıl içinde ağın büyümesine yardım edenlere veriliyor: etkin olarak, katılarak, bir şeyler geliştirerek ya da başkalarını getirerek. Her tahsis yönetim kurulunca incelenip onaylanıyor.
+- **Likidite, %50, 500.000.000 NURA.** Bir yıl boyunca işlem havuzlarında yeterli NURA bulundurmak için kullanılıyor; böylece alım satım sorunsuz işler ve fiyat her işlemde sıçramaz.
+- **Topluluk, %20, 200.000.000 NURA.** Bir yıl içinde ağın büyümesine yardım edenlere veriliyor: etkin olarak, katılarak, bir şeyler geliştirerek ya da başkalarını getirerek. Her tahsis yönetim kurulunca incelenip onaylanıyor.
 - **Halka satış, %10, 100.000.000 NURA.** Halka toplam 24.000 dolara satılıyor; bu da NURA başına 0,00024 dolar ediyor. Bu, o satışın fiyatıdır, piyasa fiyatı değil; NURA'nın herhangi bir günde ne ettiği hakkında hiçbir şey söylemez.
 - **Hazine, %10, 100.000.000 NURA.** Projenin bir yıllık kendi bütçesi; geliştirme, altyapı, ürünler ve ortaklıklar için, yönetim kurulunun gözetiminde.
-- **Airdrop, %5, 50.000.000 NURA.** Bir yıl boyunca seçilmiş kanallar ve topluluklar üzerinden ulaşılan kişilere dağıtılıyor. Nihai listeyi yönetim kurulu onaylıyor.
+- **Airdrop, %10, 100.000.000 NURA.** Bir yıl boyunca seçilmiş kanallar ve topluluklar üzerinden ulaşılan kişilere dağıtılıyor. Nihai listeyi yönetim kurulu onaylıyor.
 
-Bu altı payın toplamı %100 eder.
+Bu beş payın toplamı %100 eder.
 
 ### 5.3 Bir bakiyeyi denetlemek
 
@@ -76,11 +75,9 @@ Nura Chain'deki her bakiye herkese açıktır. Nura Explorer'ı açın, herhangi
 
 ## 6. Neye kim karar veriyor
 
-Bu revizyonda iki kural yürürlükte ve ikisi de ağın kendisiyle değil, Bölüm 5'teki coinlerle ilgili.
+Bu revizyonda tek bir kural yürürlükte ve o da ağın kendisiyle değil, Bölüm 5'teki coinlerle ilgili.
 
-Kilitli %40, ağın en az %65'inin onayladığı bir oylama olmadan serbest bırakılamaz, başka bir amaca yönlendirilemez ya da harcanamaz. Arzın en büyük tek payı üzerindeki tek kesin kural budur.
-
-Topluluk, hazine ve airdrop payları, hep birlikte tüm coinlerin dörtte biri, her dağıtımı tek tek onaylayan bir yönetim kurulunun incelemesi altında dağıtılıyor.
+Topluluk, hazine ve airdrop payları, hep birlikte tüm coinlerin %40'ı, her dağıtımı tek tek onaylayan bir yönetim kurulunun incelemesi altında dağıtılıyor.
 
 Bunun ötesinde bir iddiamız yok. Ağın kendi ayarları için, örneğin blokların ne sıklıkla yazıldığı ya da onları kimin yazdığı için bir oylama sistemi yoktur. Bunlara ağı işleten kişiler karar verir ve bu belge, var olmayan bir sistemi anlatmak yerine bunu açıkça söyler.
 

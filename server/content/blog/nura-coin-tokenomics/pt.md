@@ -14,14 +14,13 @@ O fornecimento total publicado é de 1.000.000.000 NURA — um bilhão.
 
 ## Como o fornecimento é dividido
 
-O projeto publica uma divisão em seis partes. Estas são as alocações declaradas e seus propósitos declarados:
+O projeto publica uma divisão em cinco partes. Estas são as alocações declaradas e seus propósitos declarados:
 
-- **Bloqueado — 40%.** Bloqueado por um ano. O que acontece com ele será decidido ao fim desse período, e está declarado que qualquer decisão sobre essa parcela exige aprovação por voto de ao menos 65% da rede.
-- **Liquidez — 25%.** Alocado ao longo de um ano para prover e administrar liquidez, com o objetivo de uma liquidez de negociação funcional.
-- **Comunidade — 10%.** Distribuído a membros da comunidade ao longo de um ano, para quem contribui com atividade, participação, desenvolvimento ou indicações em vez de pagar. A alocação segue revisão e aprovação do conselho de gestão.
+- **Liquidez — 50%.** Alocado ao longo de um ano para prover e administrar liquidez, com o objetivo de uma liquidez de negociação funcional.
+- **Comunidade — 20%.** Distribuído a membros da comunidade ao longo de um ano, para quem contribui com atividade, participação, desenvolvimento ou indicações em vez de pagar. A alocação segue revisão e aprovação do conselho de gestão.
 - **Venda pública — 10%.** Oferecido numa venda pública com preço total de US$ 24.000. Essa parcela são 100.000.000 de tokens, o que dá US$ 0,00024 por NURA.
 - **Tesouraria — 10%.** Alocado ao longo de um ano sob supervisão do conselho de gestão, para financiar desenvolvimento do ecossistema, infraestrutura, produtos e parcerias.
-- **Airdrop — 5%.** Distribuído ao longo de um ano, com destinatários identificados por canais e comunidades selecionados e a alocação final confirmada pelo conselho de gestão.
+- **Airdrop — 10%.** Distribuído ao longo de um ano, com destinatários identificados por canais e comunidades selecionados e a alocação final confirmada pelo conselho de gestão.
 
 Essas partes somam 100%.
 

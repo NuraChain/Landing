@@ -21,14 +21,17 @@ import { useLocale } from '../stores/locale';
  * so the worst ADJACENT pair is ΔE 13.9 protan / 16.8 normal / 12.2 tritan, with similar
  * hues kept non-adjacent. Fixed order, never cycled: a slot belongs to an entity, so
  * adding or removing a row must not repaint the survivors - which is why the green was
- * APPENDED for the sixth allocation rather than slotted in where it looked best.
+ * APPENDED for the sixth allocation rather than slotted in where it looked best, and why
+ * the teal that led the list went WITH the locked allocation when that row was removed:
+ * dropping the head kept every survivor on its hue and every adjacent pair one already
+ * measured.
  *
  * Validated on adjacent pairs against all three theme surfaces, not chosen by eye. The
- * pairing only holds for THIS order; see the note on ALLOCATIONS before reordering. Teal
- * measures 2.94:1 on the white surface, under the 3:1 floor - the direct labels below are
- * what make that legal, so they are not optional decoration.
+ * pairing only holds for THIS order; see the note on ALLOCATIONS before reordering. The
+ * direct labels below are what carry a segment's identity, so they are not optional
+ * decoration.
  */
-const HUES: string[] = ['#22a89b', '#c07f26', '#6b8afd', '#e15a7c', '#a274d6', '#4f9e52'];
+const HUES: string[] = ['#c07f26', '#6b8afd', '#e15a7c', '#a274d6', '#4f9e52'];
 
 export default component TokenomicsSection()
 {

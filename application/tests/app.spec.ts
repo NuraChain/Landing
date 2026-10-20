@@ -136,14 +136,14 @@ describe('App', () =>
         expect(document.documentElement.dir).toBe('rtl');
     });
 
-    it('splits the allocation six ways and sums to a whole', () =>
+    it('splits the allocation five ways and sums to a whole', () =>
     {
         const { container } = mountApp('/');
 
         const legend = container.querySelector('#tokenomics ul');
         const rows = [...legend!.querySelectorAll(':scope > li')];
 
-        expect(rows).toHaveLength(6);
+        expect(rows).toHaveLength(5);
 
         // Read the percentages back off the rendered rows rather than re-importing
         // ALLOCATIONS: a table that sums to 90 would render a full bar and look fine, so
@@ -174,7 +174,7 @@ describe('App', () =>
             container.querySelector(`#tokenomics button[aria-label="More about ${ label }"]`)!;
 
         const airdrop = infoFor('Airdrop');
-        const locked = infoFor('Locked');
+        const liquidity = infoFor('Liquidity');
 
         expect(airdrop).not.toBeNull();
         expect(container.textContent).not.toContain('distributed as an airdrop');
@@ -185,22 +185,22 @@ describe('App', () =>
         expect(container.textContent).toContain('distributed as an airdrop');
 
         // Opening another row replaces the first: the state holds one key, not a set.
-        fire(locked, 'click');
+        fire(liquidity, 'click');
 
         expect(airdrop.getAttribute('aria-expanded')).toBe('false');
         expect(container.textContent).not.toContain('distributed as an airdrop');
-        expect(container.textContent).toContain('locked for one year');
+        expect(container.textContent).toContain('providing and managing liquidity');
 
-        fire(locked, 'click');
+        fire(liquidity, 'click');
 
-        expect(container.textContent).not.toContain('locked for one year');
+        expect(container.textContent).not.toContain('providing and managing liquidity');
     });
 
-    it('offers a note button on every allocation now that all six have terms', () =>
+    it('offers a note button on every allocation now that all five have terms', () =>
     {
         const { container } = mountApp('/');
 
-        expect(container.querySelectorAll('#tokenomics ul button')).toHaveLength(6);
+        expect(container.querySelectorAll('#tokenomics ul button')).toHaveLength(5);
         expect(container.querySelector('#tokenomics button[aria-label="More about Public sale"]')).not.toBeNull();
     });
 

@@ -14,14 +14,13 @@ El suministro total publicado es de 1.000.000.000 NURA: mil millones.
 
 ## Cómo se reparte el suministro
 
-El proyecto publica un reparto en seis partes. Estas son sus asignaciones declaradas y sus propósitos declarados:
+El proyecto publica un reparto en cinco partes. Estas son sus asignaciones declaradas y sus propósitos declarados:
 
-- **Bloqueado — 40%.** Bloqueado durante un año. Qué ocurre con él se decidirá al terminar ese periodo, y se indica que cualquier decisión sobre esta porción requiere la aprobación de un voto de al menos el 65% de la red.
-- **Liquidez — 25%.** Asignado a lo largo de un año a proveer y gestionar liquidez, con el objetivo de una liquidez de negociación funcional.
-- **Comunidad — 10%.** Distribuido entre miembros de la comunidad durante un año, para quienes contribuyen con actividad, participación, desarrollo o referidos en lugar de pagando. La asignación sigue a la revisión y aprobación del consejo de gestión.
+- **Liquidez — 50%.** Asignado a lo largo de un año a proveer y gestionar liquidez, con el objetivo de una liquidez de negociación funcional.
+- **Comunidad — 20%.** Distribuido entre miembros de la comunidad durante un año, para quienes contribuyen con actividad, participación, desarrollo o referidos en lugar de pagando. La asignación sigue a la revisión y aprobación del consejo de gestión.
 - **Venta pública — 10%.** Ofrecido en una venta pública con un precio total de 24.000 dólares. Esa parte son 100.000.000 de tokens, lo que sale a 0,00024 dólares por NURA.
 - **Tesorería — 10%.** Asignado a lo largo de un año bajo supervisión del consejo de gestión, para financiar desarrollo del ecosistema, infraestructura, productos y alianzas.
-- **Airdrop — 5%.** Distribuido a lo largo de un año, identificando a los receptores mediante canales y comunidades seleccionados, con la asignación final confirmada por el consejo de gestión.
+- **Airdrop — 10%.** Distribuido a lo largo de un año, identificando a los receptores mediante canales y comunidades seleccionados, con la asignación final confirmada por el consejo de gestión.
 
 Esas partes suman el 100%.
 

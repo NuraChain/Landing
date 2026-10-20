@@ -59,16 +59,15 @@ Nous n'indiquons pas d'« offre en circulation » dans cette révision. Ce chiff
 
 ### 5.2 La répartition
 
-Le milliard de jetons est divisé en six parts. Pour chacune : la proportion, le nombre de jetons, et à quoi elle sert.
+Le milliard de jetons est divisé en cinq parts. Pour chacune : la proportion, le nombre de jetons, et à quoi elle sert.
 
-- **Bloqué, 40 %, 400 000 000 NURA.** Mis de côté et bloqués pendant un an. Ce qu'il en advient ensuite sera décidé à la fin de cette année, et toute décision sur cette part exige l'approbation d'au moins 65 % du réseau lors d'un vote.
-- **Liquidité, 25 %, 250 000 000 NURA.** Utilisés sur un an pour garder assez de NURA disponibles dans les pools d'échange, afin que l'achat et la vente se passent sans heurts et que le prix ne fasse pas un bond à chaque transaction.
-- **Communauté, 10 %, 100 000 000 NURA.** Donnés sur un an aux personnes qui aident le réseau à grandir : en étant actives, en participant, en construisant des choses ou en amenant d'autres personnes. Chaque attribution est examinée et approuvée par le conseil de gestion.
+- **Liquidité, 50 %, 500 000 000 NURA.** Utilisés sur un an pour garder assez de NURA disponibles dans les pools d'échange, afin que l'achat et la vente se passent sans heurts et que le prix ne fasse pas un bond à chaque transaction.
+- **Communauté, 20 %, 200 000 000 NURA.** Donnés sur un an aux personnes qui aident le réseau à grandir : en étant actives, en participant, en construisant des choses ou en amenant d'autres personnes. Chaque attribution est examinée et approuvée par le conseil de gestion.
 - **Vente publique, 10 %, 100 000 000 NURA.** Vendus au public pour 24 000 dollars au total, soit 0,00024 dollar par NURA. C'est le prix de cette vente, pas le prix du marché, et il ne dit rien de ce que vaut le NURA un jour donné.
 - **Trésorerie, 10 %, 100 000 000 NURA.** Le budget propre du projet sur un an, pour le développement, l'infrastructure, les produits et les partenariats, sous la supervision du conseil de gestion.
-- **Airdrop, 5 %, 50 000 000 NURA.** Distribués gratuitement sur un an aux personnes touchées par des canaux et des communautés sélectionnés. La liste finale est confirmée par le conseil de gestion.
+- **Airdrop, 10 %, 100 000 000 NURA.** Distribués gratuitement sur un an aux personnes touchées par des canaux et des communautés sélectionnés. La liste finale est confirmée par le conseil de gestion.
 
-Ces six parts totalisent 100 %.
+Ces cinq parts totalisent 100 %.
 
 ### 5.3 Vérifier un solde
 
@@ -76,11 +75,9 @@ Chaque solde sur Nura Chain est public. Ouvrez Nura Explorer, collez n'importe q
 
 ## 6. Qui décide de quoi
 
-Deux règles sont en place à cette révision, et toutes deux concernent les jetons de la section 5 plutôt que le réseau lui-même.
+Une règle est en place à cette révision, et elle concerne les jetons de la section 5 plutôt que le réseau lui-même.
 
-Les 40 % bloqués ne peuvent pas être libérés, réaffectés ni dépensés sans un vote où au moins 65 % du réseau donne son accord. C'est la seule règle ferme sur la plus grosse part de l'offre.
-
-Les parts communauté, trésorerie et airdrop, un quart de tous les jetons à elles trois, sont distribuées sous le contrôle d'un conseil de gestion, qui valide chaque distribution.
+Les parts communauté, trésorerie et airdrop, 40 % de tous les jetons à elles trois, sont distribuées sous le contrôle d'un conseil de gestion, qui valide chaque distribution.
 
 Nous ne prétendons rien de plus. Il n'existe pas de système de vote pour les réglages du réseau lui-même, comme la fréquence d'écriture des blocs ou qui les écrit. Ces choix reviennent aux personnes qui font tourner le réseau, et ce document le dit plutôt que de décrire un système qui n'existe pas.
 

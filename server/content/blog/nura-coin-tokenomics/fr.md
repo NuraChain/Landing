@@ -14,14 +14,13 @@ L'offre totale publiée est de 1 000 000 000 NURA — un milliard.
 
 ## Comment l'offre est répartie
 
-Le projet publie une répartition en six parts. Voici ses allocations annoncées et leurs finalités annoncées :
+Le projet publie une répartition en cinq parts. Voici ses allocations annoncées et leurs finalités annoncées :
 
-- **Bloqué — 40 %.** Bloqué pendant un an. Le sort de cette part sera décidé à l'issue de cette période, et il est annoncé que toute décision la concernant requiert l'approbation d'un vote d'au moins 65 % du réseau.
-- **Liquidité — 25 %.** Alloué sur un an à la fourniture et à la gestion de la liquidité, avec pour objectif une liquidité d'échange exploitable.
-- **Communauté — 10 %.** Distribué aux membres de la communauté sur un an, pour ceux qui contribuent par leur activité, leur participation, le développement ou le parrainage plutôt qu'en payant. L'allocation suit l'examen et l'approbation du conseil de gestion.
+- **Liquidité — 50 %.** Alloué sur un an à la fourniture et à la gestion de la liquidité, avec pour objectif une liquidité d'échange exploitable.
+- **Communauté — 20 %.** Distribué aux membres de la communauté sur un an, pour ceux qui contribuent par leur activité, leur participation, le développement ou le parrainage plutôt qu'en payant. L'allocation suit l'examen et l'approbation du conseil de gestion.
 - **Vente publique — 10 %.** Proposé lors d'une vente publique au prix total de 24 000 dollars. Cette part représente 100 000 000 de jetons, soit 0,00024 dollar par NURA.
 - **Trésorerie — 10 %.** Alloué sur un an sous la supervision du conseil de gestion, pour financer le développement de l'écosystème, l'infrastructure, les produits et les partenariats.
-- **Airdrop — 5 %.** Distribué sur un an, les bénéficiaires étant identifiés via des canaux et communautés sélectionnés, l'allocation finale étant confirmée par le conseil de gestion.
+- **Airdrop — 10 %.** Distribué sur un an, les bénéficiaires étant identifiés via des canaux et communautés sélectionnés, l'allocation finale étant confirmée par le conseil de gestion.
 
 Ces parts totalisent 100 %.
 

@@ -14,14 +14,13 @@ The published total supply is 1,000,000,000 NURA — one billion.
 
 ## How the supply is divided
 
-The project publishes a six-way split. These are its stated allocations and stated purposes:
+The project publishes a five-way split. These are its stated allocations and stated purposes:
 
-- **Locked — 40%.** Locked for one year. What happens to it is to be decided once that period ends, and any decision about this portion is stated to require approval by a vote of at least 65% of the network.
-- **Liquidity — 25%.** Allocated over a one-year period to providing and managing liquidity, with the aim of workable trading liquidity.
-- **Community — 10%.** Distributed to community members over one year, for people who contribute through activity, participation, development or referrals rather than by paying. Allocation follows review and approval by the management board.
+- **Liquidity — 50%.** Allocated over a one-year period to providing and managing liquidity, with the aim of workable trading liquidity.
+- **Community — 20%.** Distributed to community members over one year, for people who contribute through activity, participation, development or referrals rather than by paying. Allocation follows review and approval by the management board.
 - **Public sale — 10%.** Offered in a public sale priced at $24,000 in total. That share is 100,000,000 tokens, which works out at $0.00024 per NURA.
 - **Treasury — 10%.** Allocated over one year under the oversight of the management board, to fund ecosystem development, infrastructure, products and partnerships.
-- **Airdrop — 5%.** Distributed over one year, with recipients identified through selected channels and communities and the final allocation confirmed by the management board.
+- **Airdrop — 10%.** Distributed over one year, with recipients identified through selected channels and communities and the final allocation confirmed by the management board.
 
 Those add to 100%.
 

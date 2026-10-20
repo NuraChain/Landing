@@ -124,7 +124,7 @@ describe('translation completeness', () =>
         (table) => table.wallet.subtitle,
         (table) => table.footer.tagline,
         (table) => table.network.subtitle,
-        (table) => table.tokenomics.notes.locked
+        (table) => table.tokenomics.notes.liquidity
     ];
 
     it('translates the prose in every non-English locale', () =>

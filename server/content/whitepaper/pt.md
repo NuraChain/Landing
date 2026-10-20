@@ -59,16 +59,15 @@ Não declaramos um "fornecimento circulante" nesta revisão. Esse número depend
 
 ### 5.2 A divisão
 
-O bilhão de moedas é dividido em seis partes. Para cada parcela: a fatia, o número de moedas e para que serve.
+O bilhão de moedas é dividido em cinco partes. Para cada parcela: a fatia, o número de moedas e para que serve.
 
-- **Bloqueado, 40%, 400.000.000 NURA.** Reservado e bloqueado por um ano. O que acontece com ele depois é decidido ao fim desse ano, e qualquer decisão sobre essa parcela precisa da aprovação de pelo menos 65% da rede em votação.
-- **Liquidez, 25%, 250.000.000 NURA.** Usado ao longo de um ano para manter NURA suficiente disponível para compra e venda, de modo que negociar funcione sem sustos e o preço não dê um solavanco a cada negociação.
-- **Comunidade, 10%, 100.000.000 NURA.** Dado a quem ajuda a rede a crescer ao longo de um ano: sendo ativo, participando, construindo coisas ou trazendo outras pessoas. Cada alocação é analisada e aprovada pelo conselho de gestão.
+- **Liquidez, 50%, 500.000.000 NURA.** Usado ao longo de um ano para manter NURA suficiente disponível para compra e venda, de modo que negociar funcione sem sustos e o preço não dê um solavanco a cada negociação.
+- **Comunidade, 20%, 200.000.000 NURA.** Dado a quem ajuda a rede a crescer ao longo de um ano: sendo ativo, participando, construindo coisas ou trazendo outras pessoas. Cada alocação é analisada e aprovada pelo conselho de gestão.
 - **Venda pública, 10%, 100.000.000 NURA.** Vendido ao público por US$ 24.000 no total, o que dá US$ 0,00024 por NURA. Esse é o preço daquela venda, não o preço de mercado, e ele não diz nada sobre quanto o NURA vale num dia qualquer.
 - **Tesouraria, 10%, 100.000.000 NURA.** O orçamento do próprio projeto ao longo de um ano, para desenvolvimento, infraestrutura, produtos e parcerias, sob supervisão do conselho de gestão.
-- **Airdrop, 5%, 50.000.000 NURA.** Distribuído de graça ao longo de um ano a pessoas alcançadas por canais e comunidades selecionados. A lista final é confirmada pelo conselho de gestão.
+- **Airdrop, 10%, 100.000.000 NURA.** Distribuído de graça ao longo de um ano a pessoas alcançadas por canais e comunidades selecionados. A lista final é confirmada pelo conselho de gestão.
 
-Essas seis parcelas somam 100%.
+Essas cinco parcelas somam 100%.
 
 ### 5.3 Conferindo um saldo
 
@@ -76,11 +75,9 @@ Todo saldo na Nura Chain é público. Abra o Nura Explorer, cole qualquer endere
 
 ## 6. Quem decide o quê
 
-Duas regras estão em vigor nesta revisão, e as duas são sobre as moedas da seção 5, não sobre a rede em si.
+Uma regra está em vigor nesta revisão, e ela é sobre as moedas da seção 5, não sobre a rede em si.
 
-Os 40% bloqueados não podem ser liberados, redirecionados ou gastos sem uma votação em que pelo menos 65% da rede aprove. Essa é a única regra firme sobre a maior parcela isolada do fornecimento.
-
-As parcelas da comunidade, da tesouraria e do airdrop, um quarto de todas as moedas somadas, são distribuídas sob a análise de um conselho de gestão, que aprova cada distribuição.
+As parcelas da comunidade, da tesouraria e do airdrop, 40% de todas as moedas somadas, são distribuídas sob a análise de um conselho de gestão, que aprova cada distribuição.
 
 Não afirmamos nada além disso. Não existe um sistema de votação para as configurações da própria rede, como a frequência com que os blocos são escritos ou quem os escreve. Isso é decidido pelas pessoas que operam a rede, e este documento diz isso em vez de descrever um sistema que não existe.
 

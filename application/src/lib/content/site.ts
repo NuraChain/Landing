@@ -169,7 +169,7 @@ export interface Allocation
      * translate at all - unlike the chain facts above, which stay Latin in every locale
      * because they are values someone pastes into a wallet.
      */
-    key: 'locked' | 'liquidity' | 'community' | 'publicSale' | 'treasury' | 'airdrop';
+    key: 'liquidity' | 'community' | 'publicSale' | 'treasury' | 'airdrop';
     percent: number;
 }
 
@@ -183,12 +183,11 @@ export interface Allocation
  */
 export const ALLOCATIONS: readonly Allocation[] =
 [
-    { key: 'locked', percent: 40 },
-    { key: 'liquidity', percent: 25 },
-    { key: 'community', percent: 10 },
+    { key: 'liquidity', percent: 50 },
+    { key: 'community', percent: 20 },
     { key: 'publicSale', percent: 10 },
     { key: 'treasury', percent: 10 },
-    { key: 'airdrop', percent: 5 }
+    { key: 'airdrop', percent: 10 }
 ];
 
 export interface BridgeToken

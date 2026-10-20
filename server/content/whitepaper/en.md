@@ -59,16 +59,15 @@ We do not state a "circulating supply" in this revision. That number depends on 
 
 ### 5.2 The split
 
-The billion coins are divided six ways. For each portion: the share, the number of coins, and what it is for.
+The billion coins are divided five ways. For each portion: the share, the number of coins, and what it is for.
 
-- **Locked, 40%, 400,000,000 NURA.** Set aside and locked for one year. What happens to it afterwards is decided at the end of that year, and any decision about this portion needs the approval of at least 65% of the network in a vote.
-- **Liquidity, 25%, 250,000,000 NURA.** Used over one year to keep enough NURA available in trading pools, so that buying and selling works smoothly and the price does not lurch on every trade.
-- **Community, 10%, 100,000,000 NURA.** Given to people who help the network grow over one year: by being active, taking part, building things, or bringing others in. Each allocation is reviewed and approved by the management board.
+- **Liquidity, 50%, 500,000,000 NURA.** Used over one year to keep enough NURA available in trading pools, so that buying and selling works smoothly and the price does not lurch on every trade.
+- **Community, 20%, 200,000,000 NURA.** Given to people who help the network grow over one year: by being active, taking part, building things, or bringing others in. Each allocation is reviewed and approved by the management board.
 - **Public sale, 10%, 100,000,000 NURA.** Sold to the public for $24,000 in total, which works out at $0.00024 per NURA. That is the price of that sale, not the market price, and it says nothing about what NURA is worth on any given day.
 - **Treasury, 10%, 100,000,000 NURA.** The project's own budget over one year, for building, infrastructure, products and partnerships, overseen by the management board.
-- **Airdrop, 5%, 50,000,000 NURA.** Given away over one year to people reached through selected channels and communities. The final list is confirmed by the management board.
+- **Airdrop, 10%, 100,000,000 NURA.** Given away over one year to people reached through selected channels and communities. The final list is confirmed by the management board.
 
-Those six portions add up to 100%.
+Those five portions add up to 100%.
 
 ### 5.3 Checking a balance
 
@@ -76,11 +75,9 @@ Every balance on Nura Chain is public. Open Nura Explorer, paste any address, an
 
 ## 6. Who decides what
 
-Two rules are in place at this revision, and both are about the coins in section 5 rather than about the network itself.
+One rule is in place at this revision, and it is about the coins in section 5 rather than about the network itself.
 
-The locked 40% cannot be released, repurposed or spent without a vote in which at least 65% of the network approves. That is the one firm rule on the largest single portion of the supply.
-
-The community, treasury and airdrop portions, a quarter of all coins between them, are handed out under the review of a management board, which signs off on each distribution.
+The community, treasury and airdrop portions, 40% of all coins between them, are handed out under the review of a management board, which signs off on each distribution.
 
 We do not claim anything beyond that. There is no voting system for the network's own settings, such as how often blocks are written or who writes them. Those are decided by the people running the network, and this document says so rather than describing a system that does not exist.
 

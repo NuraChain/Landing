@@ -19,59 +19,60 @@ export const article: Article = {
 
     // Carried over from the sqlite the store used to keep these in, not invented here:
     // these are the timestamps the cluster was actually published and last revised under.
+    // `updatedAt` moved on 2026-10-20, when the split dropped its locked portion.
     publishedAt: '2026-08-22T01:53:27.000Z',
-    updatedAt: '2026-08-22T01:53:27.000Z',
+    updatedAt: '2026-10-20T00:00:00.000Z',
     coverImage: null,
 
     heads: {
         en: {
             title: 'Nura Coin (NURA): Supply, Allocation and Gas',
-            summary: 'What NURA pays for, the published one-billion supply and its six-way split, and '
+            summary: 'What NURA pays for, the published one-billion supply and its five-way split, and '
                 + 'which of those figures you can actually verify on-chain yourself.'
         },
         fa: {
             title: 'نورا کوین (NURA): عرضه، تخصیص و گس',
-            summary: 'NURA بهای چه چیزی را می‌پردازد، عرضه یک‌میلیاردی منتشرشده و تقسیم شش‌بخشی آن، و '
+            summary: 'NURA بهای چه چیزی را می‌پردازد، عرضه یک‌میلیاردی منتشرشده و تقسیم پنج‌بخشی آن، و '
                 + 'اینکه کدام‌یک از این ارقام را واقعاً خودتان روی زنجیره می‌توانید بسنجید.'
         },
         ar: {
             title: 'نورا كوين (NURA): المعروض والتوزيع والغاز',
-            summary: 'ما الذي تدفعه NURA، والمعروض المنشور البالغ مليارًا وتقسيمه السداسي، وأي تلك '
+            summary: 'ما الذي تدفعه NURA، والمعروض المنشور البالغ مليارًا وتقسيمه الخماسي، وأي تلك '
                 + 'الأرقام تستطيع فعلًا التحقق منه بنفسك على السلسلة.'
         },
         es: {
             title: 'Nura Coin (NURA): suministro, asignación y gas',
-            summary: 'Para qué paga NURA, el suministro publicado de mil millones y su reparto en seis '
+            summary: 'Para qué paga NURA, el suministro publicado de mil millones y su reparto en cinco '
                 + 'partes, y cuáles de esas cifras puedes verificar realmente en cadena.'
         },
         pt: {
             title: 'Nura Coin (NURA): fornecimento, alocação e gás',
-            summary: 'O que o NURA paga, o fornecimento publicado de um bilhão e sua divisão em seis '
+            summary: 'O que o NURA paga, o fornecimento publicado de um bilhão e sua divisão em cinco '
                 + 'partes, e quais desses números você realmente consegue verificar na cadeia.'
         },
         hi: {
             title: 'Nura Coin (NURA): आपूर्ति, आवंटन और गैस',
-            summary: 'NURA किसका भुगतान करती है, प्रकाशित एक-अरब आपूर्ति और उसका छह-हिस्सा विभाजन, और '
+            summary: 'NURA किसका भुगतान करती है, प्रकाशित एक-अरब आपूर्ति और उसका पाँच-हिस्सा विभाजन, और '
                 + 'इनमें से कौन-से आँकड़े आप सचमुच चेन पर स्वयं जाँच सकते हैं।'
         },
         zh: {
             title: 'Nura Coin（NURA）：供应、分配与 gas',
-            summary: 'NURA 用来支付什么、已公布的十亿供应量及其六方划分，'
+            summary: 'NURA 用来支付什么、已公布的十亿供应量及其五方划分，'
                 + '以及这些数字里哪些你真的能自己在链上核实。'
         },
         ru: {
             title: 'Nura Coin (NURA): эмиссия, распределение и газ',
-            summary: 'За что платит NURA, опубликованная эмиссия в миллиард и её разбиение на шесть '
+            summary: 'За что платит NURA, опубликованная эмиссия в миллиард и её разбиение на пять '
                 + 'долей, и какие из этих цифр вы действительно можете проверить в цепочке.'
         },
         fr: {
             title: 'Nura Coin (NURA) : offre, répartition et gaz',
-            summary: 'Ce que paie NURA, l\'offre publiée d\'un milliard et sa répartition en six parts, '
+            summary: 'Ce que paie NURA, l\'offre publiée d\'un milliard et sa répartition en cinq parts, '
                 + 'et lesquels de ces chiffres vous pouvez réellement vérifier sur la chaîne.'
         },
         tr: {
             title: 'Nura Coin (NURA): Arz, Dağılım ve Gaz',
-            summary: 'NURA neyin bedelini öder, yayımlanan bir milyarlık arz ve altı parçalı dağılımı, '
+            summary: 'NURA neyin bedelini öder, yayımlanan bir milyarlık arz ve beş parçalı dağılımı, '
                 + 've bu rakamlardan hangilerini gerçekten zincir üzerinde kendiniz doğrulayabilirsiniz.'
         }
     }

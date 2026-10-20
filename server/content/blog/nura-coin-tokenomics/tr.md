@@ -14,14 +14,13 @@ Yayımlanan toplam arz 1.000.000.000 NURA'dır — bir milyar.
 
 ## Arz nasıl bölünmüş
 
-Proje altı parçalı bir dağılım yayımlıyor. Beyan ettiği paylar ve beyan ettiği amaçlar şunlar:
+Proje beş parçalı bir dağılım yayımlıyor. Beyan ettiği paylar ve beyan ettiği amaçlar şunlar:
 
-- **Kilitli — %40.** Bir yıllığına kilitli. Bu payın akıbeti sürenin bitiminde kararlaştırılacak ve bu pay hakkındaki herhangi bir kararın ağın en az %65'inin oyuyla onaylanmasının gerektiği beyan ediliyor.
-- **Likidite — %25.** Bir yıllık süre boyunca likidite sağlamak ve yönetmek için tahsis ediliyor; amaç işleyen bir işlem likiditesi.
-- **Topluluk — %10.** Bir yıl içinde topluluk üyelerine dağıtılıyor; ödeme yaparak değil etkinlik, katılım, geliştirme ya da yönlendirme yoluyla katkı sunanlar için. Tahsis, yönetim kurulunun incelemesi ve onayının ardından yapılıyor.
+- **Likidite — %50.** Bir yıllık süre boyunca likidite sağlamak ve yönetmek için tahsis ediliyor; amaç işleyen bir işlem likiditesi.
+- **Topluluk — %20.** Bir yıl içinde topluluk üyelerine dağıtılıyor; ödeme yaparak değil etkinlik, katılım, geliştirme ya da yönlendirme yoluyla katkı sunanlar için. Tahsis, yönetim kurulunun incelemesi ve onayının ardından yapılıyor.
 - **Halka satış — %10.** Toplam 24.000 dolar fiyatla halka satışa sunuluyor. Bu pay 100.000.000 token eder, yani NURA başına 0,00024 dolar.
 - **Hazine — %10.** Yönetim kurulunun gözetiminde bir yıllık süre boyunca tahsis ediliyor; ekosistem geliştirme, altyapı, ürünler ve ortaklıkları finanse etmek için.
-- **Airdrop — %5.** Bir yıllık süre boyunca dağıtılıyor; alıcılar seçilmiş kanallar ve topluluklar üzerinden belirleniyor, nihai tahsisi yönetim kurulu onaylıyor.
+- **Airdrop — %10.** Bir yıllık süre boyunca dağıtılıyor; alıcılar seçilmiş kanallar ve topluluklar üzerinden belirleniyor, nihai tahsisi yönetim kurulu onaylıyor.
 
 Bunların toplamı %100'dür.
 
