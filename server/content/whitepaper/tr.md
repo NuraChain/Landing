@@ -55,7 +55,7 @@ Toplam arz 1.000.000.000 NURA'dır, yani bir milyar; bunun ötesinde yenisi yara
 
 Bu rakamı proje yayımlıyor. Şunu bilmekte yarar var: buradaki, kendi başınıza denetleyemeyeceğiniz az sayıdaki rakamdan biri bu. Bir cüzdan ya da gezgin size herhangi bir tek adresin bakiyesini gösterebilir; ama ağa yerleşik bir coinin hepsini toplayan bir sayacı yoktur. Tek tek bakiyeler denetlenebilir; toplam ise projenin sözüdür.
 
-Bu revizyonda bir "dolaşımdaki arz" rakamı vermiyoruz. O rakam, aşağıdaki payların hangilerinin belirli bir günde kilidi açılmış sayıldığına bağlıdır; bu da bir ölçüm değil, bir yargıdır. Projenin bir payı tutan adresleri yayımladığı yerlerde herkes onun yerine o bakiyeleri izleyebilir.
+Bu revizyonda bir "dolaşımdaki arz" rakamı vermiyoruz. O rakam, aşağıdaki payların her birinden belirli bir güne kadar ne kadarının dağıtıldığına bağlıdır ve bu belge bunun hesabını tutmaz. Projenin bir payı tutan adresleri yayımladığı yerlerde herkes onun yerine o bakiyeleri izleyebilir.
 
 ### 5.2 Dağılım
 

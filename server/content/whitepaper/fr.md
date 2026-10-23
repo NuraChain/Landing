@@ -55,7 +55,7 @@ L'offre totale est de 1 000 000 000 NURA, un milliard, et il n'en sera pas cré�
 
 Ce chiffre est publié par le projet. Il faut savoir que c'est l'un des rares chiffres de ce document que vous ne pouvez pas vérifier vous-même : un portefeuille ou l'explorateur peut vous montrer le solde de n'importe quelle adresse, mais une monnaie intégrée au réseau n'a pas de compteur qui les additionne toutes. Les soldes individuels sont vérifiables ; le total, c'est la parole du projet.
 
-Nous n'indiquons pas d'« offre en circulation » dans cette révision. Ce chiffre dépend des parts ci-dessous que l'on considère comme débloquées un jour donné, et cela relève du jugement, pas de la mesure. Là où le projet publie les adresses qui détiennent une part, chacun peut surveiller ces soldes à la place.
+Nous n'indiquons pas d'« offre en circulation » dans cette révision. Ce chiffre dépend de ce qui a déjà été distribué de chaque part ci-dessous à un jour donné, et ce document n'en tient pas le compte. Là où le projet publie les adresses qui détiennent une part, chacun peut surveiller ces soldes à la place.
 
 ### 5.2 La répartition
 

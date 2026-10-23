@@ -55,7 +55,7 @@ El suministro total es de 1.000.000.000 NURA, mil millones, y no se crearán má
 
 Esa cifra la publica el proyecto. Conviene saber que es uno de los pocos números de aquí que no puedes comprobar por tu cuenta: una cartera o el explorador pueden mostrarte el saldo de cualquier dirección concreta, pero una moneda que forma parte de la red no tiene un contador que los sume todos. Los saldos individuales son comprobables; el total es la palabra del proyecto.
 
-En esta revisión no indicamos un «suministro circulante». Esa cifra depende de cuáles de las porciones de abajo se consideran desbloqueadas en un día dado, y eso es un juicio y no una medición. Allí donde el proyecto publica las direcciones que guardan una porción, cualquiera puede vigilar esos saldos.
+En esta revisión no indicamos un «suministro circulante». Esa cifra depende de cuánto de cada porción de abajo se haya repartido hasta un día dado, y este documento no lleva esa cuenta. Allí donde el proyecto publica las direcciones que guardan una porción, cualquiera puede vigilar esos saldos.
 
 ### 5.2 El reparto
 

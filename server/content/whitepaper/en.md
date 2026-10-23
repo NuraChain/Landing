@@ -55,7 +55,7 @@ The total supply is 1,000,000,000 NURA, one billion, and no more will be created
 
 That figure is published by the project. It is worth knowing that it is one of the few numbers here you cannot check yourself: a wallet or the explorer can show you the balance of any single address, but a coin built into the network has no counter that adds them all up. The individual balances are checkable; the total is the project's word.
 
-We do not state a "circulating supply" in this revision. That number depends on which portions below count as unlocked on a given day, and that is a judgement rather than a measurement. Where the project publishes the addresses holding a portion, anyone can watch those balances instead.
+We do not state a "circulating supply" in this revision. That number depends on how much of each portion below has been handed out by a given day, and this document does not keep that count. Where the project publishes the addresses holding a portion, anyone can watch those balances instead.
 
 ### 5.2 The split
 

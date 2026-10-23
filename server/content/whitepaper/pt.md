@@ -55,7 +55,7 @@ O fornecimento total é de 1.000.000.000 NURA, um bilhão, e nenhum outro será 
 
 Esse número é publicado pelo projeto. Vale saber que ele é um dos poucos números aqui que você não consegue conferir sozinho: uma carteira ou o explorador mostram o saldo de qualquer endereço individual, mas uma moeda que faz parte da rede não tem um contador que some todos eles. Os saldos individuais são conferíveis; o total é a palavra do projeto.
 
-Não declaramos um "fornecimento circulante" nesta revisão. Esse número depende de quais das parcelas abaixo contam como desbloqueadas num dado dia, e isso é um julgamento, não uma medição. Onde o projeto publicar os endereços que guardam uma parcela, qualquer pessoa pode acompanhar esses saldos em vez disso.
+Não declaramos um "fornecimento circulante" nesta revisão. Esse número depende de quanto de cada parcela abaixo já foi distribuído até um dado dia, e este documento não acompanha essa conta. Onde o projeto publicar os endereços que guardam uma parcela, qualquer pessoa pode acompanhar esses saldos em vez disso.
 
 ### 5.2 A divisão
 
