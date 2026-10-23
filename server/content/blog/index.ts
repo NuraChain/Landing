@@ -14,6 +14,7 @@ import { article as bitcoinEtfInflowsQ32026 } from './bitcoin-etf-inflows-q3-202
 import { article as bitgetHackNorthKorea } from './bitget-hack-north-korea/article.ts';
 import { article as blastL2ShutdownWithdrawals } from './blast-l2-shutdown-withdrawals/article.ts';
 import { article as buildADappOnNuraChain } from './build-a-dapp-on-nura-chain/article.ts';
+import { article as chinaNationalBlockchainNetwork } from './china-national-blockchain-network/article.ts';
 import { article as circleArcMainnetStablecoinChain } from './circle-arc-mainnet-stablecoin-chain/article.ts';
 import { article as clarityActSenateVoteFails } from './clarity-act-senate-vote-fails/article.ts';
 import { article as connectToNuraChainRpc } from './connect-to-nura-chain-rpc/article.ts';
@@ -23,16 +24,24 @@ import { article as crossChainIntentsErc7683 } from './cross-chain-intents-erc-7
 import { article as defiTvlQ32026 } from './defi-tvl-q3-2026/article.ts';
 import { article as deployASmartContractOnNuraChain } from './deploy-a-smart-contract-on-nura-chain/article.ts';
 import { article as eip7702SmartAccounts } from './eip-7702-smart-accounts/article.ts';
+import { article as ethereumGlamsterdamDelayEip8037 } from './ethereum-glamsterdam-delay-eip-8037/article.ts';
 import { article as ethereumGlamsterdamUpgrade } from './ethereum-glamsterdam-upgrade/article.ts';
+import { article as fireblocksVisaAcquisitionReport } from './fireblocks-visa-acquisition-report/article.ts';
 import { article as geniusAct10BillionStablecoinRule } from './genius-act-10-billion-stablecoin-rule/article.ts';
 import { article as geniusActStablecoinRules } from './genius-act-stablecoin-rules/article.ts';
 import { article as howToUseNuraChainExplorer } from './how-to-use-nura-chain-explorer/article.ts';
+import { article as hsbcRedcoinHkdStablecoin } from './hsbc-redcoin-hkd-stablecoin/article.ts';
+import { article as imfTokenizationRisks2026 } from './imf-tokenization-risks-2026/article.ts';
+import { article as jpmorganTokenizedMoneyMarketFundsSolana } from './jpmorgan-tokenized-money-market-funds-solana/article.ts';
+import { article as ledgerHardwareWalletImplantCryptobilis } from './ledger-hardware-wallet-implant-cryptobilis/article.ts';
 import { article as liquidNetworkExploitExplained } from './liquid-network-exploit-explained/article.ts';
 import { article as micaBankCryptoCustodyEurope } from './mica-bank-crypto-custody-europe/article.ts';
 import { article as nuraChainEvmCompatibility } from './nura-chain-evm-compatibility/article.ts';
 import { article as nuraCoinTokenomics } from './nura-coin-tokenomics/article.ts';
 import { article as postQuantumBlockchain2029 } from './post-quantum-blockchain-2029/article.ts';
 import { article as predictionMarketsNewYorkLawsuit } from './prediction-markets-new-york-lawsuit/article.ts';
+import { article as pumpFunFomoCrossChainBridges } from './pump-fun-fomo-cross-chain-bridges/article.ts';
+import { article as railwayBreachCryptoTheft19Chains } from './railway-breach-crypto-theft-19-chains/article.ts';
 import { article as secCryptoCustodyProposal } from './sec-crypto-custody-proposal/article.ts';
 import { article as solanaAlpenglowUpgrade } from './solana-alpenglow-upgrade/article.ts';
 import { article as southKoreaTokenizedSecurities2027 } from './south-korea-tokenized-securities-2027/article.ts';
@@ -40,10 +49,10 @@ import { article as tokenUnlocksAndSupplySchedules } from './token-unlocks-and-s
 import { article as tokenizedDepositsSwiftWeekendPayment } from './tokenized-deposits-swift-weekend-payment/article.ts';
 import { article as tokenizedStocksOnchainTrading } from './tokenized-stocks-onchain-trading/article.ts';
 import { article as tokenizedTreasuriesRwa2026 } from './tokenized-treasuries-rwa-2026/article.ts';
+import { article as visaMastercardCryptoWalletPayments } from './visa-mastercard-crypto-wallet-payments/article.ts';
 import { article as whatGasActuallyCostsIn2026 } from './what-gas-actually-costs-in-2026/article.ts';
 import { article as whatIsNuraChain } from './what-is-nura-chain/article.ts';
 import { article as whyAuditedContractsGetDrained } from './why-audited-contracts-get-drained/article.ts';
-
 import { article as whyBuildOnAnEvmCompatibleChain } from './why-build-on-an-evm-compatible-chain/article.ts';
 import { article as whySoManyEvmChains } from './why-so-many-evm-chains/article.ts';
 import { article as zkevmProofsEthereumEip8025 } from './zkevm-proofs-ethereum-eip-8025/article.ts';
@@ -96,5 +105,18 @@ export const ARTICLES: readonly Article[] = [
     coreLightningUpgradeWarning,
     secCryptoCustodyProposal,
     tokenizedStocksOnchainTrading,
-    blastL2ShutdownWithdrawals
+    blastL2ShutdownWithdrawals,
+
+    // The news batch of 23 October 2026: each reports a dated event, and none is dated
+    // earlier than the event it reports.
+    ledgerHardwareWalletImplantCryptobilis,
+    hsbcRedcoinHkdStablecoin,
+    visaMastercardCryptoWalletPayments,
+    fireblocksVisaAcquisitionReport,
+    jpmorganTokenizedMoneyMarketFundsSolana,
+    chinaNationalBlockchainNetwork,
+    imfTokenizationRisks2026,
+    railwayBreachCryptoTheft19Chains,
+    ethereumGlamsterdamDelayEip8037,
+    pumpFunFomoCrossChainBridges
 ];
