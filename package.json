@@ -32,14 +32,7 @@
         "qa:browser": "node scripts/browser-qa.mjs",
         "whitepaper:pdf": "node scripts/whitepaper-pdf.ts",
         "og:image": "node scripts/og-image.ts",
-        "icons": "node scripts/icons.ts",
-        "service:install": "bash scripts/service-install.sh",
-        "service:start": "bash scripts/service-start.sh",
-        "service:stop": "bash scripts/service-stop.sh",
-        "service:restart": "bash scripts/service-restart.sh",
-        "service:status": "bash scripts/service-status.sh",
-        "service:deploy": "npm run build && npm run service:restart",
-        "service:uninstall": "bash scripts/service-uninstall.sh"
+        "icons": "node scripts/icons.ts"
     },
     "devDependencies": {
         "@azerothjs/cli": "2.1.0",

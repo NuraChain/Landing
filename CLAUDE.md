@@ -393,8 +393,7 @@ page has one left edge as you scroll.
 
 ## RTL / LTR
 
-Two RTL locales ship: `fa` and `ar`. Load the **`i18n-rtl-ltr`** skill before
-layout work.
+Two RTL locales ship: `fa` and `ar`.
 
 - **One authority for direction, and it is the SERVER.** `mountPages` is given the ten
   languages (`LOCALES` in `server/src/app.ts`, which is `POST_LOCALES`) and negotiates every
@@ -434,8 +433,6 @@ layout work.
   flags never mirror.
 
 ## Accessibility
-
-Load the **`accessibility-audit`** skill for review work.
 
 - **Native semantics over ARIA.** Do not add ARIA speculatively — most ARIA in
   the wild makes things worse. A `<button>` beats `<div role="button">`.
@@ -656,11 +653,6 @@ Measure before changing; an optimisation with no before/after number is a guess.
   `left` forces layout every frame.
 - Live figures are memoised for 60s per source in `lib/network.ts`; concurrent
   callers join one request.
-
-## Agents
-
-- **`frontend-ui-ux`** — implements UI changes, verifies in a browser.
-- **`frontend-reviewer`** — reviews, read-only by default.
 
 ## MCP
 

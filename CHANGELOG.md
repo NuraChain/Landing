@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- The systemd service scripts and their `service:*` npm entries. The `Dockerfile` is the
+  deploy path.
+
 ## [1.8.5] - 2026-10-23
 
 ### Added
