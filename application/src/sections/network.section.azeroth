@@ -258,8 +258,7 @@ export default component NetworkSection()
             { /* Four tiles that read as four of a kind. They had drifted into two pairs in
                  three separate ways: the first two were ROUNDED where the last two were
                  square, the first two were labelled in sentence case at `text-sm text-muted`
-                 where the last two used the uppercase label face, and the price figure was a
-                 size smaller than its neighbours from `lg` up. Square and uppercase now,
+                 where the last two used the uppercase label face. Square and uppercase now,
                  which is what the chain table, the explorer card and the blog already use.
 
                  The FIGURES share a baseline because each tile is a column and its number
@@ -297,7 +296,10 @@ export default component NetworkSection()
                             { icon(CircleAlert, 'size-4') }
                         </IconButton>
                     </p>
-                    <p class="mt-auto pt-1 font-mono text-2xl font-semibold text-ink sm:text-3xl">
+                    { /* A step smaller than its neighbours on purpose: a sub-cent quote at four
+                          significant digits ("$0.00001234") is the longest figure in the row,
+                          and at `text-3xl` it ran past the tile's edge in the four-column row. */ }
+                    <p class="mt-auto pt-1 font-mono text-xl font-semibold text-ink sm:text-2xl">
                         { () => figure(price === null ? null : price.usd, priceFailed, usd) }
                     </p>
 

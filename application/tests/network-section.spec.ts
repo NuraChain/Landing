@@ -72,13 +72,15 @@ const routeFetch = (sources: Sources): ReturnType<typeof vi.fn> =>
 /**
  * The four headline figures, in the order the grid lays them out.
  *
- * `.text-2xl` narrows this to the tile figures. A bare `.font-mono` also collects the TVL
- * breakdown amounts, the holder addresses and the price note's timestamp - so every index
- * here shifted the day a tile gained a panel, and the assertions that broke were the ones
- * about entirely unrelated tiles.
+ * `.mt-auto` narrows this to the tile figures - it is what pins each one to its tile's
+ * baseline, and nothing else carrying `.font-mono` has it. A bare `.font-mono` also collects
+ * the TVL breakdown amounts, the holder addresses and the price note's timestamp - so every
+ * index here shifted the day a tile gained a panel, and the assertions that broke were the
+ * ones about entirely unrelated tiles. Not a size class either: the price figure is set a
+ * step smaller than the rest.
  */
 const figures = (container: Element): string[] =>
-    [...container.querySelectorAll('.font-mono.text-2xl')].map((el) => el.textContent!.trim());
+    [...container.querySelectorAll('.font-mono.mt-auto')].map((el) => el.textContent!.trim());
 
 const ORDER = ['price', 'height', 'transactions', 'tvl'] as const;
 
