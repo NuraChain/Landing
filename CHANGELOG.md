@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.5] - 2026-10-23
+
+### Added
+
+- **The news batch of 23 October 2026**: ten topical articles in all ten languages, each
+  opening on the answer, with a Key facts list, question-shaped headings and its primary
+  source.
+- **BTC and ETH on the bridge**, priced as bitcoin and ethereum, beside the redeployed BNB
+  and USDT.
+
+### Changed
+
+- **The bridge tokens point at the redeployed contracts.** The BNB and USDT addresses the site
+  listed no longer had code on the chain, so TVL read nothing. Whitepaper 7.4, 9 and 10, the
+  ERC-20 post and what-is-nura-chain name all four assets.
+- **Tokenomics drops the locked portion**: liquidity 50%, community 20%, public sale 10%,
+  treasury 10%, airdrop 10%. The one-year lock and the 65% vote rule go with it. Whitepaper
+  5.1, 5.2 and 6 restated in every language; now at revision 1.3, PDFs regenerated.
+- **The server logs errors only by default.** Per-request lines, the boot line and warnings
+  return with `AZEROTH_LOG=info`.
+
 ## [1.8.4] - 2026-10-14
 
 ### Changed
