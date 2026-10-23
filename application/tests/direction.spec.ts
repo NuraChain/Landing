@@ -42,7 +42,7 @@ beforeEach(() =>
             {
                 if (String(url).includes('coingecko'))
                 {
-                    return { binancecoin: { usd: 600 }, tether: { usd: 1 } };
+                    return { binancecoin: { usd: 600 }, tether: { usd: 1 }, bitcoin: { usd: 1 }, ethereum: { usd: 1 } };
                 }
 
                 if (String(url).includes('explorer'))
@@ -51,7 +51,7 @@ beforeEach(() =>
                 }
 
                 return batched
-                    ? [0, 1, 2, 3].map((id) => ({ jsonrpc: '2.0', id, result: `0x${ (id % 2 === 0 ? 0 : 18).toString(16).padStart(64, '0') }` }))
+                    ? [0, 1, 2, 3, 4, 5, 6, 7].map((id) => ({ jsonrpc: '2.0', id, result: `0x${ (id % 2 === 0 ? 0 : 18).toString(16).padStart(64, '0') }` }))
                     : { jsonrpc: '2.0', id: 1, result: '0x1148' };
             }
         } as unknown as Response);

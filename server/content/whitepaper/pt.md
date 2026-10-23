@@ -101,9 +101,9 @@ O pool é pequeno. Isso significa que uma única negociação grande pode mover 
 
 ### 7.4 A ponte
 
-A ponte permite trazer BNB e USDT para a Nura Chain a partir de suas redes de origem. Ela funciona como a ficha de um guarda-volumes: suas moedas originais ficam trancadas na outra rede, e você recebe aqui uma moeda "encapsulada" equivalente, que pode gastar na Nura Chain. Devolva a moeda encapsulada e a original é liberada.
+A ponte permite trazer BNB, BTC, ETH e USDT para a Nura Chain a partir de suas redes de origem. Ela funciona como a ficha de um guarda-volumes: suas moedas originais ficam trancadas na outra rede, e você recebe aqui uma moeda "encapsulada" equivalente, que pode gastar na Nura Chain. Devolva a moeda encapsulada e a original é liberada.
 
-Uma moeda encapsulada só vale o mesmo que a original enquanto a original estiver realmente lá. O site mostra o valor total que atravessou a ponte, e esse número conta as fichas, não os casacos: ele está certo enquanto cada moeda encapsulada tiver, do outro lado, uma original guardada para ela. Os endereços das duas moedas encapsuladas estão na seção 10.
+Uma moeda encapsulada só vale o mesmo que a original enquanto a original estiver realmente lá. O site mostra o valor total que atravessou a ponte, e esse número conta as fichas, não os casacos: ele está certo enquanto cada moeda encapsulada tiver, do outro lado, uma original guardada para ela. Os endereços das quatro moedas encapsuladas estão na seção 10.
 
 ## 8. Primeiros passos
 
@@ -119,7 +119,7 @@ Se você é desenvolvedor, o blog do site tem guias passo a passo para se conect
 
 - **Uma frase de recuperação perdida significa moedas perdidas.** Ninguém consegue redefini-la, nesta rede nem em nenhuma outra. Anote-a e guarde num lugar seguro.
 - **Um ID de cadeia errado significa moedas perdidas.** Sempre confirme o 1020 antes de enviar, e trate qualquer página, inclusive esta, como algo a conferir, não como algo em que confiar.
-- **O mesmo endereço em outra rede não é o mesmo dinheiro.** Seu endereço existe no Ethereum e em outras redes também, mas os saldos são separados. Enviar moedas para "o mesmo endereço em outra cadeia" não as transfere de uma para a outra. Só a ponte faz isso, e só para BNB e USDT.
+- **O mesmo endereço em outra rede não é o mesmo dinheiro.** Seu endereço existe no Ethereum e em outras redes também, mas os saldos são separados. Enviar moedas para "o mesmo endereço em outra cadeia" não as transfere de uma para a outra. Só a ponte faz isso, e só para BNB, BTC, ETH e USDT.
 - **O preço do swap pode oscilar.** Uma única negociação num pool pequeno pode movê-lo bruscamente.
 - **Uma moeda encapsulada é a ficha, não o casaco.** Ela vale o mesmo que a original só enquanto a ponte guardar a original.
 - **Alguns números são a palavra do projeto.** O fornecimento total e as condições da divisão não podem ser conferidos numa carteira. Os saldos individuais, sim.
@@ -136,10 +136,12 @@ Os valores que uma carteira pede quando você adiciona a rede à mão:
 - Moeda: Nura, sigla `NURA`, 18 casas decimais
 - Tempo de bloco: 3 segundos
 
-As duas moedas encapsuladas que a ponte cria na Nura Chain:
+As quatro moedas encapsuladas que a ponte cria na Nura Chain:
 
-- BNB: `0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc`
-- USDT: `0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC`
+- BNB: `0x578fACf1f6d7de0E78D59f405C2A53f387d94E93`
+- BTC: `0x5891B71b6e18fB8A7d770f65A9060F76C7d2a166`
+- ETH: `0x4BEf1c404e6BdE102d9FCeca678BD7471f3Fd0ba`
+- USDT: `0xeAF3361a86C22e9691283A30338b57cA95567207`
 
 Para onde ir:
 

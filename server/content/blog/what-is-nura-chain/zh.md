@@ -45,7 +45,7 @@ curl -s https://rpc.nurachain.net \
 - 区块浏览器。[Nura Explorer](https://explorer.nurachain.net) 索引区块、交易和转账，是你确认自己发出的东西确实发生了的地方，具体用法见[如何读懂 Nura Chain 区块浏览器](/blog/how-to-use-nura-chain-explorer)。
 - Nura Wallet，一款自托管钱包，提供 Android、Windows 和 Linux 版本。它并不是唯一入口——任何支持自定义网络的 EVM 钱包都可以，这正是[把 Nura Chain 添加到你的钱包](/blog/add-nura-chain-to-your-wallet)所讲的内容。
 
-此外还有一座桥，会在 Nura 上以普通 ERC-20 合约的形式铸造 BNB 和 USDT 的封装表示，以及位于 `https://swap.nurachain.net` 的兑换界面。
+此外还有一座桥，会在 Nura 上以普通 ERC-20 合约的形式铸造 BNB、BTC、ETH 和 USDT 的封装表示，以及位于 `https://swap.nurachain.net` 的兑换界面。
 
 ## 原生代币
 

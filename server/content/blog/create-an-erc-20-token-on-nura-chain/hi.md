@@ -67,7 +67,7 @@ _mint(msg.sender, 1_000_000 * 10 ** 18);
 जाल यह मान लेने में है कि प्रतीक दशमलव की संख्या बता देता है। नहीं बताता, और Nura Chain के पास इसका जीवंत उदाहरण है। यहाँ ब्रिज किया गया USDT कॉन्ट्रैक्ट 18 दशमलव बताता है:
 
 ```bash
-cast call 0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC "decimals()(uint8)" \
+cast call 0xeAF3361a86C22e9691283A30338b57cA95567207 "decimals()(uint8)" \
   --rpc-url https://rpc.nurachain.net
 ```
 
@@ -115,8 +115,8 @@ cast call 0xYourToken "totalSupply()(uint256)" --rpc-url https://rpc.nurachain.n
 केवल अपना नहीं, असली टोकन देखना सार्थक है। नीचे के दोनों Nura Chain पर तैनात सामान्य ERC-20 कॉन्ट्रैक्ट हैं, जो ब्रिज की गई संपत्तियों का प्रतिनिधित्व करते हैं:
 
 ```text
-Bridge BNB    0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc
-Bridge USDT   0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC
+Bridge BNB    0x578fACf1f6d7de0E78D59f405C2A53f387d94E93
+Bridge USDT   0xeAF3361a86C22e9691283A30338b57cA95567207
 ```
 
 इन्हें उसी तरह पूछिए जैसे अपना पूछा था, या [Nura Explorer](https://explorer.nurachain.net) में खोलिए। ये ठीक इसलिए उपयोगी हैं क्योंकि ये किसी ट्यूटोरियल के लिए लिखे उदाहरण नहीं हैं — ये `name()`, `symbol()`, `decimals()` और `totalSupply()` का उत्तर किसी भी अन्य टोकन की तरह देते हैं, और मानक का मतलब यही है।

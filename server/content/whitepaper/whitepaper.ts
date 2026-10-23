@@ -19,7 +19,7 @@ import type { WhitepaperHead } from './types.ts';
  * a search result should promise the plain-language guide the page actually is.
  */
 export const WHITEPAPER: WhitepaperHead = {
-    revision: '1.2',
+    revision: '1.3',
     publishedAt: '2026-09-02T00:00:00.000Z',
     updatedAt: '2026-10-23T00:00:00.000Z',
     defaultLocale: 'en',

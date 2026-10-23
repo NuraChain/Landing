@@ -67,7 +67,7 @@ _mint(msg.sender, 1_000_000 * 10 ** 18);
 Ловушка — предполагать, что тикер задаёт число знаков. Это не так, и у Nura Chain есть живой пример. Здешний мостовой контракт USDT сообщает 18 знаков:
 
 ```bash
-cast call 0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC "decimals()(uint8)" \
+cast call 0xeAF3361a86C22e9691283A30338b57cA95567207 "decimals()(uint8)" \
   --rpc-url https://rpc.nurachain.net
 ```
 
@@ -115,8 +115,8 @@ cast call 0xYourToken "totalSupply()(uint256)" --rpc-url https://rpc.nurachain.n
 Полезно смотреть на настоящие токены, а не только на свой. Оба приведённых — обычные контракты ERC-20, развёрнутые в Nura Chain и представляющие перенесённые мостом активы:
 
 ```text
-Bridge BNB    0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc
-Bridge USDT   0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC
+Bridge BNB    0x578fACf1f6d7de0E78D59f405C2A53f387d94E93
+Bridge USDT   0xeAF3361a86C22e9691283A30338b57cA95567207
 ```
 
 Опросите их так же, как опрашивали свой, или откройте в [Nura Explorer](https://explorer.nurachain.net). Они полезны именно тем, что это не примеры, написанные для урока: они отвечают на `name()`, `symbol()`, `decimals()` и `totalSupply()` как любой другой токен, и в этом весь смысл стандарта.

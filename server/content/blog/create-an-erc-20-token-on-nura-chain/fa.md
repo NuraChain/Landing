@@ -67,7 +67,7 @@ _mint(msg.sender, 1_000_000 * 10 ** 18);
 تله آنجاست که فرض کنید یک نماد، تعداد اعشار را می‌رساند. چنین نیست، و نورا چین نمونه‌ای زنده دارد. قرارداد USDT پل‌شده اینجا ۱۸ اعشار گزارش می‌کند:
 
 ```bash
-cast call 0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC "decimals()(uint8)" \
+cast call 0xeAF3361a86C22e9691283A30338b57cA95567207 "decimals()(uint8)" \
   --rpc-url https://rpc.nurachain.net
 ```
 
@@ -115,8 +115,8 @@ cast call 0xYourToken "totalSupply()(uint256)" --rpc-url https://rpc.nurachain.n
 ارزش دارد به نمونه‌های واقعی نگاه کنید نه فقط به مال خودتان. هر دوی اینها قراردادهای معمولی ERC-20 مستقرشده روی نورا چین‌اند که دارایی‌های پل‌شده را نمایندگی می‌کنند:
 
 ```text
-Bridge BNB    0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc
-Bridge USDT   0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC
+Bridge BNB    0x578fACf1f6d7de0E78D59f405C2A53f387d94E93
+Bridge USDT   0xeAF3361a86C22e9691283A30338b57cA95567207
 ```
 
 آنها را به همان روشی که مال خودتان را پرسیدید بپرسید، یا در [کاوشگر نورا](https://explorer.nurachain.net) بازشان کنید. دقیقاً از این رو مفیدند که نمونه‌هایی نیستند که برای یک آموزش نوشته شده باشند — به `name()`، `symbol()`، `decimals()` و `totalSupply()` مثل هر توکن دیگری پاسخ می‌دهند، و نکته یک استاندارد همین است.

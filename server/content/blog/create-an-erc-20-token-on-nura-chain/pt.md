@@ -67,7 +67,7 @@ Passar `1_000_000` em vez disso emite um milionésimo de milionésimo de token, 
 A armadilha é supor que um símbolo implica uma quantidade de casas. Não implica, e a Nura Chain tem um exemplo vivo. O contrato de USDT em ponte aqui informa 18 casas decimais:
 
 ```bash
-cast call 0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC "decimals()(uint8)" \
+cast call 0xeAF3361a86C22e9691283A30338b57cA95567207 "decimals()(uint8)" \
   --rpc-url https://rpc.nurachain.net
 ```
 
@@ -115,8 +115,8 @@ Se sua carteira ainda nem aponta para esta rede, [adicionar a Nura Chain à sua 
 Vale olhar tokens reais, não só o seu. Ambos abaixo são contratos ERC-20 comuns implantados na Nura Chain, representando ativos em ponte:
 
 ```text
-Bridge BNB    0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc
-Bridge USDT   0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC
+Bridge BNB    0x578fACf1f6d7de0E78D59f405C2A53f387d94E93
+Bridge USDT   0xeAF3361a86C22e9691283A30338b57cA95567207
 ```
 
 Consulte-os do mesmo jeito que consultou o seu, ou abra-os no [Nura Explorer](https://explorer.nurachain.net). São úteis justamente por não serem exemplos escritos para um tutorial — respondem a `name()`, `symbol()`, `decimals()` e `totalSupply()` como qualquer outro token, que é exatamente o sentido de um padrão.

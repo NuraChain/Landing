@@ -203,7 +203,7 @@ export interface BridgeToken
 /**
  * The bridged assets whose value makes up TVL.
  *
- * Both are mint-and-burn ERC-20s on Nura, NOT vaults - they carry no `getBalance`, and
+ * All four are mint-and-burn ERC-20s on Nura, NOT vaults - they carry no `getBalance`, and
  * their own token balances are zero. So the figure that means "value bridged in" is
  * `totalSupply()`: a unit exists here only because a unit was locked on the origin chain,
  * which is the same way bridged TVL is counted elsewhere. `balanceOf(token)` would instead
@@ -214,12 +214,17 @@ export interface BridgeToken
  * BNB Chain and Ethereum is the authoritative side, and this page cannot see it.
  *
  * Decimals are read on-chain rather than listed here, so a redeploy cannot silently move
- * the decimal point on a dollar figure.
+ * the decimal point on a dollar figure. That redeploy happened: the addresses below replaced
+ * a BNB and USDT pair that no longer has code on the chain (checked 2026-10-23). The pair
+ * keeps its place at the head of the list, so the breakdown a returning reader knows does
+ * not reshuffle; BTC and ETH arrived with the redeploy and follow it.
  */
 export const BRIDGE_TOKENS: readonly BridgeToken[] =
 [
-    { symbol: 'BNB', address: '0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc', priceId: 'binancecoin' },
-    { symbol: 'USDT', address: '0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC', priceId: 'tether' }
+    { symbol: 'BNB', address: '0x578fACf1f6d7de0E78D59f405C2A53f387d94E93', priceId: 'binancecoin' },
+    { symbol: 'USDT', address: '0xeAF3361a86C22e9691283A30338b57cA95567207', priceId: 'tether' },
+    { symbol: 'BTC', address: '0x5891B71b6e18fB8A7d770f65A9060F76C7d2a166', priceId: 'bitcoin' },
+    { symbol: 'ETH', address: '0x4BEf1c404e6BdE102d9FCeca678BD7471f3Fd0ba', priceId: 'ethereum' }
 ];
 
 /**

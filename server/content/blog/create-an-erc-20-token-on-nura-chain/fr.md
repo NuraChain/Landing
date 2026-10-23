@@ -67,7 +67,7 @@ Passer `1_000_000` à la place émet un millionième de millionième de jeton, e
 Le piège consiste à croire qu'un symbole implique un nombre de décimales. Ce n'est pas le cas, et Nura Chain en offre un exemple vivant. Le contrat USDT ponté ici annonce 18 décimales :
 
 ```bash
-cast call 0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC "decimals()(uint8)" \
+cast call 0xeAF3361a86C22e9691283A30338b57cA95567207 "decimals()(uint8)" \
   --rpc-url https://rpc.nurachain.net
 ```
 
@@ -115,8 +115,8 @@ Si votre portefeuille ne pointe pas encore vers ce réseau, [ajouter Nura Chain 
 Il vaut la peine de regarder de vrais jetons, pas seulement le vôtre. Les deux suivants sont des contrats ERC-20 ordinaires déployés sur Nura Chain, représentant des actifs pontés :
 
 ```text
-Bridge BNB    0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc
-Bridge USDT   0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC
+Bridge BNB    0x578fACf1f6d7de0E78D59f405C2A53f387d94E93
+Bridge USDT   0xeAF3361a86C22e9691283A30338b57cA95567207
 ```
 
 Interrogez-les comme vous avez interrogé le vôtre, ou ouvrez-les dans [Nura Explorer](https://explorer.nurachain.net). Ils sont utiles précisément parce qu'ils ne sont pas des exemples écrits pour un tutoriel : ils répondent à `name()`, `symbol()`, `decimals()` et `totalSupply()` comme n'importe quel autre jeton, ce qui est tout l'intérêt d'un standard.

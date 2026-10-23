@@ -42,7 +42,7 @@ const routeFetch = (sources: Sources): ReturnType<typeof vi.fn> =>
 
         if (target.includes('coingecko'))
         {
-            return (sources.prices ?? (() => Promise.resolve(ok({ binancecoin: { usd: 600 }, tether: { usd: 1 } }))))();
+            return (sources.prices ?? (() => Promise.resolve(ok({ binancecoin: { usd: 600 }, tether: { usd: 1 }, bitcoin: { usd: 1 }, ethereum: { usd: 1 } }))))();
         }
 
         if (target.includes('explorer'))
@@ -55,7 +55,9 @@ const routeFetch = (sources: Sources): ReturnType<typeof vi.fn> =>
         {
             return (sources.supplies ?? (() => Promise.resolve(ok([
                 { id: 0, result: word(0n) }, { id: 1, result: word(18n) },
-                { id: 2, result: word(0n) }, { id: 3, result: word(18n) }
+                { id: 2, result: word(0n) }, { id: 3, result: word(18n) },
+                { id: 4, result: word(0n) }, { id: 5, result: word(18n) },
+                { id: 6, result: word(0n) }, { id: 7, result: word(18n) }
             ]))))();
         }
 
@@ -240,7 +242,9 @@ describe('NetworkSection TVL breakdown', () =>
     const withBalances = () => routeFetch({
         supplies: () => Promise.resolve(ok([
             { id: 0, result: word(2n * 10n ** 18n) }, { id: 1, result: word(18n) },
-            { id: 2, result: word(500n * 10n ** 18n) }, { id: 3, result: word(18n) }
+            { id: 2, result: word(500n * 10n ** 18n) }, { id: 3, result: word(18n) },
+            { id: 4, result: word(0n) }, { id: 5, result: word(18n) },
+            { id: 6, result: word(0n) }, { id: 7, result: word(18n) }
         ]))
     });
 

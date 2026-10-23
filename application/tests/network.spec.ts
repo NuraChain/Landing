@@ -197,14 +197,16 @@ describe('bridgeTvl', () =>
 
     const supplies = (bnb: bigint, usdt: bigint) => [
         { id: 0, value: bnb }, { id: 1, value: 18n },
-        { id: 2, value: usdt }, { id: 3, value: 18n }
+        { id: 2, value: usdt }, { id: 3, value: 18n },
+        { id: 4, value: 0n }, { id: 5, value: 18n },
+        { id: 6, value: 0n }, { id: 7, value: 18n }
     ];
 
     it('prices each bridged supply and sums them', async () =>
     {
         const fetchMock = vi.fn().mockImplementation((url: string) =>
             Promise.resolve(String(url).includes('coingecko')
-                ? prices({ binancecoin: { usd: 600 }, tether: { usd: 1 } })
+                ? prices({ binancecoin: { usd: 600 }, tether: { usd: 1 }, bitcoin: { usd: 1 }, ethereum: { usd: 1 } })
                 : batch(supplies(2n * 10n ** 18n, 500n * 10n ** 18n))));
 
         vi.stubGlobal('fetch', fetchMock);
@@ -217,7 +219,7 @@ describe('bridgeTvl', () =>
     {
         const fetchMock = vi.fn().mockImplementation((url: string) =>
             Promise.resolve(String(url).includes('coingecko')
-                ? prices({ binancecoin: { usd: 600 }, tether: { usd: 1 } })
+                ? prices({ binancecoin: { usd: 600 }, tether: { usd: 1 }, bitcoin: { usd: 1 }, ethereum: { usd: 1 } })
                 : batch(supplies(2n * 10n ** 18n, 500n * 10n ** 18n))));
 
         vi.stubGlobal('fetch', fetchMock);
@@ -226,11 +228,13 @@ describe('bridgeTvl', () =>
 
         expect(parts).toEqual([
             { symbol: 'BNB', units: 2, usd: 1200 },
-            { symbol: 'USDT', units: 500, usd: 500 }
+            { symbol: 'USDT', units: 500, usd: 500 },
+            { symbol: 'BTC', units: 0, usd: 0 },
+            { symbol: 'ETH', units: 0, usd: 0 }
         ]);
     });
 
-    it('still names both tokens when nothing is bridged', async () =>
+    it('still names every token when nothing is bridged', async () =>
     {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue(batch(supplies(0n, 0n))));
 
@@ -238,7 +242,7 @@ describe('bridgeTvl', () =>
 
         // The breakdown must say which assets are empty, not fall silent - "$0.00" with no
         // rows would leave a reader unable to tell zero from unsupported.
-        expect(parts.map((part) => part.symbol)).toEqual(['BNB', 'USDT']);
+        expect(parts.map((part) => part.symbol)).toEqual(['BNB', 'USDT', 'BTC', 'ETH']);
         expect(parts.every((part) => part.units === 0)).toBe(true);
     });
 
@@ -260,7 +264,7 @@ describe('bridgeTvl', () =>
     {
         const fetchMock = vi.fn().mockImplementation((url: string) =>
             Promise.resolve(String(url).includes('coingecko')
-                ? prices({ binancecoin: { usd: 600 }, tether: { usd: 1 } })
+                ? prices({ binancecoin: { usd: 600 }, tether: { usd: 1 }, bitcoin: { usd: 1 }, ethereum: { usd: 1 } })
                 : batch([...supplies(1n * 10n ** 18n, 7n * 10n ** 18n)].reverse())));
 
         vi.stubGlobal('fetch', fetchMock);
@@ -272,10 +276,12 @@ describe('bridgeTvl', () =>
     {
         const fetchMock = vi.fn().mockImplementation((url: string) =>
             Promise.resolve(String(url).includes('coingecko')
-                ? prices({ binancecoin: { usd: 600 }, tether: { usd: 1 } })
+                ? prices({ binancecoin: { usd: 600 }, tether: { usd: 1 }, bitcoin: { usd: 1 }, ethereum: { usd: 1 } })
                 : batch([
                     { id: 0, value: 0n }, { id: 1, value: 18n },
-                    { id: 2, value: 1_000_000n }, { id: 3, value: 6n }
+                    { id: 2, value: 1_000_000n }, { id: 3, value: 6n },
+                    { id: 4, value: 0n }, { id: 5, value: 18n },
+                    { id: 6, value: 0n }, { id: 7, value: 18n }
                 ])));
 
         vi.stubGlobal('fetch', fetchMock);

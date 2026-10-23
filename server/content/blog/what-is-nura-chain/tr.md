@@ -45,7 +45,7 @@ Buradaki bloklar EIP-1559 taban ücreti taşır; yani işlemler London'dan bu ya
 - Blok gezgini. [Nura Explorer](https://explorer.nurachain.net) blokları, işlemleri ve transferleri dizinler. Gönderdiğiniz şeyin gerçekten olduğunu orada doğrularsınız; anlatımı [Nura Chain gezgini nasıl okunur](/blog/how-to-use-nura-chain-explorer) yazısında.
 - Nura Wallet, Android, Windows ve Linux sürümleri olan kendi saklamalı bir cüzdan. Tek giriş yolu değil — özel ağ kabul eden herhangi bir EVM cüzdanı iş görür; bunu [Nura Chain'i cüzdanınıza eklemek](/blog/add-nura-chain-to-your-wallet) adım adım anlatıyor.
 
-Ayrıca BNB ve USDT'nin sarmalanmış temsillerini Nura üzerinde sıradan ERC-20 sözleşmeleri olarak basan bir köprü ve `https://swap.nurachain.net` adresinde bir takas arayüzü var.
+Ayrıca BNB, BTC, ETH ve USDT'nin sarmalanmış temsillerini Nura üzerinde sıradan ERC-20 sözleşmeleri olarak basan bir köprü ve `https://swap.nurachain.net` adresinde bir takas arayüzü var.
 
 ## Yerel coin
 

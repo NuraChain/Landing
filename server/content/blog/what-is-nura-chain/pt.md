@@ -45,7 +45,7 @@ Três coisas estão no ar e acessíveis agora, e vale ser preciso sobre quais s�
 - O explorador de blocos. O [Nura Explorer](https://explorer.nurachain.net) indexa blocos, transações e transferências. É onde você confirma que algo enviado realmente aconteceu, e está descrito em [como ler o explorador da Nura Chain](/blog/how-to-use-nura-chain-explorer).
 - A Nura Wallet, uma carteira de autocustódia com versões para Android, Windows e Linux. Não é a única porta de entrada — qualquer carteira EVM que aceite uma rede personalizada serve, que é o que [adicionar a Nura Chain à sua carteira](/blog/add-nura-chain-to-your-wallet) percorre.
 
-Existe também uma ponte que emite representações encapsuladas de BNB e USDT na Nura como contratos ERC-20 comuns, e uma interface de troca em `https://swap.nurachain.net`.
+Existe também uma ponte que emite representações encapsuladas de BNB, BTC, ETH e USDT na Nura como contratos ERC-20 comuns, e uma interface de troca em `https://swap.nurachain.net`.
 
 ## A moeda nativa
 

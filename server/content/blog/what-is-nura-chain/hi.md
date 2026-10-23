@@ -45,7 +45,7 @@ Ethereum Virtual Machine वही निष्पादन वातावर�
 - ब्लॉक एक्सप्लोरर। [Nura Explorer](https://explorer.nurachain.net) ब्लॉक, ट्रांज़ैक्शन और ट्रांसफ़र को अनुक्रमित करता है। यहीं आप पुष्टि करते हैं कि आपने जो भेजा वह सचमुच हुआ, और इसका विवरण [Nura Chain एक्सप्लोरर कैसे पढ़ें](/blog/how-to-use-nura-chain-explorer) में है।
 - Nura Wallet, एक सेल्फ़-कस्टडी वॉलेट जिसके Android, Windows और Linux बिल्ड हैं। यह अकेला रास्ता नहीं है — कोई भी EVM वॉलेट जो कस्टम नेटवर्क स्वीकार करे, काम करेगा, जिसे [अपने वॉलेट में Nura Chain जोड़ना](/blog/add-nura-chain-to-your-wallet) क़दम-दर-क़दम बताता है।
 
-एक ब्रिज भी है जो BNB और USDT के रैप्ड प्रतिरूप Nura पर सामान्य ERC-20 कॉन्ट्रैक्ट के रूप में जारी करता है, और `https://swap.nurachain.net` पर एक स्वैप इंटरफ़ेस।
+एक ब्रिज भी है जो BNB, BTC, ETH और USDT के रैप्ड प्रतिरूप Nura पर सामान्य ERC-20 कॉन्ट्रैक्ट के रूप में जारी करता है, और `https://swap.nurachain.net` पर एक स्वैप इंटरफ़ेस।
 
 ## नेटिव कॉइन
 

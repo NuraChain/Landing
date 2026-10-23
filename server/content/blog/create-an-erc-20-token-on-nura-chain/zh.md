@@ -67,7 +67,7 @@ _mint(msg.sender, 1_000_000 * 10 ** 18);
 真正的陷阱是以为符号能推断出小数位数。它不能，而 Nura Chain 上就有一个活生生的例子。这里跨链而来的 USDT 合约报告的是 18 位小数：
 
 ```bash
-cast call 0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC "decimals()(uint8)" \
+cast call 0xeAF3361a86C22e9691283A30338b57cA95567207 "decimals()(uint8)" \
   --rpc-url https://rpc.nurachain.net
 ```
 
@@ -115,8 +115,8 @@ cast call 0xYourToken "totalSupply()(uint256)" --rpc-url https://rpc.nurachain.n
 值得看看真实的代币，而不只是你自己的。下面两份都是部署在 Nura Chain 上的普通 ERC-20 合约，代表跨链而来的资产：
 
 ```text
-Bridge BNB    0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc
-Bridge USDT   0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC
+Bridge BNB    0x578fACf1f6d7de0E78D59f405C2A53f387d94E93
+Bridge USDT   0xeAF3361a86C22e9691283A30338b57cA95567207
 ```
 
 用你查询自己代币的方式去查询它们，或在 [Nura Explorer](https://explorer.nurachain.net) 中打开。它们有用，恰恰因为它们不是为教程写的例子——它们和任何别的代币一样回应 `name()`、`symbol()`、`decimals()` 和 `totalSupply()`，而这正是「标准」的意义所在。

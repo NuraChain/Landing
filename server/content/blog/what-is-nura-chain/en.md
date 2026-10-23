@@ -45,7 +45,7 @@ Three things are live and reachable right now, and it is worth being precise abo
 - The block explorer. [Nura Explorer](https://explorer.nurachain.net) indexes blocks, transactions and transfers. It is where you confirm that something you sent actually happened, and it is described in [how to read the Nura Chain explorer](/blog/how-to-use-nura-chain-explorer).
 - Nura Wallet, a self-custody wallet with builds for Android, Windows and Linux. It is not the only way in — any EVM wallet that accepts a custom network will do, which is what [adding Nura Chain to your wallet](/blog/add-nura-chain-to-your-wallet) walks through.
 
-There is also a bridge that mints wrapped representations of BNB and USDT on Nura as ordinary ERC-20 contracts, and a swap interface at `https://swap.nurachain.net`.
+There is also a bridge that mints wrapped representations of BNB, BTC, ETH and USDT on Nura as ordinary ERC-20 contracts, and a swap interface at `https://swap.nurachain.net`.
 
 ## The native coin
 

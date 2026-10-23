@@ -101,9 +101,9 @@ El fondo es pequeño. Eso significa que una sola operación grande puede mover m
 
 ### 7.4 El puente
 
-El puente te permite traer BNB y USDT a Nura Chain desde sus redes de origen. Funciona como el ticket de un guardarropa: tus monedas originales quedan bloqueadas en la otra red y aquí recibes una moneda «envuelta» equivalente que puedes gastar en Nura Chain. Devuelve la moneda envuelta y la original se libera.
+El puente te permite traer BNB, BTC, ETH y USDT a Nura Chain desde sus redes de origen. Funciona como el ticket de un guardarropa: tus monedas originales quedan bloqueadas en la otra red y aquí recibes una moneda «envuelta» equivalente que puedes gastar en Nura Chain. Devuelve la moneda envuelta y la original se libera.
 
-Una moneda envuelta solo vale lo que su original mientras el original esté realmente ahí. El sitio muestra el valor total que ha cruzado el puente, y esa cifra cuenta los tickets, no los abrigos: es correcta siempre que cada moneda envuelta esté respaldada una a una al otro lado. Las direcciones de las dos monedas envueltas están en la sección 10.
+Una moneda envuelta solo vale lo que su original mientras el original esté realmente ahí. El sitio muestra el valor total que ha cruzado el puente, y esa cifra cuenta los tickets, no los abrigos: es correcta siempre que cada moneda envuelta esté respaldada una a una al otro lado. Las direcciones de las cuatro monedas envueltas están en la sección 10.
 
 ## 8. Primeros pasos
 
@@ -119,7 +119,7 @@ Si eres desarrollador, el blog del sitio tiene guías paso a paso para conectars
 
 - **Perder la frase de recuperación es perder las monedas.** Nadie puede restablecerla, ni en esta red ni en ninguna otra. Apúntala y guárdala en un lugar seguro.
 - **Un ID de cadena equivocado es perder las monedas.** Confirma siempre el 1020 antes de enviar, y trata cualquier página, incluida esta, como algo que comprobar y no como algo en lo que confiar.
-- **La misma dirección en otra red no es el mismo dinero.** Tu dirección existe también en Ethereum y en otras redes, pero los saldos son independientes. Enviar monedas a «la misma dirección en otra cadena» no las traslada. Solo el puente hace eso, y solo con BNB y USDT.
+- **La misma dirección en otra red no es el mismo dinero.** Tu dirección existe también en Ethereum y en otras redes, pero los saldos son independientes. Enviar monedas a «la misma dirección en otra cadena» no las traslada. Solo el puente hace eso, y solo con BNB, BTC, ETH y USDT.
 - **El precio del swap puede oscilar.** Una sola operación en un fondo pequeño puede moverlo de golpe.
 - **Una moneda envuelta es el ticket, no el abrigo.** Vale lo que la original solo mientras el puente guarde la original.
 - **Algunas cifras son la palabra del proyecto.** El suministro total y las condiciones del reparto no se pueden comprobar en una cartera. Los saldos individuales, sí.
@@ -136,10 +136,12 @@ Los valores que te pide una cartera cuando añades la red a mano:
 - Moneda: Nura, símbolo `NURA`, 18 decimales
 - Tiempo de bloque: 3 segundos
 
-Las dos monedas envueltas que el puente crea en Nura Chain:
+Las cuatro monedas envueltas que el puente crea en Nura Chain:
 
-- BNB: `0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc`
-- USDT: `0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC`
+- BNB: `0x578fACf1f6d7de0E78D59f405C2A53f387d94E93`
+- BTC: `0x5891B71b6e18fB8A7d770f65A9060F76C7d2a166`
+- ETH: `0x4BEf1c404e6BdE102d9FCeca678BD7471f3Fd0ba`
+- USDT: `0xeAF3361a86C22e9691283A30338b57cA95567207`
 
 A dónde ir:
 

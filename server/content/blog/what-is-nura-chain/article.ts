@@ -16,8 +16,9 @@ export const article: Article = {
 
     // Carried over from the sqlite the store used to keep these in, not invented here:
     // these are the timestamps the cluster was actually published and last revised under.
+    // `updatedAt` moved on 2026-10-23, when the bridge tokens were redeployed.
     publishedAt: '2026-08-22T00:40:57.000Z',
-    updatedAt: '2026-08-22T01:53:27.000Z',
+    updatedAt: '2026-10-23T00:00:00.000Z',
     coverImage: null,
 
     heads: {

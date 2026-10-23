@@ -16,7 +16,11 @@ const SUPPLIES = [
     { jsonrpc: '2.0', id: 0, result: word(2n * 10n ** 18n) },
     { jsonrpc: '2.0', id: 1, result: word(18n) },
     { jsonrpc: '2.0', id: 2, result: word(0n) },
-    { jsonrpc: '2.0', id: 3, result: word(18n) }
+    { jsonrpc: '2.0', id: 3, result: word(18n) },
+    { jsonrpc: '2.0', id: 4, result: word(0n) },
+    { jsonrpc: '2.0', id: 5, result: word(18n) },
+    { jsonrpc: '2.0', id: 6, result: word(0n) },
+    { jsonrpc: '2.0', id: 7, result: word(18n) }
 ];
 
 /** Fails exactly one upstream and answers the others normally. */
@@ -29,7 +33,7 @@ const failOnly = (target: 'rpc' | 'batch' | 'explorer' | 'prices', code: number)
 
         if (href.includes('coingecko'))
         {
-            return Promise.resolve(target === 'prices' ? status(code) : ok({ binancecoin: { usd: 600 }, tether: { usd: 1 } }));
+            return Promise.resolve(target === 'prices' ? status(code) : ok({ binancecoin: { usd: 600 }, tether: { usd: 1 }, bitcoin: { usd: 1 }, ethereum: { usd: 1 } }));
         }
 
         if (href.includes('explorer'))
@@ -212,7 +216,7 @@ describe('request shape', () =>
     {
         const fetchMock = vi.fn().mockImplementation((url: string) =>
             Promise.resolve(String(url).includes('coingecko')
-                ? ok({ binancecoin: { usd: 600 }, tether: { usd: 1 } })
+                ? ok({ binancecoin: { usd: 600 }, tether: { usd: 1 }, bitcoin: { usd: 1 }, ethereum: { usd: 1 } })
                 : ok(SUPPLIES)));
 
         vi.stubGlobal('fetch', fetchMock);
@@ -224,7 +228,7 @@ describe('request shape', () =>
 
         const batch = JSON.parse((rpcCalls[0][1] as RequestInit).body as string) as unknown[];
 
-        expect(batch).toHaveLength(4);
+        expect(batch).toHaveLength(8);
         expect(batch.every((entry) => (entry as { method: string }).method === 'eth_call')).toBe(true);
     });
 
@@ -232,7 +236,7 @@ describe('request shape', () =>
     {
         const fetchMock = vi.fn().mockImplementation((url: string) =>
             Promise.resolve(String(url).includes('coingecko')
-                ? ok({ binancecoin: { usd: 600 }, tether: { usd: 1 } })
+                ? ok({ binancecoin: { usd: 600 }, tether: { usd: 1 }, bitcoin: { usd: 1 }, ethereum: { usd: 1 } })
                 : ok(SUPPLIES)));
 
         vi.stubGlobal('fetch', fetchMock);

@@ -101,9 +101,9 @@ Havuz küçük. Bu da tek bir büyük işlemin fiyatı iki yönde de epey oynata
 
 ### 7.4 Köprü
 
-Köprü, BNB ve USDT'yi kendi ağlarından Nura Chain'e getirmenizi sağlar. Vestiyer fişi gibi çalışır: asıl coinleriniz öbür ağda kilitlenir ve burada, Nura Chain'de harcayabileceğiniz eşleşen bir "sarmalanmış" coin alırsınız. Sarmalanmış coini geri verdiğinizde asıl olan serbest bırakılır.
+Köprü, BNB, BTC, ETH ve USDT'yi kendi ağlarından Nura Chain'e getirmenizi sağlar. Vestiyer fişi gibi çalışır: asıl coinleriniz öbür ağda kilitlenir ve burada, Nura Chain'de harcayabileceğiniz eşleşen bir "sarmalanmış" coin alırsınız. Sarmalanmış coini geri verdiğinizde asıl olan serbest bırakılır.
 
-Sarmalanmış bir coin, ancak aslı gerçekten orada durduğu sürece aslı kadar eder. Site köprüden geçen toplam değeri gösterir ve o rakam paltoları değil fişleri sayar: her sarmalanmış coin öbür tarafta birebir karşılandığı sürece doğrudur. İki sarmalanmış coinin adresleri Bölüm 10'da listeleniyor.
+Sarmalanmış bir coin, ancak aslı gerçekten orada durduğu sürece aslı kadar eder. Site köprüden geçen toplam değeri gösterir ve o rakam paltoları değil fişleri sayar: her sarmalanmış coin öbür tarafta birebir karşılandığı sürece doğrudur. Dört sarmalanmış coinin adresleri Bölüm 10'da listeleniyor.
 
 ## 8. Başlarken
 
@@ -119,7 +119,7 @@ Geliştiriciyseniz sitenin blogunda ağa bağlanmak ve sözleşme dağıtmak iç
 
 - **Kaybolan kurtarma ifadesi, kaybolan coin demektir.** Ne bu ağda ne başka bir ağda kimse onu sıfırlayamaz. Bir yere yazın ve güvenli bir yerde saklayın.
 - **Yanlış zincir kimliği, kaybolan coin demektir.** Göndermeden önce her zaman 1020 olduğunu doğrulayın ve bu sayfa dahil her sayfayı güvenilecek bir şey olarak değil, denetlenecek bir şey olarak görün.
-- **Başka bir ağdaki aynı adres, aynı para değildir.** Adresiniz Ethereum'da ve başka ağlarda da var, ama bakiyeler ayrıdır. Coinleri "başka bir zincirdeki aynı adrese" göndermek onları karşıya taşımaz. Bunu yalnızca köprü yapar ve yalnızca BNB ile USDT için.
+- **Başka bir ağdaki aynı adres, aynı para değildir.** Adresiniz Ethereum'da ve başka ağlarda da var, ama bakiyeler ayrıdır. Coinleri "başka bir zincirdeki aynı adrese" göndermek onları karşıya taşımaz. Bunu yalnızca köprü yapar ve yalnızca BNB, BTC, ETH ve USDT için.
 - **Takas fiyatı dalgalanabilir.** Küçük bir havuzdaki tek bir işlem onu sert biçimde oynatabilir.
 - **Sarmalanmış coin fiştir, palto değil.** Ancak köprü aslını tuttuğu sürece aslı kadar eder.
 - **Bazı rakamlar projenin sözüdür.** Toplam arz ve dağılımın koşulları bir cüzdanda denetlenemez. Tek tek bakiyeler denetlenebilir.
@@ -136,10 +136,12 @@ Ağı elle eklerken bir cüzdanın sizden istediği değerler:
 - Coin: Nura, sembolü `NURA`, 18 ondalık basamak
 - Blok süresi: 3 saniye
 
-Köprünün Nura Chain üzerinde oluşturduğu iki sarmalanmış coin:
+Köprünün Nura Chain üzerinde oluşturduğu dört sarmalanmış coin:
 
-- BNB: `0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc`
-- USDT: `0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC`
+- BNB: `0x578fACf1f6d7de0E78D59f405C2A53f387d94E93`
+- BTC: `0x5891B71b6e18fB8A7d770f65A9060F76C7d2a166`
+- ETH: `0x4BEf1c404e6BdE102d9FCeca678BD7471f3Fd0ba`
+- USDT: `0xeAF3361a86C22e9691283A30338b57cA95567207`
 
 Nereye gidilir:
 

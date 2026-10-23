@@ -67,7 +67,7 @@ Bunun yerine `1_000_000` vermek, tokenın milyonda birinin milyonda birini basar
 Tuzak, sembolün ondalık sayısını ima ettiğini varsaymaktır. Etmez ve Nura Chain'de bunun canlı bir örneği var. Buradaki köprülenmiş USDT sözleşmesi 18 ondalık bildiriyor:
 
 ```bash
-cast call 0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC "decimals()(uint8)" \
+cast call 0xeAF3361a86C22e9691283A30338b57cA95567207 "decimals()(uint8)" \
   --rpc-url https://rpc.nurachain.net
 ```
 
@@ -115,8 +115,8 @@ Cüzdanınız bu ağa henüz hiç yöneltilmemişse, önce [Nura Chain'i cüzdan
 Yalnızca kendinizinkine değil, gerçek tokenlara bakmakta yarar var. Aşağıdakilerin ikisi de Nura Chain üzerinde dağıtılmış, köprülenmiş varlıkları temsil eden sıradan ERC-20 sözleşmeleridir:
 
 ```text
-Bridge BNB    0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc
-Bridge USDT   0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC
+Bridge BNB    0x578fACf1f6d7de0E78D59f405C2A53f387d94E93
+Bridge USDT   0xeAF3361a86C22e9691283A30338b57cA95567207
 ```
 
 Kendi tokenınızı sorguladığınız gibi bunları da sorgulayın ya da [Nura Explorer](https://explorer.nurachain.net) üzerinde açın. Tam da bir ders için yazılmış örnekler olmadıkları için yararlılar — `name()`, `symbol()`, `decimals()` ve `totalSupply()` sorularına başka herhangi bir token gibi yanıt verirler; standardın anlamı da budur.

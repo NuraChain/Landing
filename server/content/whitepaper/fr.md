@@ -101,9 +101,9 @@ Ce pool est petit. Cela veut dire qu'une seule grosse transaction peut faire bea
 
 ### 7.4 Le pont
 
-Le pont vous permet de faire venir des BNB et des USDT sur Nura Chain depuis leurs réseaux d'origine. Il fonctionne comme un ticket de vestiaire : vos jetons d'origine sont bloqués sur l'autre réseau, et vous recevez ici un jeton « encapsulé » équivalent que vous pouvez dépenser sur Nura Chain. Rendez le jeton encapsulé et l'original est libéré.
+Le pont vous permet de faire venir des BNB, des BTC, des ETH et des USDT sur Nura Chain depuis leurs réseaux d'origine. Il fonctionne comme un ticket de vestiaire : vos jetons d'origine sont bloqués sur l'autre réseau, et vous recevez ici un jeton « encapsulé » équivalent que vous pouvez dépenser sur Nura Chain. Rendez le jeton encapsulé et l'original est libéré.
 
-Un jeton encapsulé ne vaut son original que tant que l'original est vraiment là. Le site affiche la valeur totale qui a traversé le pont, et ce chiffre compte les tickets, pas les manteaux : il est juste tant que chaque jeton encapsulé est couvert un pour un de l'autre côté. Les adresses des deux jetons encapsulés figurent dans la section 10.
+Un jeton encapsulé ne vaut son original que tant que l'original est vraiment là. Le site affiche la valeur totale qui a traversé le pont, et ce chiffre compte les tickets, pas les manteaux : il est juste tant que chaque jeton encapsulé est couvert un pour un de l'autre côté. Les adresses des quatre jetons encapsulés figurent dans la section 10.
 
 ## 8. Premiers pas
 
@@ -119,7 +119,7 @@ Si vous êtes développeur, le blog du site propose des guides pas à pas pour s
 
 - **Une phrase de récupération perdue, ce sont des jetons perdus.** Personne ne peut la réinitialiser, ni sur ce réseau ni sur un autre. Notez-la et gardez-la en lieu sûr.
 - **Un mauvais chain ID, ce sont des jetons perdus.** Confirmez toujours 1020 avant d'envoyer, et considérez toute page, celle-ci comprise, comme quelque chose à vérifier plutôt qu'à croire sur parole.
-- **La même adresse sur un autre réseau, ce n'est pas le même argent.** Votre adresse existe aussi sur Ethereum et sur d'autres réseaux, mais les soldes sont séparés. Envoyer des jetons vers « la même adresse sur une autre chaîne » ne les fait pas changer de réseau. Seul le pont le fait, et seulement pour BNB et USDT.
+- **La même adresse sur un autre réseau, ce n'est pas le même argent.** Votre adresse existe aussi sur Ethereum et sur d'autres réseaux, mais les soldes sont séparés. Envoyer des jetons vers « la même adresse sur une autre chaîne » ne les fait pas changer de réseau. Seul le pont le fait, et seulement pour BNB, BTC, ETH et USDT.
 - **Le prix du swap peut osciller.** Une seule transaction dans un petit pool peut le faire bouger brusquement.
 - **Un jeton encapsulé est un ticket, pas le manteau.** Il ne vaut l'original que tant que le pont détient l'original.
 - **Certains chiffres reposent sur la parole du projet.** L'offre totale et les conditions de la répartition ne se vérifient pas dans un portefeuille. Les soldes individuels, si.
@@ -136,10 +136,12 @@ Les valeurs qu'un portefeuille demande quand vous ajoutez le réseau à la main 
 - Monnaie : Nura, symbole `NURA`, 18 décimales
 - Temps de bloc : 3 secondes
 
-Les deux jetons encapsulés que le pont crée sur Nura Chain :
+Les quatre jetons encapsulés que le pont crée sur Nura Chain :
 
-- BNB : `0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc`
-- USDT : `0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC`
+- BNB : `0x578fACf1f6d7de0E78D59f405C2A53f387d94E93`
+- BTC : `0x5891B71b6e18fB8A7d770f65A9060F76C7d2a166`
+- ETH : `0x4BEf1c404e6BdE102d9FCeca678BD7471f3Fd0ba`
+- USDT : `0xeAF3361a86C22e9691283A30338b57cA95567207`
 
 Où aller :
 

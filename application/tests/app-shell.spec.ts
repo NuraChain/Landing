@@ -35,7 +35,7 @@ beforeEach(() =>
 
         if (href.includes('coingecko'))
         {
-            return Promise.resolve(ok({ binancecoin: { usd: 1 }, tether: { usd: 1 } }));
+            return Promise.resolve(ok({ binancecoin: { usd: 1 }, tether: { usd: 1 }, bitcoin: { usd: 1 }, ethereum: { usd: 1 } }));
         }
         if (href.includes('explorer'))
         {
@@ -43,7 +43,7 @@ beforeEach(() =>
         }
 
         return Promise.resolve((init?.body ?? '').trimStart().startsWith('[')
-            ? ok([0, 1, 2, 3].map((id) => ({ jsonrpc: '2.0', id, result: word(id % 2 === 0 ? 0n : 18n) })))
+            ? ok([0, 1, 2, 3, 4, 5, 6, 7].map((id) => ({ jsonrpc: '2.0', id, result: word(id % 2 === 0 ? 0n : 18n) })))
             : ok({ jsonrpc: '2.0', id: 1, result: '0x1148' }));
     }));
 });

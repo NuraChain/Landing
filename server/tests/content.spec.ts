@@ -286,7 +286,8 @@ describe('the repository whitepaper', () =>
         for (const row of content.translations)
         {
             for (const fact of ['`1020`', '`0x3fc`', 'https://rpc.nurachain.net', 'https://explorer.nurachain.net',
-                '0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc', '0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC'])
+                '0x578fACf1f6d7de0E78D59f405C2A53f387d94E93', '0x5891B71b6e18fB8A7d770f65A9060F76C7d2a166',
+                '0x4BEf1c404e6BdE102d9FCeca678BD7471f3Fd0ba', '0xeAF3361a86C22e9691283A30338b57cA95567207'])
             {
                 expect(row.body, `${ row.locale } should state ${ fact }`).toContain(fact);
             }

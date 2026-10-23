@@ -67,7 +67,7 @@ Pasar `1_000_000` en su lugar mintea una millonésima de millonésima de token, 
 La trampa está en suponer que un símbolo implica una cantidad de decimales. No lo hace, y Nura Chain tiene un ejemplo vivo. El contrato de USDT puenteado aquí declara 18 decimales:
 
 ```bash
-cast call 0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC "decimals()(uint8)" \
+cast call 0xeAF3361a86C22e9691283A30338b57cA95567207 "decimals()(uint8)" \
   --rpc-url https://rpc.nurachain.net
 ```
 
@@ -115,8 +115,8 @@ Si tu cartera todavía no apunta a esta red, [añadir Nura Chain a tu cartera](/
 Merece la pena mirar tokens reales y no solo el tuyo. Los dos siguientes son contratos ERC-20 corrientes desplegados en Nura Chain, que representan activos puenteados:
 
 ```text
-Bridge BNB    0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc
-Bridge USDT   0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC
+Bridge BNB    0x578fACf1f6d7de0E78D59f405C2A53f387d94E93
+Bridge USDT   0xeAF3361a86C22e9691283A30338b57cA95567207
 ```
 
 Consúltalos igual que consultaste el tuyo, o ábrelos en [Nura Explorer](https://explorer.nurachain.net). Son útiles precisamente porque no son ejemplos escritos para un tutorial: responden a `name()`, `symbol()`, `decimals()` y `totalSupply()` como cualquier otro token, que es justamente el sentido de un estándar.

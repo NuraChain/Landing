@@ -67,7 +67,7 @@ _mint(msg.sender, 1_000_000 * 10 ** 18);
 والفخ هو افتراض أن الرمز يدل على عدد الخانات. وهو لا يدل، ولنورا تشين مثال حي. فعقد USDT المجسور هنا يبلّغ عن 18 خانة عشرية:
 
 ```bash
-cast call 0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC "decimals()(uint8)" \
+cast call 0xeAF3361a86C22e9691283A30338b57cA95567207 "decimals()(uint8)" \
   --rpc-url https://rpc.nurachain.net
 ```
 
@@ -115,8 +115,8 @@ cast call 0xYourToken "totalSupply()(uint256)" --rpc-url https://rpc.nurachain.n
 يستحق أن تنظر إلى رموز حقيقية لا إلى رمزك وحده. وكلا هذين عقدا ERC-20 عاديان منشوران على نورا تشين، يمثلان أصولًا مجسورة:
 
 ```text
-Bridge BNB    0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc
-Bridge USDT   0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC
+Bridge BNB    0x578fACf1f6d7de0E78D59f405C2A53f387d94E93
+Bridge USDT   0xeAF3361a86C22e9691283A30338b57cA95567207
 ```
 
 استعلم عنهما بالطريقة نفسها التي استعلمت بها عن رمزك، أو افتحهما في [مستكشف نورا](https://explorer.nurachain.net). وهما مفيدان تحديدًا لأنهما ليسا أمثلة كُتبت لأجل درس — فهما يجيبان عن `name()` و`symbol()` و`decimals()` و`totalSupply()` كأي رمز آخر، وهذا هو مغزى وجود معيار.

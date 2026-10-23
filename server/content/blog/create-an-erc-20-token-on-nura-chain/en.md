@@ -67,7 +67,7 @@ Passing `1_000_000` instead mints a millionth of a millionth of a token, and the
 The trap is assuming a symbol implies a decimal count. It does not, and Nura Chain has a live example. The bridged USDT contract here reports 18 decimals:
 
 ```bash
-cast call 0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC "decimals()(uint8)" \
+cast call 0xeAF3361a86C22e9691283A30338b57cA95567207 "decimals()(uint8)" \
   --rpc-url https://rpc.nurachain.net
 ```
 
@@ -115,8 +115,8 @@ If your wallet is not yet pointed at this network at all, [adding Nura Chain to 
 Worth looking at real ones rather than only your own. Both of these are ordinary ERC-20 contracts deployed on Nura Chain, representing bridged assets:
 
 ```text
-Bridge BNB    0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc
-Bridge USDT   0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC
+Bridge BNB    0x578fACf1f6d7de0E78D59f405C2A53f387d94E93
+Bridge USDT   0xeAF3361a86C22e9691283A30338b57cA95567207
 ```
 
 Query them the same way you queried your own, or open them in [Nura Explorer](https://explorer.nurachain.net). They are useful precisely because they are not examples written for a tutorial — they answer `name()`, `symbol()`, `decimals()` and `totalSupply()` like any other token, which is the point of a standard.

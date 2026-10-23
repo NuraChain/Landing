@@ -1,16 +1,16 @@
 {
-    "revision": "1.2",
-    "generatedAt": "2026-10-23T08:33:01.210Z",
+    "revision": "1.3",
+    "generatedAt": "2026-10-23T09:14:20.027Z",
     "sha256": {
-        "en": "ac3759b654e45e42e6a39a3ea2265971f0a8c3d9aa5494fda6d61ee520a2b409",
-        "fa": "8b097f50b765408f666d1edd5e80ffd94ef98771535ef4dc0ccd7dcb4b537fc0",
-        "ar": "4b64dab0c051ddbfbab23703d2c709c09a0583330813c333c263c827cc8d99a3",
-        "es": "477eefe9e2f9bcf804e3f3baf71cc49afddc994fec6be6877198eec8e3da52cd",
-        "pt": "ea5b9c251b8c484ccea8be19ae871c041e61f3bc70e2fafdd5e3d5b4a0cca662",
-        "hi": "702ccebf8f226c42c807b8e3020f6c66fb6a91b78cebd3b083194ebe72ea1554",
-        "zh": "201bf7b7079dc67e265b84f310007654e8fc8fcb95dba359f8e4882f93a19158",
-        "ru": "e612a831c3c33cc7aabb47512ccabd4c8db4b45f3641416c8972780332b16f6c",
-        "fr": "4db05984cd3c3d6471b8932afe50a37ccd3bc72cd6523df0e0e803b4ea47fabd",
-        "tr": "9cd70a9df3df7cdd334c09a8bddb24966fe39767fdaa489df7fd62f164801740"
+        "en": "074eef494110cbb273ab7243de4e8bc4a3b713e28d9b81838c95c0e9c3b70b73",
+        "fa": "5314207dd51c5f7555cce40b998a528a14e2ded2e90c7a200373f4e7b40f8dce",
+        "ar": "e0838117ec8efd353797e15b6a273e73510fe3dbe616f77deb44d8446465f61b",
+        "es": "e7dc26693105c4245fd607015ef63010d4ae64dc09a5a20dbec3117037e35b07",
+        "pt": "4c107de3c07b07ef52e869d51552d53ebeddb51a8ba062371e43ef5ac336c1a8",
+        "hi": "6a84da1b08e89ab2f14728a78965ffc24c9249c3fda3cd8a89d044c7d76fe0bc",
+        "zh": "c2d62d77b1e7fdc2267068a6e06150f641ef245a96c42fc87b50090ef4cdc5b5",
+        "ru": "9207b160f4fdce33dc0dde5f7ba7a0a895e523b1c3ff2c5fc375193d9cb77b8d",
+        "fr": "0ff0c3094b197dbb2d89a40855476ae35646aed70aa24693a320f6c26974d579",
+        "tr": "9fe5bcbcde6225ae8c562172d8d45d79ce35e9a51f78fd7852ce9ef8d1b160e7"
     }
 }

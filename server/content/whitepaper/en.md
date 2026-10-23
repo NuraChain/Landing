@@ -101,9 +101,9 @@ The pool is small. That means one large trade can move the price a lot, in eithe
 
 ### 7.4 The bridge
 
-The bridge lets you bring BNB and USDT onto Nura Chain from their home networks. It works like a cloakroom ticket: your original coins are locked on the other network, and you receive a matching "wrapped" coin here that you can spend on Nura Chain. Hand the wrapped coin back and the original is released.
+The bridge lets you bring BNB, BTC, ETH and USDT onto Nura Chain from their home networks. It works like a cloakroom ticket: your original coins are locked on the other network, and you receive a matching "wrapped" coin here that you can spend on Nura Chain. Hand the wrapped coin back and the original is released.
 
-A wrapped coin is only worth its original while the original is really there. The site shows the total value that has crossed the bridge, and that number counts the tickets, not the coats: it is correct as long as every wrapped coin is backed one for one on the other side. The addresses of the two wrapped coins are listed in section 10.
+A wrapped coin is only worth its original while the original is really there. The site shows the total value that has crossed the bridge, and that number counts the tickets, not the coats: it is correct as long as every wrapped coin is backed one for one on the other side. The addresses of the four wrapped coins are listed in section 10.
 
 ## 8. Getting started
 
@@ -119,7 +119,7 @@ If you are a developer, the site's blog has step-by-step guides for connecting t
 
 - **A lost recovery phrase means lost coins.** Nobody can reset it, on this network or any other. Write it down and keep it somewhere safe.
 - **A wrong chain ID means lost coins.** Always confirm 1020 before sending, and treat any page, including this one, as something to check rather than something to trust.
-- **The same address on another network is not the same money.** Your address exists on Ethereum and other networks too, but the balances are separate. Sending coins to "the same address on another chain" does not move them across. Only the bridge does that, and only for BNB and USDT.
+- **The same address on another network is not the same money.** Your address exists on Ethereum and other networks too, but the balances are separate. Sending coins to "the same address on another chain" does not move them across. Only the bridge does that, and only for BNB, BTC, ETH and USDT.
 - **The swap price can swing.** One trade in a small pool can move it sharply.
 - **A wrapped coin is a ticket, not the coat.** It is worth the original only while the bridge holds the original.
 - **Some numbers are the project's word.** The total supply and the terms of the split cannot be checked in a wallet. Individual balances can.
@@ -136,10 +136,12 @@ The values a wallet asks for when you add the network by hand:
 - Coin: Nura, ticker `NURA`, 18 decimal places
 - Block time: 3 seconds
 
-The two wrapped coins the bridge creates on Nura Chain:
+The four wrapped coins the bridge creates on Nura Chain:
 
-- BNB: `0xD4221Ad9772BF5bA7423a044bBBEe6af2154A5Fc`
-- USDT: `0x4E0DB0B1Da408faF5637202CF48b0bc7733bE6dC`
+- BNB: `0x578fACf1f6d7de0E78D59f405C2A53f387d94E93`
+- BTC: `0x5891B71b6e18fB8A7d770f65A9060F76C7d2a166`
+- ETH: `0x4BEf1c404e6BdE102d9FCeca678BD7471f3Fd0ba`
+- USDT: `0xeAF3361a86C22e9691283A30338b57cA95567207`
 
 Where to go:
 

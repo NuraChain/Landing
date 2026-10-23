@@ -179,7 +179,7 @@ describe('bridgeTvl: uint256 to token units', () =>
                 : ok(entries.map(({ id, value }) => ({ jsonrpc: '2.0', id, result: word(value) }))))));
     };
 
-    const PRICES = { binancecoin: { usd: 1 }, tether: { usd: 1 } };
+    const PRICES = { binancecoin: { usd: 1 }, tether: { usd: 1 }, bitcoin: { usd: 1 }, ethereum: { usd: 1 } };
 
     it('scales any supply by any sane decimals without losing the integer part', async () =>
     {
@@ -194,7 +194,9 @@ describe('bridgeTvl: uint256 to token units', () =>
             resetNetworkStats();
             supplyReply([
                 { id: 0, value: raw }, { id: 1, value: BigInt(decimals) },
-                { id: 2, value: 0n }, { id: 3, value: 18n }
+                { id: 2, value: 0n }, { id: 3, value: 18n },
+                { id: 4, value: 0n }, { id: 5, value: 18n },
+                { id: 6, value: 0n }, { id: 7, value: 18n }
             ], PRICES);
 
             const { parts } = await bridgeTvl();
@@ -211,7 +213,9 @@ describe('bridgeTvl: uint256 to token units', () =>
 
         supplyReply([
             { id: 0, value: raw }, { id: 1, value: 18n },
-            { id: 2, value: 0n }, { id: 3, value: 18n }
+            { id: 2, value: 0n }, { id: 3, value: 18n },
+            { id: 4, value: 0n }, { id: 5, value: 18n },
+            { id: 6, value: 0n }, { id: 7, value: 18n }
         ], PRICES);
 
         const { parts } = await bridgeTvl();
@@ -231,7 +235,9 @@ describe('bridgeTvl: uint256 to token units', () =>
             resetNetworkStats();
             supplyReply([
                 { id: 0, value: raw }, { id: 1, value: BigInt(decimals) },
-                { id: 2, value: 0n }, { id: 3, value: 18n }
+                { id: 2, value: 0n }, { id: 3, value: 18n },
+                { id: 4, value: 0n }, { id: 5, value: 18n },
+                { id: 6, value: 0n }, { id: 7, value: 18n }
             ], PRICES);
 
             const { usd, parts } = await bridgeTvl();
@@ -250,7 +256,9 @@ describe('bridgeTvl: uint256 to token units', () =>
     {
         supplyReply([
             { id: 0, value: 0n }, { id: 1, value: 18n },
-            { id: 2, value: 0n }, { id: 3, value: 18n }
+            { id: 2, value: 0n }, { id: 3, value: 18n },
+            { id: 4, value: 0n }, { id: 5, value: 18n },
+            { id: 6, value: 0n }, { id: 7, value: 18n }
         ], PRICES);
 
         const { usd, parts } = await bridgeTvl();
