@@ -1,13 +1,16 @@
-# Nura Wallet Website — Multilingual Landing Page and Blog
+# Nura Chain Website — Official Blockchain Landing Page
 
-This repository contains the marketing website for **Nura Wallet**, the self-custody crypto wallet for Nura Chain. The site presents wallet features, supported platforms, network information and download links in a responsive, multilingual experience.
+This repository contains the official **Nura Chain** website: the public entry point for the Nura blockchain network, its EVM-compatible infrastructure and developer ecosystem.
 
-The website supports **ten languages**, including Persian and Arabic right-to-left layouts, dark and light themes, live Nura Chain and TVL figures, and a multilingual blog whose articles are maintained as files in this repository.
+The website presents network information such as the chain ID and RPC endpoint, links to the block explorer and Nura Wallet, tokenomics and project resources. It also includes a multilingual blog, whitepaper PDFs, live chain and TVL figures, and download paths for supported platforms.
 
-- **Website:** [nurawallet.app](https://nurawallet.app)
+The site supports **ten languages**, including Persian and Arabic right-to-left layouts, with dark and light themes.
+
+- **Official website:** [nurachain.net](https://nurachain.net)
+- **Block explorer:** [explorer.nurachain.net](https://explorer.nurachain.net)
+- **Nura Wallet:** [nurawallet.app](https://nurawallet.app)
 - **Wallet source and releases:** [NuraChain/Wallet](https://github.com/NuraChain/Wallet)
-- **Blockchain:** [Nura Chain](https://nurachain.net)
-
+- **Network implementation:** [NuraChain/EVM](https://github.com/NuraChain/EVM)
 
 [![Built with AzerothJS](https://img.shields.io/badge/built%20with-AzerothJS-2ad4b8)](https://github.com/AzerothJS/AzerothJS)
 [![Node](https://img.shields.io/badge/node-%3E%3D22-5fb3e8)](https://nodejs.org)
@@ -149,7 +152,3 @@ head each server-rendered page is served with.
 `.github/workflows/ci.yml` runs four jobs on every push and pull request: typecheck and
 lint, tests with coverage, a determinism pass, and a production build that smoke-checks the
 bundle. Nothing depends on a secret, so it works on forks.
-
-## License
-
-MIT.
