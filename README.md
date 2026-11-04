@@ -14,7 +14,6 @@ The site supports **ten languages**, including Persian and Arabic right-to-left 
 
 [![Built with AzerothJS](https://img.shields.io/badge/built%20with-AzerothJS-2ad4b8)](https://github.com/AzerothJS/AzerothJS)
 [![Node](https://img.shields.io/badge/node-%3E%3D22-5fb3e8)](https://nodejs.org)
-[![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 ## Layout
 
