@@ -1,10 +1,13 @@
-# Nura Landing Page
+# Nura Wallet Website — Multilingual Landing Page and Blog
 
-The marketing site for **Nura Wallet**: a self custody wallet for the Nura network.
-Ten languages, two of them right to left, two themes, live chain and TVL figures read in
-the browser, and a download path for every platform.
+This repository contains the marketing website for **Nura Wallet**, the self-custody crypto wallet for Nura Chain. The site presents wallet features, supported platforms, network information and download links in a responsive, multilingual experience.
 
-It also carries a **blog** in all ten languages, published as files in this repository.
+The website supports **ten languages**, including Persian and Arabic right-to-left layouts, dark and light themes, live Nura Chain and TVL figures, and a multilingual blog whose articles are maintained as files in this repository.
+
+- **Website:** [nurawallet.app](https://nurawallet.app)
+- **Wallet source and releases:** [NuraChain/Wallet](https://github.com/NuraChain/Wallet)
+- **Blockchain:** [Nura Chain](https://nurachain.net)
+
 
 [![Built with AzerothJS](https://img.shields.io/badge/built%20with-AzerothJS-2ad4b8)](https://github.com/AzerothJS/AzerothJS)
 [![Node](https://img.shields.io/badge/node-%3E%3D22-5fb3e8)](https://nodejs.org)
